@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestInsight 项目总结</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-alt: #334155;
+    --border: #475569;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --green: #4ade80;
+    --red: #f87171;
+    --orange: #fb923c;
+    --yellow: #facc15;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1a1040 100%);
+    padding: 60px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero h1 { font-size: 2.8em; font-weight: 700; margin-bottom: 12px; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--text-dim); font-size: 1.15em; max-width: 700px; margin: 0 auto; }
+  .hero .badges { margin-top: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .badge {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-size: 0.85em; font-weight: 600;
+  }
+  .badge-blue { background: rgba(56,189,248,.15); color: var(--accent); border: 1px solid rgba(56,189,248,.3); }
+  .badge-purple { background: rgba(129,140,248,.15); color: var(--accent2); border: 1px solid rgba(129,140,248,.3); }
+  .badge-green { background: rgba(74,222,128,.15); color: var(--green); border: 1px solid rgba(74,222,128,.3); }
+  .badge-orange { background: rgba(251,146,60,.15); color: var(--orange); border: 1px solid rgba(251,146,60,.3); }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+
+  nav.toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 32px;
+    margin-bottom: 40px;
+  }
+  nav.toc h2 { font-size: 1.3em; margin-bottom: 16px; color: var(--accent); }
+  nav.toc ol { columns: 2; column-gap: 40px; padding-left: 24px; }
+  nav.toc li { margin-bottom: 6px; }
+  nav.toc a { color: var(--text); text-decoration: none; transition: color .2s; }
+  nav.toc a:hover { color: var(--accent); }
+
+  section { margin-bottom: 48px; }
+  section > h2 {
+    font-size: 1.6em; font-weight: 700;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--accent);
+    display: flex; align-items: center; gap: 10px;
+  }
+  section > h2 .num {
+    background: var(--accent);
+    color: var(--bg);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.7em; font-weight: 800;
+    flex-shrink: 0;
+  }
+  h3 { color: var(--accent2); font-size: 1.15em; margin: 18px 0 10px; }
+  h4 { color: var(--orange); font-size: 1.0em; margin: 14px 0 8px; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  .card .icon { font-size: 1.8em; margin-bottom: 8px; }
+  .card .title { font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+  .card .desc { color: var(--text-dim); font-size: 0.92em; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 0.92em;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th { background: var(--card-alt); color: var(--accent); font-weight: 600; position: sticky; top: 0; }
+  tr:hover td { background: rgba(56,189,248,.04); }
+  td code {
+    background: var(--card-alt);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--green);
+  }
+
+  .flow-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .flow-row {
+    display: flex; align-items: center; gap: 0; flex-wrap: nowrap;
+    margin-bottom: 14px; min-width: 800px;
+  }
+  .flow-box {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.88em;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .flow-arrow {
+    color: var(--text-dim);
+    font-size: 1.2em;
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+  .fb-blue { background: rgba(56,189,248,.15); color: var(--accent); border: 1px solid rgba(56,189,248,.3); }
+  .fb-purple { background: rgba(129,140,248,.15); color: var(--accent2); border: 1px solid rgba(129,140,248,.3); }
+  .fb-green { background: rgba(74,222,128,.15); color: var(--green); border: 1px solid rgba(74,222,128,.3); }
+  .fb-orange { background: rgba(251,146,60,.15); color: var(--orange); border: 1px solid rgba(251,146,60,.3); }
+  .fb-red { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+  .fb-yellow { background: rgba(250,204,21,.15); color: var(--yellow); border: 1px solid rgba(250,204,21,.3); }
+
+  .api-group { margin-bottom: 18px; }
+  .api-group h4 { display: flex; align-items: center; gap: 8px; }
+  .api-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 0.75em; font-weight: 700;
+  }
+  .tag-sina { background: #dc2626; color: #fff; }
+  .tag-tencent { background: #2563eb; color: #fff; }
+  .tag-eastmoney { background: #d97706; color: #fff; }
+  .tag-yahoo { background: #7c3aed; color: #fff; }
+  .tag-other { background: #059669; color: #fff; }
+
+  ul.feature-list { list-style: none; padding: 0; }
+  ul.feature-list li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+    border-bottom: 1px solid rgba(71,85,105,.3);
+  }
+  ul.feature-list li::before {
+    content: '✦';
+    position: absolute;
+    left: 4px;
+    color: var(--accent);
+  }
+
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.88em;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 12px 0;
+    color: #c9d1d9;
+  }
+  .code-block .comment { color: #8b949e; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .cmd { color: var(--green); }
+
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 24px;
+    text-align: center;
+    flex: 1;
+    min-width: 140px;
+  }
+  .stat-box .val { font-size: 2em; font-weight: 800; color: var(--accent); }
+  .stat-box .label { color: var(--text-dim); font-size: 0.85em; margin-top: 4px; }
+
+  .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px; top: 6px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .timeline-item .time { color: var(--text-dim); font-size: 0.85em; }
+  .timeline-item .content { margin-top: 4px; }
+
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    font-size: 0.9em;
+  }
+
+  @media (max-width: 768px) {
+    .hero { padding: 40px 20px; }
+    .hero h1 { font-size: 1.8em; }
+    nav.toc ol { columns: 1; }
+    .card-grid { grid-template-columns: 1fr; }
+    .stat-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>📊 <span>InvestInsight</span> 项目总结</h1>
+  <p>基于 Qt/C++ 的智能投资分析桌面应用 — 集成多源数据、技术分析、策略回测与 AI 增强的一站式投资决策工具</p>
+  <div class="badges">
+    <span class="badge badge-blue">C++17</span>
+    <span class="badge badge-purple">Qt 5/6</span>
+    <span class="badge badge-green">多源API</span>
+    <span class="badge badge-orange">AI增强</span>
+  </div>
+</div>
+
+<div class="container">
+
+<nav class="toc" id="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#overview">项目概览与核心指标</a></li>
+    <li><a href="#arch">系统架构</a></li>
+    <li><a href="#structure">项目目录结构</a></li>
+    <li><a href="#source-files">源文件清单与职责</a></li>
+    <li><a href="#data-flow">数据流全链路</a></li>
+    <li><a href="#apis">外部 API 数据源</a></li>
+    <li><a href="#ui-pages">UI 界面与页面</a></li>
+    <li><a href="#features">核心功能特性</a></li>
+    <li><a href="#tech-indicators">技术指标体系</a></li>
+    <li><a href="#strategy">策略回测系统</a></li>
+    <li><a href="#ai">AI 分析模块</a></li>
+    <li><a href="#config">配置与数据持久化</a></li>
+    <li><a href="#deps">依赖与构建</a></li>
+    <li><a href="#key-fixes">关键问题修复记录</a></li>
+  </ol>
+</nav>
+
+<!-- ========== 1. 项目概览 ========== -->
+<section id="overview">
+  <h2><span class="num">1</span>项目概览与核心指标</h2>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="val">20+</div><div class="label">源文件</div></div>
+    <div class="stat-box"><div class="val">15+</div><div class="label">外部API</div></div>
+    <div class="stat-box"><div class="val">5</div><div class="label">策略引擎</div></div>
+    <div class="stat-box"><div class="val">6</div><div class="label">技术指标</div></div>
+    <div class="stat-box"><div class="val">10+</div><div class="label">新闻来源</div></div>
+  </div>
+
+  <p><strong>InvestInsight</strong> 是一个基于 Qt/C++ 开发的桌面级智能投资分析应用，面向 A 股市场板块级投资决策。系统从新浪财经、腾讯财经、东方财富等多个数据源获取实时行情、K线数据、资金流向和财经新闻，结合技术分析、量化策略回测、周期分析及可选的 AI 深度分析能力，为用户提供完整的板块投资分析报告与操作建议。</p>
+
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <div class="icon">🏗️</div>
+      <div class="title">技术栈</div>
+      <div class="desc">C++17 + Qt 5/6（Core, Widgets, Network, Concurrent），CMake 构建，macOS/Linux 平台</div>
+    </div>
+    <div class="card">
+      <div class="icon">📡</div>
+      <div class="title">数据来源</div>
+      <div class="desc">新浪财经、腾讯财经、东方财富、Yahoo Finance、同花顺、华尔街见闻、财联社等 15+ 个 API 接入</div>
+    </div>
+    <div class="card">
+      <div class="icon">📈</div>
+      <div class="title">分析能力</div>
+      <div class="desc">MACD/RSI/KDJ/MA/BOLL/ATR 技术指标 + 5 种策略回测 + 周期分析 + 板块轮动检测</div>
+    </div>
+    <div class="card">
+      <div class="icon">🤖</div>
+      <div class="title">AI 增强</div>
+      <div class="desc">支持 DeepSeek / OpenAI / 通义千问 / Claude / Gemini 等多家 AI 深度分析与对话</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2. 系统架构 ========== -->
+<section id="arch">
+  <h2><span class="num">2</span>系统架构</h2>
+
+  <div class="flow-diagram">
+    <p style="color:var(--text-dim); margin-bottom:16px; font-size:0.9em;">分层架构：UI → 编排层 → 数据获取 → 分析引擎 → 渲染输出</p>
+
+    <div class="flow-row">
+      <div class="flow-box fb-blue">MainWindow<br><small>UI 层</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-purple">InsightOrchestrator<br><small>核心编排</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green">SectorFetcher<br><small>板块数据</small></div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box" style="visibility:hidden;">占位</div>
+      <div class="flow-arrow" style="visibility:hidden;">→</div>
+      <div class="flow-box fb-purple" style="visibility:hidden;">占位</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green">MarketContextFetcher<br><small>大盘指数</small></div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box" style="visibility:hidden;">占位</div>
+      <div class="flow-arrow" style="visibility:hidden;">→</div>
+      <div class="flow-box fb-purple" style="visibility:hidden;">占位</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green">RealFinanceNewsProvider<br><small>新闻聚合</small></div>
+    </div>
+
+    <div class="flow-row" style="margin-top:20px;">
+      <div class="flow-box fb-orange">TechIndicators<br><small>技术指标</small></div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-box fb-orange">StrategyEngine<br><small>策略生成</small></div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-box fb-orange">RotationDetector<br><small>轮动检测</small></div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-box fb-red">AIAnalyzer<br><small>AI 深度分析</small></div>
+    </div>
+
+    <div class="flow-row" style="margin-top:20px;">
+      <div class="flow-box fb-yellow">SignalExtractor<br><small>信号提取</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-yellow">ImpactAnalyzer<br><small>影响评估</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-yellow">AdviceEngine<br><small>建议引擎</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-yellow">ReportComposer<br><small>报告生成</small></div>
+    </div>
+  </div>
+
+  <h3>核心类职责</h3>
+  <table>
+    <tr><th>类名</th><th>层级</th><th>职责</th></tr>
+    <tr><td><code>MainWindow</code></td><td>UI</td><td>全部界面呈现：配置中心、数据总览、投资策略、板块详情、AI聊天；HTML 渲染 + 图表绘制（QPainter）；持仓管理与持久化</td></tr>
+    <tr><td><code>InsightOrchestrator</code></td><td>核心编排</td><td>分析流程总控：并行数据拉取 → 指标计算 → 评分公式 → 策略回测 → 周期分析 → 轮动检测 → AI增强 → 输出 AnalysisResult</td></tr>
+    <tr><td><code>SectorFetcher</code></td><td>数据获取</td><td>板块列表获取（新浪概念+行业板块）；ETF代理K线数据；资金流向（含历史缓存）；估值百分位计算</td></tr>
+    <tr><td><code>MarketContextFetcher</code></td><td>数据获取</td><td>大盘指数（上证/深证/创业板 + 美股三大指数）；市场宽度（涨跌家数）；北向资金代理；风险情绪评估</td></tr>
+    <tr><td><code>RealFinanceNewsProvider</code></td><td>数据获取</td><td>10+ 来源并行新闻抓取；关键词→板块映射；新闻质量评分；情感极性判断</td></tr>
+    <tr><td><code>TechIndicators</code></td><td>分析引擎</td><td>MACD(12,26,9) / RSI(6,12,24) / KDJ(9,3,3) / MA(5,10,20,60) / BOLL(20,2σ) / 成交量均线</td></tr>
+    <tr><td><code>StrategyEngine</code></td><td>分析引擎</td><td>基于 SectorSnapshot 生成交易策略文本 + 支撑/阻力位 + ATR(14)动态止盈止损</td></tr>
+    <tr><td><code>RotationDetector</code></td><td>分析引擎</td><td>板块轮动评分排名 + 六维市场风险雷达图数据</td></tr>
+    <tr><td><code>AIAnalyzer</code></td><td>AI层</td><td>新闻摘要、板块深度分析增强、对话式查询 — 支持多 LLM 提供商配置</td></tr>
+    <tr><td><code>SignalExtractor</code></td><td>分析链</td><td>关键词匹配提取新闻中的板块信号方向与强度</td></tr>
+    <tr><td><code>DataCollector</code></td><td>数据聚合</td><td>管理 IDataProvider 列表，收集并合并所有 RawInsight 数据</td></tr>
+    <tr><td><code>HttpClient</code></td><td>基础设施</td><td>同步 HTTP 请求工具（GET / GBK-GET / POST JSON），超时与重试机制</td></tr>
+  </table>
+</section>
+
+<!-- ========== 3. 项目目录结构 ========== -->
+<section id="structure">
+  <h2><span class="num">3</span>项目目录结构</h2>
+
+  <div class="code-block">
+<span class="cmd">investinsight/</span>
+├── <span class="string">CMakeLists.txt</span>          <span class="comment"># CMake 构建配置（Qt5/Qt6 自动检测）</span>
+├── <span class="string">run_gui.sh</span>              <span class="comment"># 一键构建运行脚本</span>
+├── <span class="cmd">src/</span>
+│   ├── <span class="string">main.cpp</span>             <span class="comment"># 应用入口 + --auto-analyze 支持</span>
+│   ├── <span class="cmd">domain/</span>              <span class="comment"># 纯数据模型层</span>
+│   │   ├── AnalysisResult.h  <span class="comment"># 核心结构体集合（SectorSnapshot等）</span>
+│   │   ├── RawInsight.h      <span class="comment"># 原始新闻/事件数据</span>
+│   │   ├── IndustrySignal.h  <span class="comment"># 板块信号（方向+强度）</span>
+│   │   ├── FundImpact.h      <span class="comment"># 基金类别影响评估</span>
+│   │   └── InvestmentAdvice.h<span class="comment"># 投资建议枚举与结构</span>
+│   ├── <span class="cmd">core/</span>                <span class="comment"># 核心业务逻辑</span>
+│   │   ├── InsightOrchestrator.h/.cpp  <span class="comment"># 分析流程编排</span>
+│   │   ├── SectorFetcher.h/.cpp        <span class="comment"># 板块数据获取</span>
+│   │   ├── MarketContext.h/.cpp        <span class="comment"># 大盘环境获取</span>
+│   │   ├── TechIndicators.h/.cpp       <span class="comment"># 技术指标计算</span>
+│   │   ├── StrategyEngine.h/.cpp       <span class="comment"># 策略与止盈止损</span>
+│   │   ├── RotationDetector.h/.cpp     <span class="comment"># 板块轮动检测</span>
+│   │   ├── AIAnalyzer.h/.cpp           <span class="comment"># AI 分析接口</span>
+│   │   ├── DataCollector.h/.cpp        <span class="comment"># 数据收集器</span>
+│   │   ├── HttpClient.h/.cpp           <span class="comment"># HTTP 请求工具</span>
+│   │   ├── SignalExtractor.h/.cpp      <span class="comment"># 信号提取</span>
+│   │   ├── ImpactAnalyzer.h/.cpp       <span class="comment"># 影响分析</span>
+│   │   ├── AdviceEngine.h/.cpp         <span class="comment"># 建议引擎</span>
+│   │   └── ReportComposer.h/.cpp       <span class="comment"># 报告生成</span>
+│   ├── <span class="cmd">providers/</span>           <span class="comment"># 数据提供者</span>
+│   │   ├── IDataProvider.h             <span class="comment"># 提供者接口</span>
+│   │   ├── RealFinanceNewsProvider.h/.cpp <span class="comment"># 多源新闻聚合</span>
+│   │   └── RealLinkageProvider.h/.cpp  <span class="comment"># ETF联动分析</span>
+│   └── <span class="cmd">ui/</span>                  <span class="comment"># 界面层</span>
+│       ├── MainWindow.h/.cpp           <span class="comment"># 主窗口（全部UI逻辑）</span>
+│       └── <span class="comment">(辅助类内联在MainWindow.h中)</span>
+├── <span class="cmd">third_party/</span>             <span class="comment"># 第三方依赖（Qt框架/AGL stub）</span>
+└── <span class="cmd">summary/</span>                 <span class="comment"># 项目总结文档</span>
+  </div>
+</section>
+
+<!-- ========== 4. 源文件清单 ========== -->
+<section id="source-files">
+  <h2><span class="num">4</span>源文件清单与职责</h2>
+
+  <h3>Domain 层（纯数据定义）</h3>
+  <table>
+    <tr><th>文件</th><th>核心内容</th></tr>
+    <tr><td><code>AnalysisResult.h</code></td><td>
+      <code>KBar</code>（OHLCV K线）、<code>SectorInfo</code>（板块原始数据）、<code>NewsEntry</code>（新闻条目含URL）、
+      <code>TechSignals</code>（技术指标信号）、<code>FormulaBreakdown</code>（评分公式分解）、
+      <code>StrategyBacktest</code>（回测统计）、<code>CycleAnalysis</code>（周期分析）、
+      <code>TradingStrategy</code>（交易策略建议）、<code>SectorSnapshot</code>（板块完整快照 — 200+ 字段）、
+      <code>MarketContext</code>（大盘环境）、<code>AnalysisResult</code>（最终分析结果集合）
+    </td></tr>
+    <tr><td><code>RawInsight.h</code></td><td><code>RawInsight</code> — 新闻/事件原始数据（标题、正文、来源URL、关键词列表等）</td></tr>
+    <tr><td><code>IndustrySignal.h</code></td><td><code>IndustrySignal</code> — 板块信号方向（看多/看空/中性）+ 强度 + 来源URL</td></tr>
+    <tr><td><code>FundImpact.h</code></td><td><code>FundImpact</code> — 基金类别聚合影响（遗留分析链）</td></tr>
+    <tr><td><code>InvestmentAdvice.h</code></td><td><code>AdviceAction</code> 枚举（Increase/Hold/Decrease）+ <code>InvestmentAdvice</code> 结构体</td></tr>
+  </table>
+
+  <h3>Core 层（核心逻辑）</h3>
+  <table>
+    <tr><th>文件</th><th>核心功能</th><th>关键方法</th></tr>
+    <tr><td><code>InsightOrchestrator</code></td><td>全流程编排：数据获取→分析→评分→输出</td><td><code>runAnalysis()</code>、<code>chatQuery()</code>、<code>setPortfolio()</code></td></tr>
+    <tr><td><code>SectorFetcher</code></td><td>板块列表 + K线 + 资金流 + 估值</td><td><code>fetchSectorList()</code>、<code>fetchMarketData()</code>、<code>fetchValuationData()</code></td></tr>
+    <tr><td><code>MarketContext</code></td><td>大盘指数 + 北向资金 + 市场宽度</td><td><code>fetch()</code> → <code>fetchIndices()</code> / <code>fetchNorthbound()</code> / <code>fetchMarketBreadth()</code></td></tr>
+    <tr><td><code>TechIndicators</code></td><td>技术指标纯计算</td><td><code>calcMACD()</code>、<code>calcRSI()</code>、<code>calcKDJ()</code>、<code>calcMA()</code>、<code>calcBOLL()</code></td></tr>
+    <tr><td><code>StrategyEngine</code></td><td>策略文本生成 + ATR止盈止损</td><td><code>generate(SectorSnapshot)</code></td></tr>
+    <tr><td><code>RotationDetector</code></td><td>板块轮动信号 + 风险雷达</td><td><code>detect()</code></td></tr>
+    <tr><td><code>AIAnalyzer</code></td><td>LLM 集成：摘要/深度分析/对话</td><td><code>digestNews()</code>、<code>enhance()</code>、<code>chatCompletion()</code></td></tr>
+    <tr><td><code>HttpClient</code></td><td>同步 HTTP 请求</td><td><code>get()</code>、<code>getGbk()</code>、<code>postJson()</code></td></tr>
+    <tr><td><code>SignalExtractor</code></td><td>关键词→板块信号映射</td><td><code>extract()</code></td></tr>
+    <tr><td><code>DataCollector</code></td><td>数据源注册+批量采集</td><td><code>addProvider()</code>、<code>collectAll()</code></td></tr>
+    <tr><td><code>ImpactAnalyzer</code></td><td>信号→基金影响聚合</td><td><code>analyze()</code></td></tr>
+    <tr><td><code>AdviceEngine</code></td><td>影响→投资建议映射</td><td><code>generate()</code></td></tr>
+    <tr><td><code>ReportComposer</code></td><td>纯文本报告生成</td><td><code>compose()</code></td></tr>
+  </table>
+
+  <h3>Providers 层（数据提供者）</h3>
+  <table>
+    <tr><th>文件</th><th>说明</th></tr>
+    <tr><td><code>RealFinanceNewsProvider</code></td><td>10+ 来源并行抓取（东财快讯、新浪滚动、同花顺、华尔街见闻、财联社、证券时报、上证报、国务院、Google News 等），关键词→板块映射，去重与质量评分</td></tr>
+    <tr><td><code>RealLinkageProvider</code></td><td>ETF vs 指数 K 线相关性分析（已编译但未在编排器中注册）</td></tr>
+  </table>
+
+  <h3>UI 层</h3>
+  <table>
+    <tr><th>文件</th><th>说明</th></tr>
+    <tr><td><code>MainWindow</code></td><td>全部 UI 逻辑集中在此：配置页面（AI配置 + 持仓管理）、数据总览 HTML、投资策略 HTML、板块指数列表、板块详情页（含图表渲染）、指数详情页、AI 聊天标签页；使用 QPainter 绘制趋势图/K线图/MACD/成交量/资金流面板</td></tr>
+    <tr><td><code>ClickableBrowser</code></td><td>继承 QTextBrowser 的可交互浏览器组件，支持自定义链接协议（jump-sector / jumpi-index）</td></tr>
+    <tr><td><code>ScrollableTabWidget</code></td><td>带滚动功能的标签页容器</td></tr>
+  </table>
+</section>
+
+<!-- ========== 5. 数据流 ========== -->
+<section id="data-flow">
+  <h2><span class="num">5</span>数据流全链路</h2>
+
+  <div class="flow-diagram">
+    <h4 style="color:var(--accent);margin-bottom:16px;">完整分析流程（InsightOrchestrator::runAnalysis）</h4>
+
+    <div class="flow-row">
+      <div class="flow-box fb-blue">① 用户点击<br>"开始分析"</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-purple">② QtConcurrent<br>异步启动</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green">③ 并行数据获取</div>
+    </div>
+
+    <div style="padding-left:40px; margin: 10px 0;">
+      <div class="flow-row">
+        <div class="flow-box fb-green" style="font-size:.8em;">SectorFetcher<br>板块列表+K线+资金流</div>
+        <div class="flow-arrow" style="font-size:.9em;">∥</div>
+        <div class="flow-box fb-green" style="font-size:.8em;">NewsProvider<br>10+新闻来源</div>
+        <div class="flow-arrow" style="font-size:.9em;">∥</div>
+        <div class="flow-box fb-green" style="font-size:.8em;">MarketContext<br>大盘+北向+宽度</div>
+      </div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box fb-yellow">④ 信号提取<br>SignalExtractor</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">⑤ 指标计算<br>TechIndicators</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">⑥ 多因子评分<br>FormulaBreakdown</div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box fb-orange">⑦ 策略回测<br>5种策略历史回测</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">⑧ 周期分析<br>峰谷检测+趋势判断</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">⑨ 轮动检测<br>RotationDetector</div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box fb-red">⑩ AI 深度分析<br>（可选）Top-N 板块</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-purple">⑪ 一致性校正<br>信号与建议协调</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-blue">⑫ AnalysisResult<br>输出到UI渲染</div>
+    </div>
+  </div>
+
+  <h3>评分公式（FormulaBreakdown）</h3>
+  <p>每个板块的综合评分由以下因子加权得到，最终映射为 AdviceAction（增配/持有/减仓）：</p>
+  <table>
+    <tr><th>因子</th><th>来源</th><th>说明</th></tr>
+    <tr><td><code>techFactor</code></td><td>TechIndicators</td><td>基于 MACD/RSI/KDJ/MA 的技术动量综合评分</td></tr>
+    <tr><td><code>newsSentiment</code></td><td>SignalExtractor</td><td>新闻情感均值（正面→看多，负面→看空）</td></tr>
+    <tr><td><code>trendMomentum</code></td><td>K线数据</td><td>5日/20日动量因子</td></tr>
+    <tr><td><code>flowFactor</code></td><td>资金流</td><td>主力资金净流入方向与强度</td></tr>
+    <tr><td><code>meanReversionPenalty</code></td><td>K线偏离度</td><td>均值回归惩罚（过度偏离MA时减分）</td></tr>
+    <tr><td><code>valuationFactor</code></td><td>估值百分位</td><td>当前价格在历史区间中的位置</td></tr>
+    <tr><td><code>crowdingFactor</code></td><td>成交/换手/动量</td><td>拥挤度修正（过度拥挤时扣分）</td></tr>
+    <tr><td><code>dataQualityWeight</code></td><td>数据覆盖率</td><td>数据完整性权重（缺失越多权重越低）</td></tr>
+    <tr><td><code>sourceConsistencyWeight</code></td><td>来源一致性</td><td>多数据源一致性加权</td></tr>
+  </table>
+</section>
+
+<!-- ========== 6. 外部 API ========== -->
+<section id="apis">
+  <h2><span class="num">6</span>外部 API 数据源</h2>
+
+  <div class="api-group">
+    <h4><span class="api-tag tag-sina">新浪财经</span> Sina Finance（主力数据源）</h4>
+    <table>
+      <tr><th>接口</th><th>用途</th><th>使用位置</th></tr>
+      <tr><td><code>newFLJK.php?param=class</code></td><td>概念板块列表（~175个，GBK编码）</td><td>SectorFetcher</td></tr>
+      <tr><td><code>newSinaHy.php</code></td><td>行业板块列表（~48个，GBK编码）</td><td>SectorFetcher</td></tr>
+      <tr><td><code>CN_MarketData.getKLineData</code></td><td>ETF/指数日K线数据（250根）</td><td>SectorFetcher / MarketContext</td></tr>
+      <tr><td><code>MoneyFlow.ssl_bkzj_bk</code></td><td>板块资金流（概念 fenlei=1 + 行业 fenlei=0）</td><td>SectorFetcher / MarketContext</td></tr>
+      <tr><td><code>Market_Center.getHQNodeStockCount</code></td><td>A股总股票数量</td><td>MarketContext</td></tr>
+      <tr><td><code>feed.mix.sina.com.cn/api/roll/get</code></td><td>滚动新闻（多个频道lid）</td><td>RealFinanceNewsProvider</td></tr>
+      <tr><td><code>top.finance.sina.com.cn</code></td><td>财经热门话题</td><td>RealFinanceNewsProvider</td></tr>
+    </table>
+  </div>
+
+  <div class="api-group">
+    <h4><span class="api-tag tag-tencent">腾讯财经</span> Tencent Finance</h4>
+    <table>
+      <tr><th>接口</th><th>用途</th><th>使用位置</th></tr>
+      <tr><td><code>qt.gtimg.cn/q=...</code></td><td>实时指数行情（GBK编码）</td><td>MarketContext</td></tr>
+      <tr><td><code>proxy.finance.qq.com/.../fqkline/get</code></td><td>指数日K线（前复权）</td><td>MarketContext</td></tr>
+    </table>
+  </div>
+
+  <div class="api-group">
+    <h4><span class="api-tag tag-eastmoney">东方财富</span> EastMoney</h4>
+    <table>
+      <tr><th>接口</th><th>用途</th><th>使用位置</th></tr>
+      <tr><td><code>push2.eastmoney.com</code></td><td>板块/概念列表补充（备用源）</td><td>SectorFetcher</td></tr>
+      <tr><td><code>np-listapi.eastmoney.com</code></td><td>快讯新闻流（多栏目）</td><td>RealFinanceNewsProvider</td></tr>
+    </table>
+  </div>
+
+  <div class="api-group">
+    <h4><span class="api-tag tag-yahoo">Yahoo Finance</span></h4>
+    <table>
+      <tr><th>接口</th><th>用途</th><th>使用位置</th></tr>
+      <tr><td><code>query1.finance.yahoo.com/v8/finance/chart/</code></td><td>美股三大指数日K线（^IXIC, ^GSPC, ^DJI）</td><td>MarketContext</td></tr>
+    </table>
+  </div>
+
+  <div class="api-group">
+    <h4><span class="api-tag tag-other">其他新闻来源</span></h4>
+    <table>
+      <tr><th>来源</th><th>接口形式</th></tr>
+      <tr><td>同花顺 (10jqka)</td><td>REST API（stock news push）</td></tr>
+      <tr><td>华尔街见闻 (WallStreetCN)</td><td>REST API（apiv1/content/lives）</td></tr>
+      <tr><td>财联社 (CLS)</td><td>REST API（nodeapi/updateTelegraph）</td></tr>
+      <tr><td>网易财经 (163)</td><td>JSONP 回调</td></tr>
+      <tr><td>证券时报 (STCN)</td><td>HTML 列表页抓取</td></tr>
+      <tr><td>上证报 (cnstock)</td><td>HTML 列表页抓取</td></tr>
+      <tr><td>国务院/发改委</td><td>搜索接口 + HTML 抓取</td></tr>
+      <tr><td>Google News RSS</td><td>RSS XML 解析</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ========== 7. UI 界面 ========== -->
+<section id="ui-pages">
+  <h2><span class="num">7</span>UI 界面与页面</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="icon">⚙️</div>
+      <div class="title">配置中心</div>
+      <div class="desc">
+        <strong>AI 接入配置</strong>：多 LLM 提供商（DeepSeek/OpenAI/通义千问/Claude/Gemini）的 API Key、URL、模型名配置；AI 启用开关；深度分析 Top-N 设置<br>
+        <strong>我的持仓</strong>：板块名称、类型（概念/行业）、买入日期、首次收益日、投入金额（元）、已卖出标记 — 支持多批次管理，已卖出项自动下沉
+      </div>
+    </div>
+    <div class="card">
+      <div class="icon">📊</div>
+      <div class="title">数据总览</div>
+      <div class="desc">
+        持仓总览卡片（总投入/今日盈亏/累计盈亏）；每板块详情行（投入金额/今日涨幅/盈亏/累计收益）；待确认与休市状态标识；大盘指数概览
+      </div>
+    </div>
+    <div class="card">
+      <div class="icon">🎯</div>
+      <div class="title">投资策略</div>
+      <div class="desc">
+        整体策略建议卡片；板块评分排行（综合分/技术分/置信度）；板块轮动信号；止盈止损建议（ATR动态）；市场风险雷达
+      </div>
+    </div>
+    <div class="card">
+      <div class="icon">📋</div>
+      <div class="title">板块&指数信息</div>
+      <div class="desc">
+        可过滤的板块/指数列表表格；实时涨跌幅；资金流向；热度评分；点击可进入板块详情页或指数详情页
+      </div>
+    </div>
+    <div class="card">
+      <div class="icon">🔍</div>
+      <div class="title">板块详情页（动态标签）</div>
+      <div class="desc">
+        <strong>结论优先</strong>：操作建议（买入/持有/减仓/止损）+ 预期收益/风险对比 + 短中长期展望 + 看多/看空因素<br>
+        <strong>图表区</strong>：3组趋势图（3月/6月/1年）+ 3组K线图（日K/周K/月K）+ 成交量 + MACD + 资金流面板<br>
+        <strong>事件新闻</strong>：关键事件时间线 + 新闻列表（可点击链接、情感标签、时间排序）<br>
+        <strong>技术详情</strong>：支撑/阻力位、策略回测统计、主力资金异动
+      </div>
+    </div>
+    <div class="card">
+      <div class="icon">💬</div>
+      <div class="title">AI 助手</div>
+      <div class="desc">
+        基于分析结果上下文的对话式查询；支持自然语言提问；结合板块数据给出实时回答
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 8. 核心功能 ========== -->
+<section id="features">
+  <h2><span class="num">8</span>核心功能特性</h2>
+
+  <ul class="feature-list">
+    <li><strong>多源数据融合</strong> — 同时接入新浪、腾讯、东方财富、Yahoo等多个数据源，通过名称归一化（去除"概念"/"板块"/"行业"后缀）和模糊匹配合并数据，确保覆盖面和容错性</li>
+    <li><strong>投资组合管理</strong> — 支持多板块、多批次持仓配置；跟踪首次收益日起的累计收益；智能计算今日/累计盈亏；已卖出标记自动过滤</li>
+    <li><strong>累计收益计算</strong> — 从用户配置的首次收益日（firstEarnDate）开始，在 ETF 代理 K 线中找到对应的起始价格，计算至今的累计收益率。未来日期自动归零，K线缺失时使用最后一根K线作为保守回退</li>
+    <li><strong>多因子评分体系</strong> — 综合技术面（MACD/RSI/KDJ等）、消息面（新闻情感）、资金面（主力流向）、估值面（百分位）、动量因子，加上数据质量和来源一致性权重，输出 -1 到 +1 的标准化评分</li>
+    <li><strong>5 种策略回测</strong> — MACD金叉策略、RSI超卖反弹、均线多头突破、放量突破策略、布林带回归策略 — 独立统计胜率/平均收益/最大回撤，并基于最新K线重新评估信号（非历史最后一笔）</li>
+    <li><strong>ATR(14) 动态止盈止损</strong> — 根据每个板块14日平均真实波幅独立计算，高波动板块止损区间更大、止盈目标更高，与主策略评分保持一致</li>
+    <li><strong>周期分析 + 趋势判断</strong> — 峰谷检测识别板块周期（底部蓄力/复苏上行/扩张加速/顶部滞涨/收缩回调），数据不足时回退到 MA5/MA20/MA60 趋势判断（上升趋势/下降趋势/横盘整理/低位震荡/高位震荡）</li>
+    <li><strong>板块轮动检测</strong> — 跨板块动量排名、轮动信号识别、六维市场风险雷达图数据</li>
+    <li><strong>资金流向分析</strong> — 新浪概念+行业双维度资金流获取；历史资金流缓存（QSettings持久化60天）；未匹配板块使用量价估算 fallback</li>
+    <li><strong>多源新闻聚合</strong> — 10+ 来源并行抓取，关键词→板块映射，情感极性分析（看多/看空/中性），新闻按时间倒序展示并附带可点击原文链接</li>
+    <li><strong>图表系统</strong> — QPainter 自定义绘制：3 组趋势图（3月/6月/1年折线+面积填充）、3 组 K 线图（日K/周K/月K 真实 OHLC 蜡烛图）、成交量柱状图、MACD 柱状图、资金流面板 — 每张图底部4个等间距日期标注</li>
+    <li><strong>休市智能检测</strong> — 综合星期、时间（9:25后判定交易时段）、最新K线日期判断市场是否休市，UI动态切换"今日"/"上一交易日"标签</li>
+    <li><strong>AI 深度分析（可选）</strong> — 支持 DeepSeek / OpenAI / 通义千问 / Claude / Gemini 等多提供商；Stage 1 新闻摘要 → Stage 2 Top-N 板块深度分析 → 对话式查询</li>
+    <li><strong>自动验证模式</strong> — <code>--auto-analyze</code> 命令行参数支持无人值守分析运行，用于日志输出验证计算正确性</li>
+  </ul>
+</section>
+
+<!-- ========== 9. 技术指标 ========== -->
+<section id="tech-indicators">
+  <h2><span class="num">9</span>技术指标体系</h2>
+
+  <table>
+    <tr><th>指标</th><th>参数</th><th>计算类</th><th>用途</th></tr>
+    <tr><td><strong>MACD</strong></td><td>快线12 / 慢线26 / 信号线9</td><td><code>TechIndicators::calcMACD</code></td><td>趋势判断、金叉/死叉信号、回测策略</td></tr>
+    <tr><td><strong>RSI</strong></td><td>RSI6 / RSI12 / RSI24</td><td><code>TechIndicators::calcRSI</code></td><td>超买超卖判断、回测策略</td></tr>
+    <tr><td><strong>KDJ</strong></td><td>N=9 / M1=3 / M2=3</td><td><code>TechIndicators::calcKDJ</code></td><td>短期波动信号</td></tr>
+    <tr><td><strong>MA</strong></td><td>MA5 / MA10 / MA20 / MA60</td><td><code>TechIndicators::calcMA</code></td><td>趋势支撑/阻力、多空排列判断、回测策略</td></tr>
+    <tr><td><strong>BOLL</strong></td><td>中轨20日 / 2倍标准差</td><td><code>TechIndicators::calcBOLL</code></td><td>波动区间、超买超卖、回测策略</td></tr>
+    <tr><td><strong>成交量MA</strong></td><td>5日均量</td><td><code>TechIndicators</code></td><td>放量突破判断</td></tr>
+    <tr><td><strong>ATR(14)</strong></td><td>14日平均真实波幅</td><td><code>StrategyEngine</code> 内部</td><td>动态止盈止损计算（非导出API）</td></tr>
+  </table>
+
+  <h3>指标在分析链中的应用</h3>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-box fb-green">250根日K线</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">TechIndicators<br>6项指标计算</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-purple">TechSignals<br>结构化信号</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-blue">techScore<br>+ techFactor</div>
+    </div>
+    <div class="flow-row" style="margin-top:10px;">
+      <div class="flow-box fb-green">同源K线</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">5种回测策略<br>使用指标信号</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-purple">StrategyBacktest<br>胜率+信号</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-blue">bestStrategy<br>+ recommendation</div>
+    </div>
+    <div class="flow-row" style="margin-top:10px;">
+      <div class="flow-box fb-green">同源K线</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-orange">ATR(14) 计算<br>StrategyEngine</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-red">止盈: ATR×2.5<br>止损: ATR×2.0</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-blue">TradingStrategy<br>+ stops/targets</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 10. 策略回测 ========== -->
+<section id="strategy">
+  <h2><span class="num">10</span>策略回测系统</h2>
+
+  <table>
+    <tr><th>策略名称</th><th>买入条件</th><th>卖出条件</th></tr>
+    <tr><td><strong>MACD金叉策略</strong></td><td>DIF 从下穿越 DEA（金叉）</td><td>DIF 从上穿越 DEA（死叉）</td></tr>
+    <tr><td><strong>RSI超卖反弹</strong></td><td>RSI6 从 &lt;25 上穿 25</td><td>RSI6 &gt; 75</td></tr>
+    <tr><td><strong>均线多头突破</strong></td><td>收盘价上穿 MA20</td><td>收盘价跌破 MA10</td></tr>
+    <tr><td><strong>放量突破策略</strong></td><td>成交量 &gt; 5日均量×1.8 且 涨幅 &gt; 1%</td><td>跌幅 &gt; 2%</td></tr>
+    <tr><td><strong>布林带回归策略</strong></td><td>收盘价触及布林下轨×1.005</td><td>收盘价触及布林上轨×0.995</td></tr>
+  </table>
+
+  <h3>currentSignal 判定逻辑</h3>
+  <p>信号基于<strong>最新K线</strong>的实时状态评估，而非历史最后一笔交易结果：</p>
+  <table>
+    <tr><th>信号</th><th>判定条件</th></tr>
+    <tr><td><code>持仓中</code></td><td>回测结束时策略仍处于持仓状态（entryPrice &gt; 0）</td></tr>
+    <tr><td><code>买入信号</code></td><td>最新一根K线触发买入条件</td></tr>
+    <tr><td><code>卖出信号</code></td><td>最新一根K线触发卖出条件</td></tr>
+    <tr><td><code>近期买入</code></td><td>前一根K线触发买入条件（最新K线已过，但信号仍近期有效）</td></tr>
+    <tr><td><code>观望</code></td><td>最新两根K线均无明确信号</td></tr>
+  </table>
+
+  <h3>ATR(14) 止盈止损计算</h3>
+  <table>
+    <tr><th>项目</th><th>公式</th><th>范围</th></tr>
+    <tr><td>止损百分比</td><td><code>-ATR(14)% × 2.0</code>，结合支撑位距离</td><td>[-12%, -1.5%]</td></tr>
+    <tr><td>止盈百分比</td><td><code>+ATR(14)% × 2.5</code>，结合阻力位距离</td><td>[+2%, +20%]</td></tr>
+    <tr><td>低波动回退</td><td>ATR &le; 0.5% 时使用固定百分比公式</td><td>—</td></tr>
+  </table>
+</section>
+
+<!-- ========== 11. AI ========== -->
+<section id="ai">
+  <h2><span class="num">11</span>AI 分析模块</h2>
+
+  <h3>支持的 LLM 提供商</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="title">DeepSeek</div>
+      <div class="desc">默认推荐；api.deepseek.com；deepseek-chat 模型</div>
+    </div>
+    <div class="card">
+      <div class="title">OpenAI</div>
+      <div class="desc">api.openai.com；gpt-4o 模型</div>
+    </div>
+    <div class="card">
+      <div class="title">通义千问 (Dashscope)</div>
+      <div class="desc">dashscope.aliyuncs.com；qwen-plus 模型</div>
+    </div>
+    <div class="card">
+      <div class="title">Anthropic Claude</div>
+      <div class="desc">api.anthropic.com（OpenAI兼容端点）；claude-sonnet-4-20250514 模型</div>
+    </div>
+    <div class="card">
+      <div class="title">Google Gemini</div>
+      <div class="desc">generativelanguage.googleapis.com（OpenAI兼容端点）；gemini-2.5-flash 模型</div>
+    </div>
+  </div>
+
+  <h3>AI 分析阶段</h3>
+  <table>
+    <tr><th>阶段</th><th>功能</th><th>时机</th></tr>
+    <tr><td><strong>Stage 1: 新闻摘要</strong></td><td><code>digestNews()</code> — 将收集到的新闻标题摘要为结构化的板块信号</td><td>与K线/指标计算并行</td></tr>
+    <tr><td><strong>Stage 2: 深度分析</strong></td><td><code>enhance()</code> — 对评分 Top-N 的板块进行深度 AI 分析，填充 aiNarrative 字段</td><td>所有常规分析完成后</td></tr>
+    <tr><td><strong>Chat: 对话查询</strong></td><td><code>chatQuery()</code> — 基于分析结果上下文回答用户自然语言提问</td><td>用户在 AI 助手标签页发送消息时</td></tr>
+  </table>
+</section>
+
+<!-- ========== 12. 配置 ========== -->
+<section id="config">
+  <h2><span class="num">12</span>配置与数据持久化</h2>
+
+  <p>应用使用 <code>QSettings("InvestInsight", "InvestInsight")</code> 持久化所有用户配置和缓存数据。</p>
+
+  <table>
+    <tr><th>键路径</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>ai/providers_json</code></td><td>JSON Array</td><td>AI 提供商配置列表 <code>[{name, api_url, api_key, model}]</code></td></tr>
+    <tr><td><code>ai/enabled</code></td><td>bool</td><td>AI 分析总开关</td></tr>
+    <tr><td><code>ai/deep_analysis_top_n</code></td><td>int</td><td>AI 深度分析的 Top-N 板块数量</td></tr>
+    <tr><td><code>portfolio/batches_json</code></td><td>JSON Array</td><td>用户持仓批次数据 <code>[{sector, type, buyDate, firstEarnDate, amount, sold}]</code></td></tr>
+    <tr><td><code>cache/sector_names</code></td><td>StringList</td><td>上次获取的板块名称列表（ComboBox 预填充）</td></tr>
+    <tr><td><code>cache/flow_history_&lt;板块名&gt;</code></td><td>JSON Array</td><td>资金流历史缓存 <code>[{d: "2026-05-16", v: 126.97}]</code>（最多60天）</td></tr>
+    <tr><td><code>strategy/&lt;板块名&gt;/name</code></td><td>QString</td><td>最佳策略名称（追踪用）</td></tr>
+    <tr><td><code>strategy/&lt;板块名&gt;/entryPrice</code></td><td>double</td><td>策略追踪起始价格</td></tr>
+    <tr><td><code>strategy/&lt;板块名&gt;/date</code></td><td>QString</td><td>策略追踪起始日期</td></tr>
+  </table>
+
+  <h3>环境变量（AI 备用配置）</h3>
+  <table>
+    <tr><th>变量名</th><th>用途</th></tr>
+    <tr><td><code>DEEPSEEK_API_KEY</code></td><td>DeepSeek API 密钥</td></tr>
+    <tr><td><code>INVESTINSIGHT_AI_KEY</code></td><td>通用 AI 密钥</td></tr>
+    <tr><td><code>INVESTINSIGHT_AI_URL</code></td><td>自定义 AI API 地址</td></tr>
+    <tr><td><code>INVESTINSIGHT_AI_MODEL</code></td><td>自定义模型名</td></tr>
+  </table>
+</section>
+
+<!-- ========== 13. 构建 ========== -->
+<section id="deps">
+  <h2><span class="num">13</span>依赖与构建</h2>
+
+  <h3>依赖项</h3>
+  <table>
+    <tr><th>依赖</th><th>版本</th><th>模块</th></tr>
+    <tr><td><strong>Qt</strong></td><td>5.x 或 6.x（自动检测）</td><td>Core, Widgets, Network, Concurrent</td></tr>
+    <tr><td><strong>CMake</strong></td><td>≥ 3.16</td><td>构建系统</td></tr>
+    <tr><td><strong>C++ 标准</strong></td><td>C++17</td><td>语言标准</td></tr>
+    <tr><td><strong>第三方</strong></td><td>—</td><td>仅 AGL stub（macOS 兼容）；无其他外部库依赖</td></tr>
+  </table>
+
+  <h3>构建步骤</h3>
+  <div class="code-block">
+<span class="comment"># 方式一：使用便捷脚本</span>
+<span class="cmd">./run_gui.sh</span>
+
+<span class="comment"># 方式二：手动构建</span>
+<span class="cmd">cmake</span> -S . -B build -DCMAKE_BUILD_TYPE=Release
+<span class="cmd">cmake</span> --build build
+
+<span class="comment"># macOS 运行（需设置 Qt 框架路径）</span>
+<span class="keyword">export</span> DYLD_FRAMEWORK_PATH=<span class="string">"$(pwd)/third_party"</span>
+<span class="cmd">./build/InvestInsight</span>
+
+<span class="comment"># 自动分析模式（无人值守验证）</span>
+<span class="cmd">./build/InvestInsight</span> --auto-analyze
+  </div>
+</section>
+
+<!-- ========== 14. 关键修复记录 ========== -->
+<section id="key-fixes">
+  <h2><span class="num">14</span>关键问题修复记录</h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="time">API 数据源迁移</div>
+      <div class="content">东方财富 push2.eastmoney.com 持续返回 RemoteHostClosedError，全面切换到新浪/腾讯 API 作为主力数据源，东方财富降级为备用</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">Gzip 解压问题</div>
+      <div class="content">HttpClient 显式设置 Accept-Encoding: gzip 导致 Qt 无法自动解压响应，移除该头部恢复正常</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">GBK 编码处理</div>
+      <div class="content">新浪资金流 API 返回 GBK 编码 JSON，UTF-8 解析失败，增加 getGbk() 回退机制</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">累计收益计算修复</div>
+      <div class="content">firstEarnDate 无对应K线时，从使用第一根K线（导致虚假高收益）改为使用最后一根K线（正确归零）</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">止盈止损差异化</div>
+      <div class="content">所有板块止盈止损相同（固定 -3%/+3%），引入 ATR(14) 基础的动态计算，各板块根据波动率独立设置</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">休市判断智能化</div>
+      <div class="content">仅靠 lastDataDate != today 判断导致交易日误判为休市，改为综合星期+时间+K线日期的多条件判断</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">资金流覆盖扩展</div>
+      <div class="content">仅获取概念板块(fenlei=1)资金流，增加行业板块(fenlei=0)获取，匹配率从 ~180 提升到 ~228 个板块</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">策略回测信号修复</div>
+      <div class="content">currentSignal 取历史最后一笔交易结果（几乎全是"卖出"），改为基于最新K线重新评估策略条件</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">持仓建议金额单位</div>
+      <div class="content">用户输入"元"但显示文本直接标注"万元"，改为根据金额大小自动切换单位（≥10000 → 万元，否则 → 元）</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">图表系统重构</div>
+      <div class="content">移除事件标注，新增 3组趋势图(3月/6月/1年) + 3组K线图(日K/周K/月K)，K线数据从 120 扩展到 250 根</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">板块详情页布局重构</div>
+      <div class="content">将投资结论移至页面最顶部（操作建议+预期收益/风险+展望），图表区次之，关键事件与新闻排最后</div>
+    </div>
+    <div class="timeline-item">
+      <div class="time">新闻可点击链接</div>
+      <div class="content">新增 NewsEntry 结构体存储新闻 URL，板块详情页新闻列表支持点击直接跳转原文</div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <p>InvestInsight 项目总结 | 生成时间：2026年5月16日 | 基于项目源码自动分析生成</p>
+</footer>
+
+</body>
+</html>

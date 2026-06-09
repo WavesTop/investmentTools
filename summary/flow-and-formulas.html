@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestInsight 主体流程与计算公式</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --card2: #162032; --border: #334155;
+    --text: #e2e8f0; --dim: #94a3b8; --muted: #64748b;
+    --accent: #38bdf8; --accent2: #818cf8; --green: #4ade80; --red: #f87171;
+    --orange: #fb923c; --yellow: #facc15; --purple: #a78bfa; --cyan: #22d3ee;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background:var(--bg); color:var(--text); line-height:1.75; }
+  .hero { background:linear-gradient(135deg,#1a2744,#0f172a 50%,#1a1040); padding:50px 40px; text-align:center; border-bottom:1px solid var(--border); }
+  .hero h1 { font-size:2.4em; font-weight:800; }
+  .hero h1 span { color:var(--accent); }
+  .hero p { color:var(--dim); font-size:1.05em; max-width:700px; margin:8px auto 0; }
+  .container { max-width:1100px; margin:0 auto; padding:32px 20px; }
+  nav.toc { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 28px; margin-bottom:36px; }
+  nav.toc h2 { font-size:1.2em; color:var(--accent); margin-bottom:12px; }
+  nav.toc ol { padding-left:22px; columns:2; column-gap:36px; }
+  nav.toc li { margin-bottom:4px; }
+  nav.toc a { color:var(--text); text-decoration:none; }
+  nav.toc a:hover { color:var(--accent); }
+  section { margin-bottom:44px; }
+  section>h2 { font-size:1.45em; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+  section>h2 .n { background:var(--accent); color:var(--bg); width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.7em; font-weight:800; flex-shrink:0; }
+  h3 { color:var(--accent2); margin:16px 0 8px; font-size:1.08em; }
+  h4 { color:var(--orange); margin:12px 0 6px; }
+
+  .pipe { display:flex; align-items:center; gap:0; flex-wrap:wrap; margin:10px 0; }
+  .pb { padding:10px 16px; border-radius:8px; font-weight:600; font-size:.85em; white-space:nowrap; text-align:center; }
+  .pa { color:var(--muted); margin:0 4px; font-size:1.1em; }
+  .p-blue { background:rgba(56,189,248,.12); color:var(--accent); border:1px solid rgba(56,189,248,.25); }
+  .p-purple { background:rgba(129,140,248,.12); color:var(--accent2); border:1px solid rgba(129,140,248,.25); }
+  .p-green { background:rgba(74,222,128,.12); color:var(--green); border:1px solid rgba(74,222,128,.25); }
+  .p-orange { background:rgba(251,146,60,.12); color:var(--orange); border:1px solid rgba(251,146,60,.25); }
+  .p-red { background:rgba(248,113,113,.12); color:var(--red); border:1px solid rgba(248,113,113,.25); }
+  .p-cyan { background:rgba(34,211,238,.12); color:var(--cyan); border:1px solid rgba(34,211,238,.25); }
+  .p-yellow { background:rgba(250,204,21,.12); color:var(--yellow); border:1px solid rgba(250,204,21,.25); }
+
+  table { width:100%; border-collapse:collapse; margin:10px 0 18px; font-size:.9em; }
+  th,td { padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); }
+  th { background:var(--card); color:var(--accent); font-weight:600; }
+  tr:hover td { background:rgba(56,189,248,.03); }
+  td code, p code { background:var(--card); padding:1px 5px; border-radius:3px; font-size:.88em; color:var(--green); font-family:'SF Mono','Fira Code',monospace; }
+
+  .formula-box { background:#0d1117; border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:10px 0; font-family:'SF Mono','Fira Code',monospace; font-size:.86em; line-height:1.7; overflow-x:auto; color:#c9d1d9; }
+  .formula-box .c { color:#8b949e; }
+  .formula-box .k { color:#ff7b72; }
+  .formula-box .v { color:#79c0ff; }
+  .formula-box .s { color:#a5d6ff; }
+  .formula-box .g { color:var(--green); }
+
+  .card-row { display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
+  .info-card { flex:1; min-width:200px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px; }
+  .info-card .label { font-size:.78em; color:var(--dim); text-transform:uppercase; letter-spacing:.5px; }
+  .info-card .val { font-size:1.3em; font-weight:800; color:var(--accent); margin-top:2px; }
+  .info-card .desc { font-size:.82em; color:var(--muted); margin-top:4px; }
+
+  .step-list { list-style:none; padding:0; counter-reset:step; }
+  .step-list li { padding:8px 0 8px 36px; position:relative; border-left:2px solid var(--border); margin-left:14px; }
+  .step-list li::before { counter-increment:step; content:counter(step); position:absolute; left:-15px; top:8px; width:28px; height:28px; border-radius:50%; background:var(--accent); color:var(--bg); font-size:.75em; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .step-list li:last-child { border-left-color:transparent; }
+
+  .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:.78em; font-weight:600; }
+  .b-green { background:rgba(74,222,128,.15); color:var(--green); }
+  .b-red { background:rgba(248,113,113,.15); color:var(--red); }
+  .b-blue { background:rgba(56,189,248,.15); color:var(--accent); }
+  .b-orange { background:rgba(251,146,60,.15); color:var(--orange); }
+  .b-purple { background:rgba(167,139,250,.15); color:var(--purple); }
+
+  footer { text-align:center; padding:32px; color:var(--muted); border-top:1px solid var(--border); font-size:.85em; }
+  @media(max-width:768px) { .hero{padding:30px 16px;} .hero h1{font-size:1.6em;} nav.toc ol{columns:1;} .card-row{flex-direction:column;} .pipe{flex-wrap:wrap;} }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1><span>InvestInsight</span> 主体流程与计算公式</h1>
+  <p>从数据拉取 → 因子计算 → 趋势生命周期 → 评分决策 → 展示给用户的完整链路</p>
+</div>
+
+<div class="container">
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#s1">全链路总览</a></li>
+    <li><a href="#s2">阶段一：多源数据拉取</a></li>
+    <li><a href="#s3">阶段二：信号提取与情感聚合</a></li>
+    <li><a href="#s4">阶段三：市场状态识别与动态权重</a></li>
+    <li><a href="#s5">阶段四：多因子评分公式</a></li>
+    <li><a href="#s6">阶段五：技术指标与技术评分</a></li>
+    <li><a href="#s7">阶段六：趋势生命周期系统</a></li>
+    <li><a href="#s8">阶段七：策略回测与止盈止损</a></li>
+    <li><a href="#s9">阶段八：最终决策与输出</a></li>
+    <li><a href="#s10">UI 展示层：板块详情呈现</a></li>
+  </ol>
+</nav>
+
+<!-- ==================== 1 ==================== -->
+<section id="s1">
+<h2><span class="n">1</span>全链路总览</h2>
+
+<div class="pipe">
+  <div class="pb p-blue">① 多源数据拉取<br><small>K线 / 资金流 / 新闻 / 大盘</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-green">② 信号提取<br><small>关键词→板块信号</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-cyan">③ 市场状态<br><small>MarketRegime</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-purple">④ 多因子评分<br><small>FormulaBreakdown</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-orange">⑤ 技术评分<br><small>MACD/RSI/KDJ...</small></div>
+</div>
+<div class="pipe">
+  <div class="pb p-yellow">⑥ 趋势生命周期<br><small>阶段/健康/过热/推理</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-red">⑦ 策略回测<br><small>5策略+ATR止盈止损</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-purple">⑧ 最终决策<br><small>action校正+推理链</small></div>
+  <div class="pa">→</div>
+  <div class="pb p-blue">⑨ UI展示<br><small>板块详情页</small></div>
+</div>
+
+<p style="margin-top:14px;color:var(--dim);">每个板块独立经历以上全部计算步骤，最终生成 <code>SectorSnapshot</code>（约 60+ 字段），渲染为用户看到的板块详情页面。</p>
+</section>
+
+<!-- ==================== 2 ==================== -->
+<section id="s2">
+<h2><span class="n">2</span>阶段一：多源数据拉取（并行）</h2>
+
+<p>三路并行拉取，总耗时取决于最慢的一路（通常 15-30 秒）：</p>
+
+<div class="card-row">
+  <div class="info-card">
+    <div class="label">路线 A：板块数据</div>
+    <div class="val">SectorFetcher</div>
+    <div class="desc">板块列表（新浪概念~175 + 行业~48）→ ETF 代理日 K 线（250根）→ 资金流（概念+行业双维度）→ 估值百分位 → 拥挤度</div>
+  </div>
+  <div class="info-card">
+    <div class="label">路线 B：新闻数据</div>
+    <div class="val">NewsProvider</div>
+    <div class="desc">10+ 来源并行（东财/新浪/同花顺/华尔街见闻/财联社等）→ 关键词→板块映射 → 去重与质量评分</div>
+  </div>
+  <div class="info-card">
+    <div class="label">路线 C：大盘环境</div>
+    <div class="val">MarketContext</div>
+    <div class="desc">上证/深证/创业板（腾讯实时）→ 美股三大指数（Yahoo）→ 涨跌家数 → 北向资金代理 → 风险情绪</div>
+  </div>
+</div>
+
+<h3>关键计算：估值百分位</h3>
+<div class="formula-box">
+<span class="c">// 将 250 根 K 线的收盘价排序，看当前价格在历史中的位置</span>
+historicalCloses = sort(dailyBars[0..n].close)
+rank = count(close < currentPrice)
+<span class="g">pePercentile</span> = rank / n × 100      <span class="c">// 0 = 极低估, 100 = 极高估</span>
+</div>
+
+<h3>关键计算：拥挤度指数</h3>
+<div class="formula-box">
+turnoverRatio = 近5日均换手 / 历史均换手
+volPercentile = 当前成交量在历史中的百分位
+momFactor = min(|5日涨幅| / 10, 1.0)
+
+<span class="g">crowdingIndex</span> = min(turnoverRatio/2, 1) × 40
+              + volPercentile × 0.35
+              + momFactor × 25
+              <span class="c">// 范围 [0, 100]，>70 为拥挤</span>
+</div>
+
+<h3>关键计算：资金流信号</h3>
+<div class="formula-box">
+<span class="c">// 5日平均净流入（亿元），通过 tanh 压缩到 [-1, +1]</span>
+flow5dAvg = mean(最近5日净流入)
+<span class="g">flowSignal</span> = tanh(flow5dAvg / 30)    <span class="c">// 30亿为归一化基准</span>
+</div>
+
+<h3>关键计算：热度评分</h3>
+<div class="formula-box">
+<span class="g">hotScore</span> = |changePct| × 0.35
+          + min(turnoverRate, 30)/30 × 100 × 0.35
+          + min(涨跌家数, 200)/200 × 30
+</div>
+</section>
+
+<!-- ==================== 3 ==================== -->
+<section id="s3">
+<h2><span class="n">3</span>阶段二：信号提取与情感聚合</h2>
+
+<h3>流程</h3>
+<ol class="step-list">
+  <li><strong>关键词信号提取</strong>（SignalExtractor）：从 RawInsight 新闻标题/正文中提取关键词，匹配板块，赋予方向（Positive/Negative）和强度值</li>
+  <li><strong>AI 新闻摘要</strong>（可选 Stage 1）：将新闻标题发送给 LLM，返回结构化的板块信号（sentiment 值），与关键词信号合并</li>
+  <li><strong>按板块聚合</strong>：每个板块累加所有信号的 sentiment 值，统计正面/负面新闻数量</li>
+</ol>
+
+<h3>情感值计算</h3>
+<div class="formula-box">
+<span class="c">// 每个板块的新闻聚合结果</span>
+sentimentSum = Σ signal.strength       <span class="c">// 关键词信号 + AI信号</span>
+count = 信号总数
+positiveCount = count(direction == Positive)
+negativeCount = count(direction == Negative)
+
+<span class="g">newsSentiment</span> = sentimentSum / count   <span class="c">// 平均情感值</span>
+<span class="g">newsRatio</span> = (positiveCount - negativeCount) / count  <span class="c">// 正负比</span>
+</div>
+</section>
+
+<!-- ==================== 4 ==================== -->
+<section id="s4">
+<h2><span class="n">4</span>阶段三：市场状态识别与动态权重</h2>
+
+<p>在逐板块评分之前，先基于大盘环境判断当前市场状态，动态调整各因子权重。</p>
+
+<h3>市场状态评分</h3>
+<table>
+  <tr><th>状态</th><th>关键判据</th><th>计分规则</th></tr>
+  <tr><td><span class="badge b-green">牛市</span></td><td>上证>MA20 3% / 涨家>60% / 恐贪>60 / 涨停>2%</td><td>25+20+15+15+10 = 最高85</td></tr>
+  <tr><td><span class="badge b-red">熊市</span></td><td>上证<MA20 -3% / 涨家<35% / 恐贪<30 / 跌停>2%</td><td>25+20+15+15+10 = 最高85</td></tr>
+  <tr><td><span class="badge b-orange">高波动</span></td><td>|涨跌|>2.5% / 涨停+跌停>4% / 恐贪<25或>80</td><td>30+25+20 = 最高75</td></tr>
+  <tr><td><span class="badge b-blue">低波动</span></td><td>|涨跌|<0.5% / 涨家40-60% / 恐贪40-60</td><td>30+20+15 = 最高65</td></tr>
+  <tr><td><span class="badge b-purple">轮动行情</span></td><td>涨家40-65% / |涨跌|<1.5% + 基线15分</td><td>20+15+15 = 50</td></tr>
+</table>
+
+<p><code>regimeConfidence = 最高分 / 总分 × 100%</code></p>
+
+<h3>动态权重调整表</h3>
+<table>
+  <tr><th>因子</th><th>默认</th><th>牛市/风险偏好↑</th><th>熊市/风险偏好↓</th><th>高波动</th><th>低波动</th></tr>
+  <tr><td>动量权重</td><td>20%</td><td><span class="badge b-green">25%</span></td><td><span class="badge b-red">10%</span></td><td>12%</td><td>20%</td></tr>
+  <tr><td>估值权重</td><td>15%</td><td>8%</td><td><span class="badge b-green">22%</span></td><td>15%</td><td>18%</td></tr>
+  <tr><td>情绪权重</td><td>15%</td><td>15%</td><td>10%</td><td>12%</td><td>15%</td></tr>
+  <tr><td>风险权重</td><td>15%</td><td>10%</td><td><span class="badge b-red">25%</span></td><td><span class="badge b-red">25%</span></td><td>10%</td></tr>
+  <tr><td>资金流权重</td><td>10%</td><td>12%</td><td>10%</td><td>10%</td><td>10%</td></tr>
+</table>
+
+<div class="formula-box">
+<span class="c">// 权重缩放：相对默认值的比例因子</span>
+momentumScale = dynW.momentumWeight / 0.20    <span class="c">// 牛市=1.25, 熊市=0.50</span>
+sentimentScale = dynW.sentimentWeight / 0.15
+riskScale = dynW.riskWeight / 0.15
+valuationScale = dynW.valuationWeight / 0.15
+flowScale = dynW.flowWeight / 0.10
+
+<span class="c">// 应用到各因子</span>
+momentumFactor × momentumScale
+sentimentFactor × sentimentScale
+...
+</div>
+</section>
+
+<!-- ==================== 5 ==================== -->
+<section id="s5">
+<h2><span class="n">5</span>阶段四：多因子评分公式（FormulaBreakdown）</h2>
+
+<p>这是系统的核心评分公式。每个板块独立计算，所有因子相加得到原始预测分。</p>
+
+<h3>各因子计算公式</h3>
+<table>
+  <tr><th>因子</th><th>公式</th><th>量级范围</th></tr>
+  <tr><td><code>momentumFactor</code></td><td><code>5日动量 × 0.015 + 20日动量 × 0.008</code></td><td>约 ±0.15</td></tr>
+  <tr><td><code>todayFactor</code></td><td><code>今日涨跌% × 0.015</code></td><td>约 ±0.08</td></tr>
+  <tr><td><code>sentimentFactor</code></td><td><code>newsSentiment × 0.6 + newsRatio × 0.15</code></td><td>约 ±0.75</td></tr>
+  <tr><td><code>newsIntensityFactor</code></td><td><code>min(新闻数/8, 1) × 0.08 × sign(sentiment)</code></td><td>约 ±0.08</td></tr>
+  <tr><td><code>fundFlowFactor</code></td><td><code>tanh(flow5dAvg/30) × 0.10</code></td><td>约 ±0.10</td></tr>
+  <tr><td><code>hotnessFactor</code></td><td><code>min(hotScore/120, 0.08) × trendDirection</code></td><td>0 ~ 0.08</td></tr>
+  <tr><td><code>techFactor</code></td><td><code>techScore × 0.12</code>（第二遍加入）</td><td>约 ±0.12</td></tr>
+  <tr><td><code>valuationFactor</code></td><td><code>(50 - PE百分位)/50 × 0.08</code></td><td>约 ±0.08</td></tr>
+  <tr><td><code>crowdingFactor</code></td><td><code>(50 - 拥挤度)/50 × 0.06</code></td><td>约 ±0.06</td></tr>
+  <tr><td><code>meanReversionPenalty</code></td><td>5日动量>8%: <code>-(mom5d-8)×0.025</code><br>20日动量>20%: <code>-(mom20d-20)×0.008</code></td><td>负值惩罚</td></tr>
+</table>
+
+<h3>综合评分公式</h3>
+<div class="formula-box">
+<span class="g">rawForecast</span> = momentumFactor + todayFactor + sentimentFactor
+              + newsIntensityFactor + fundFlowFactor + hotnessFactor
+              + meanReversionPenalty + techFactor + valuationFactor + crowdingFactor
+
+<span class="c">// 数据质量权重 [0.55, 1.00]</span>
+qualityWeight = 0.55 + 0.45 × (qualityScore / 100)
+
+<span class="c">// 来源一致性权重 [0.70, 1.00]</span>
+consistencyWeight = 0.70 + 0.30 × (consistencyScore / 100)
+
+<span class="g">forecastFinal</span> = clamp(rawForecast × qualityWeight × consistencyWeight, -1.0, +1.0)
+</div>
+
+<h3>置信度计算</h3>
+<div class="formula-box">
+confidenceBase = clamp(
+    0.15 × |forecast|         <span class="c">// 评分越极端越自信</span>
+  + 0.40 × min(新闻数/5, 1)   <span class="c">// 新闻覆盖越多越自信</span>
+  + 0.25 × min(K线数/20, 1)   <span class="c">// 趋势数据越多越自信</span>
+  + 0.20 × min(hotScore/40, 1) <span class="c">// 热度越高越自信</span>
+, 0.10, 0.95)
+
+<span class="g">confidence</span> = clamp(confidenceBase × 质量修正 × 一致性修正, 0.10, 0.95)
+</div>
+
+<h3>数据质量评分</h3>
+<div class="formula-box">
+<span class="g">qualityScore</span> = (
+    K线覆盖率 × 0.30      <span class="c">// min(K线数/60, 1)</span>
+  + 资金流覆盖率 × 0.20   <span class="c">// min(流量点数/20, 1)</span>
+  + 估值覆盖率 × 0.20     <span class="c">// PE/PB/市值至少一项有值</span>
+  + 新闻覆盖率 × 0.20     <span class="c">// min(新闻数/6, 1)</span>
+  + 多周期覆盖率 × 0.10   <span class="c">// (周线+月线) / 2</span>
+) × 100                    <span class="c">// 范围 [0, 100]</span>
+</div>
+
+<h3>决策阈值</h3>
+<table>
+  <tr><th>评分范围</th><th>Action</th><th>趋势标签</th></tr>
+  <tr><td><code>≥ +0.30</code> 且 5日动量>1.5%</td><td rowspan="2"><span class="badge b-green">增配</span></td><td>强势看多</td></tr>
+  <tr><td><code>≥ +0.15</code></td><td>偏多</td></tr>
+  <tr><td><code>-0.12 ~ +0.15</code></td><td><span class="badge b-blue">持有</span></td><td>方向不明 / 横盘震荡</td></tr>
+  <tr><td><code>≤ -0.12</code></td><td rowspan="2"><span class="badge b-red">减仓</span></td><td>偏空</td></tr>
+  <tr><td><code>≤ -0.25</code> 且 5日动量<-1.5%</td><td>强势看空</td></tr>
+</table>
+</section>
+
+<!-- ==================== 6 ==================== -->
+<section id="s6">
+<h2><span class="n">6</span>阶段五：技术指标与技术评分</h2>
+
+<h3>指标参数</h3>
+<table>
+  <tr><th>指标</th><th>参数</th><th>加分/减分</th></tr>
+  <tr><td>MACD</td><td>快线12 / 慢线26 / 信号线9</td><td>金叉 <span class="badge b-green">+0.20</span> / 死叉 <span class="badge b-red">-0.20</span> / HIST>0 +0.05 / HIST<0 -0.05</td></tr>
+  <tr><td>RSI</td><td>RSI6 / RSI12 / RSI24</td><td>超卖(RSI6<20) <span class="badge b-green">+0.15</span> / 超买(RSI6>80) <span class="badge b-red">-0.15</span></td></tr>
+  <tr><td>KDJ</td><td>N=9 / M1=3 / M2=3</td><td>金叉 <span class="badge b-green">+0.10</span> / 超卖(J<0) +0.10 / 超买(J>100) <span class="badge b-red">-0.10</span></td></tr>
+  <tr><td>MA</td><td>MA5/10/20/60</td><td>多头排列 <span class="badge b-green">+0.20</span> / 空头排列 <span class="badge b-red">-0.20</span></td></tr>
+  <tr><td>BOLL</td><td>中轨20 / 2σ</td><td>跌破下轨 +0.10 / 突破上轨 +0.05</td></tr>
+  <tr><td>量比</td><td>5日均量</td><td>放量上涨 +0.05 / 放量下跌 -0.05</td></tr>
+</table>
+
+<div class="formula-box">
+<span class="g">techScore</span> = clamp(各指标加减分之和, -1.0, +1.0)
+<span class="g">techFactor</span> = techScore × 0.12   <span class="c">// 注入到 FormulaBreakdown</span>
+</div>
+</section>
+
+<!-- ==================== 7 ==================== -->
+<section id="s7">
+<h2><span class="n">7</span>阶段六：趋势生命周期系统（核心升级）</h2>
+
+<p>这是系统从"趋势跟随"升级为"趋势理解"的核心。在多因子评分之后运行，可以<strong>覆盖</strong>纯动量追随的建议。</p>
+
+<h3>7.1 趋势阶段识别（TrendStageDetector）</h3>
+
+<p>对 7 个阶段分别计算匹配分数，取最高者为当前阶段：</p>
+
+<table>
+  <tr><th>阶段</th><th>关键指标</th><th>最高分</th></tr>
+  <tr><td><span class="badge b-purple">底部吸筹</span></td><td>价格在年低位25%以下 (+30) / MA60走平 (+20) / 波动率收缩<0.8 (+20) / 温和放量 (+15)</td><td>85</td></tr>
+  <tr><td><span class="badge b-blue">初期突破</span></td><td>价格上穿MA60 (+35) / MA多头+MA20斜率>0.3% (+25) / 放量>1.5倍+涨2% (+20)</td><td>90</td></tr>
+  <tr><td><span class="badge b-green">主升阶段</span></td><td>MA多头+MA20上行 (+25) / 偏离MA60 3%-20% (+25) / 回撤健康>60 (+20) / 量价配合 (+15)</td><td>95</td></tr>
+  <tr><td><span class="badge b-orange">加速冲顶</span></td><td>偏离MA60>15% (+25) / 波动率放大>1.5x (+25) / MA5远离MA20超3% (+20) / 年高位80%+ (+15)</td><td>85</td></tr>
+  <tr><td><span class="badge b-red">高位派发</span></td><td>派发风险>30% (+30) / 缩量上涨/放量下跌 (+25) / 年高位+MA20走平 (+20) / 波动率>2x (+15)</td><td>90</td></tr>
+  <tr><td><span class="badge b-red">下跌趋势</span></td><td>MA空头排列 (+30) / MA20斜率<-0.3% (+25) / 偏离MA60<-5% (+20) / 低位 (+15)</td><td>90</td></tr>
+  <tr><td>横盘整理</td><td>MA20走平|<0.15% (+30) / 波动率适中 (+20) / 中间位置 (+15)</td><td>65</td></tr>
+</table>
+
+<div class="formula-box">
+<span class="g">stageConfidence</span> = 最高阶段分数 / 所有阶段总分 × 100%
+</div>
+
+<h3>7.2 趋势健康度（TrendHealthAnalyzer）</h3>
+
+<table>
+  <tr><th>维度</th><th>计算方式</th><th>权重</th></tr>
+  <tr><td>结构评分</td><td>MA排列（多头80/部分55/空头15/其他40）+ MA20斜率修正（>1%→+15, <-0.5%→-15）</td><td>25%</td></tr>
+  <tr><td>动量质量</td><td>近20日上涨天数占比×50 + 涨跌幅正面比例×50</td><td>20%</td></tr>
+  <tr><td>回撤健康</td><td>近30日回撤次数中，回踩MA20后企稳(跌幅<3%)的比例×100</td><td>20%</td></tr>
+  <tr><td>量价配合</td><td>基准50 + 涨配放量×6 - 涨配缩量×8 - 跌配放量×10</td><td>20%</td></tr>
+  <tr><td>波动率合理性</td><td>近10日/近30日标准差比值：<0.7→50, <1.3→85(健康), <2.0→55, >2.0→25</td><td>15%</td></tr>
+</table>
+
+<div class="formula-box">
+<span class="g">sustainability</span> = 结构×0.25 + 动量×0.20 + 回撤×0.20 + 量价×0.20 + 波动×0.15
+<span class="c">// 范围 [0, 100]，>65 = 趋势健康, <40 = 趋势恶化</span>
+</div>
+
+<h3>7.3 过热检测（OverheatDetector）</h3>
+
+<table>
+  <tr><th>维度</th><th>计算方式</th><th>权重</th></tr>
+  <tr><td>情绪过热</td><td>新闻数>15: +(n-10)×3 / sentiment>0.3: +sent×60 / 热度>80: +(hot-70)×1.5</td><td>20%</td></tr>
+  <tr><td>成交量高潮</td><td>(近5日最大量/30日均量 - 1) × 30</td><td>20%</td></tr>
+  <tr><td>波动率爆发</td><td>(近5日最大|涨跌|/20日均|涨跌| - 1) × 25</td><td>15%</td></tr>
+  <tr><td>MA偏离</td><td>max(偏离MA60% - 5, 0) × 4</td><td>20%</td></tr>
+  <tr><td>换手率风险</td><td>近5日日均振幅% × 10</td><td>10%</td></tr>
+  <tr><td>拥挤度风险</td><td>直接使用 crowdingIndex</td><td>15%</td></tr>
+</table>
+
+<div class="formula-box">
+<span class="g">compositeOverheat</span> = Σ(各维度 × 权重)
+<span class="c">// 范围 [0, 100]，>65 = 过热风险, >40 = 需关注</span>
+</div>
+
+<h3>7.4 可解释推理链（ExplainabilityEngine）</h3>
+
+<div class="formula-box">
+<span class="c">// 趋势强度：基于阶段类型 + 置信度</span>
+<span class="k">if</span> 主升/加速 → <span class="g">trendStrength</span> = 70 + confidence × 0.3
+<span class="k">if</span> 初期突破 → <span class="g">trendStrength</span> = 55 + confidence × 0.2
+<span class="k">if</span> 下跌趋势 → <span class="g">trendStrength</span> = 15
+<span class="k">if</span> 高位派发 → <span class="g">trendStrength</span> = 35
+<span class="k">else</span>         → <span class="g">trendStrength</span> = 40
+
+<span class="c">// 趋势质量 = 健康度的可持续性评分</span>
+<span class="g">trendQuality</span> = sustainability
+
+<span class="c">// 耗竭风险：三维综合</span>
+<span class="g">exhaustionRisk</span> = compositeOverheat × 0.5
+                + distributionRisk × 0.3
+                + (100 - breadthHealth) × 0.2
+</div>
+
+<h3>7.5 投资状态判定（InvestmentState）</h3>
+
+<table>
+  <tr><th>状态</th><th>判定条件（优先级从高到低）</th><th>含义</th></tr>
+  <tr><td><span class="badge b-red">下跌回避</span></td><td>阶段 = 下跌趋势</td><td>不宜参与</td></tr>
+  <tr><td><span class="badge b-red">派发警告</span></td><td>阶段 = 高位派发 且 过热>50</td><td>主力出货</td></tr>
+  <tr><td><span class="badge b-orange">过热风险</span></td><td>过热>65</td><td>情绪泡沫</td></tr>
+  <tr><td><span class="badge b-orange">末期动量</span></td><td>阶段 = 加速冲顶 且 耗竭>50</td><td>惯性但风险累积</td></tr>
+  <tr><td><span class="badge b-green">早期趋势机会</span></td><td>阶段 = 初期突破/底部吸筹 且 可持续性>50</td><td>风险收益比好</td></tr>
+  <tr><td><span class="badge b-green">健康上涨趋势</span></td><td>阶段 = 主升阶段 且 可持续性>55</td><td>趋势中继</td></tr>
+  <tr><td><span class="badge b-blue">防御持有</span></td><td>其他所有情况</td><td>观望等待</td></tr>
+</table>
+</section>
+
+<!-- ==================== 8 ==================== -->
+<section id="s8">
+<h2><span class="n">8</span>阶段七：策略回测与止盈止损</h2>
+
+<h3>5 种回测策略</h3>
+<table>
+  <tr><th>策略</th><th>买入信号</th><th>卖出信号</th><th>最大持仓</th></tr>
+  <tr><td>MACD金叉策略</td><td>DIF上穿DEA</td><td>DIF下穿DEA</td><td>20天</td></tr>
+  <tr><td>RSI超卖反弹</td><td>RSI6从<25上穿25</td><td>RSI6>75</td><td>20天</td></tr>
+  <tr><td>均线多头突破</td><td>收盘价上穿MA20</td><td>收盘价跌破MA10</td><td>20天</td></tr>
+  <tr><td>放量突破策略</td><td>成交量>5日均量×1.8 且 涨幅>1%</td><td>跌幅>2%</td><td>20天</td></tr>
+  <tr><td>布林带回归策略</td><td>收盘价≤下轨×1.005</td><td>收盘价≥上轨×0.995</td><td>20天</td></tr>
+</table>
+
+<div class="formula-box">
+<span class="c">// 回测统计</span>
+winRate = wins / totalTrades × 100%
+avgReturn = Σ(每笔收益%) / totalTrades
+maxDrawdown = max(peak − trough) / peak × 100%
+
+<span class="c">// 当前信号：基于最新K线重新评估（非历史最后一笔）</span>
+<span class="k">if</span> 仍持仓 → <span class="s">"持仓中"</span>
+<span class="k">else if</span> 最新K线触发买入 → <span class="s">"买入信号"</span>
+<span class="k">else if</span> 最新K线触发卖出 → <span class="s">"卖出信号"</span>
+<span class="k">else if</span> 前一根K线买入 → <span class="s">"近期买入"</span>
+<span class="k">else</span> → <span class="s">"观望"</span>
+</div>
+
+<h3>ATR(14) 动态止盈止损</h3>
+<div class="formula-box">
+<span class="c">// 14日平均真实波幅</span>
+TR[i] = max(High-Low, |High-PrevClose|, |Low-PrevClose|)
+ATR14 = mean(TR[last14])
+<span class="g">atr14Pct</span> = ATR14 / lastClose × 100%
+
+<span class="k">if</span> atr14Pct > 0.5%:     <span class="c">// 有足够波动率</span>
+    stopLoss  = clamp(min(支撑位距离-1%, <span class="v">-ATR×2.0</span>), <span class="v">-12%, -1.5%</span>)
+    takeProfit = clamp(max(阻力位距离+1%, <span class="v">+ATR×2.5</span>), <span class="v">+2%, +20%</span>)
+<span class="k">else</span>:                    <span class="c">// 低波动回退</span>
+    stopLoss  = clamp(支撑位距离-2%, <span class="v">-8%, -3%</span>)
+    takeProfit = clamp(阻力位距离+2%, <span class="v">+3%, +15%</span>)
+</div>
+</section>
+
+<!-- ==================== 9 ==================== -->
+<section id="s9">
+<h2><span class="n">9</span>阶段八：最终决策与输出</h2>
+
+<p>在多因子评分和趋势生命周期分析完成后，系统进行最终的决策校正：</p>
+
+<h3>InvestmentState 覆盖 Action</h3>
+
+<div class="formula-box">
+<span class="c">// 趋势理解覆盖纯动量追随</span>
+<span class="k">if</span> 状态 == 派发警告 || 下跌回避:
+    增配 → <span class="v">减仓</span>        <span class="c">// 即使动量强也要降级</span>
+
+<span class="k">if</span> 状态 == 过热风险 || 末期动量:
+    增配 → <span class="v">持有</span>        <span class="c">// 不追高</span>
+
+<span class="k">if</span> 状态 == 早期趋势机会:
+    持有 → <span class="v">增配</span>        <span class="c">// 条件：forecastFinal > 0.05</span>
+</div>
+
+<h3>板块轮动信号注入</h3>
+<div class="formula-box">
+<span class="c">// 轮动评分 = 动量加速 × 0.5 + 资金加速 × 0.3 + 5日动量 × 0.2</span>
+rotationScore = momentumDelta × 0.5 + fundFlowAccel × 0.3 + mom5d × 0.2
+
+<span class="c">// 轮入条件</span>
+isRotatingIn  = momentumDelta > 1.0 且 mom5d > 0.5
+<span class="c">// 轮出条件</span>
+isRotatingOut = momentumDelta < -1.0 且 mom5d < -0.5
+</div>
+
+<h3>累计收益计算</h3>
+<div class="formula-box">
+<span class="c">// 从用户配置的"首次收益日"开始追踪</span>
+startPrice = 找到 firstEarnDate 当日或之后的第一根K线收盘价
+<span class="k">if</span> firstEarnDate > 今天 → return = 0%    <span class="c">// 还没开始</span>
+<span class="k">if</span> K线中找不到 → startPrice = 最后一根K线   <span class="c">// 保守回退</span>
+
+<span class="g">cumulativeReturn</span> = (currentPrice - startPrice) / startPrice × 100%
+<span class="g">trackingDays</span> = startDate 到今天的天数
+</div>
+
+<h3>最终输出字段（SectorSnapshot 关键字段）</h3>
+
+<div class="card-row">
+  <div class="info-card">
+    <div class="label">评分决策</div>
+    <div class="desc"><code>forecastScore</code> [-1,+1] → <code>action</code> (增配/持有/减仓) → <code>trendSummary</code> (强势看多~强势看空)</div>
+  </div>
+  <div class="info-card">
+    <div class="label">趋势理解</div>
+    <div class="desc"><code>trendStageResult</code> (7阶段) → <code>trendHealth</code> (5维健康度) → <code>explanation</code> (推理链+InvestmentState)</div>
+  </div>
+  <div class="info-card">
+    <div class="label">风险控制</div>
+    <div class="desc"><code>overheat</code> (6维过热) → <code>stopLossPct</code> / <code>takeProfitPct</code> (ATR动态) → action覆盖</div>
+  </div>
+  <div class="info-card">
+    <div class="label">策略验证</div>
+    <div class="desc"><code>backtestResults</code> (5策略胜率) → <code>bestStrategyCurrentSignal</code> → <code>investmentRecommendation</code></div>
+  </div>
+</div>
+</section>
+
+<!-- ==================== 10 ==================== -->
+<section id="s10">
+<h2><span class="n">10</span>UI 展示层：板块详情呈现</h2>
+
+<p>用户点击板块后看到的详情页，按以下顺序呈现计算结果：</p>
+
+<ol class="step-list">
+  <li><strong>投资结论区</strong>
+    <br/>操作标签（买入/持有/减仓/止损） ← <code>strategy.actionLabel</code>
+    <br/>综合评分 ← <code>forecastScore</code> / 置信度 ← <code>confidence</code> / 趋势 ← <code>trendSummary</code>
+    <br/>三张卡片：预期收益(止盈%) / 最大风险(止损%) / 累计收益(%) ← ATR计算 + 累计追踪
+    <br/>短期/中期/长期展望文本 ← <code>strategy.shortTermView/mediumTermView/longTermView</code>
+    <br/>操作建议 ← <code>strategy.operationAdvice</code>
+    <br/>看多/看空因素列表 ← <code>positiveFactors / negativeFactors</code>
+    <br/>AI深度分析 ← <code>aiAnalysis</code>（若启用）
+    <br/>我的持仓建议 ← <code>personalAdvice</code>（含趋势阶段信息）
+  </li>
+  <li><strong>趋势生命周期分析区</strong>
+    <br/>趋势阶段标签（7态） ← <code>trendStageResult.stageName</code>
+    <br/>投资状态标签（7态） ← <code>explanation.stateName</code>
+    <br/>阶段置信度% ← <code>trendStageResult.stageConfidence</code>
+    <br/>健康度 5 维卡片（结构/动量/回撤/量价/波动/可持续） ← <code>trendHealth</code>
+    <br/>三维评分条（趋势强度/趋势质量/耗竭风险） ← <code>explanation</code>
+    <br/>推理链文本（强度/可持续性/风险原因） ← <code>explanation.*Reason</code>
+    <br/>结论文本 ← <code>explanation.conclusion</code>
+    <br/>资金结构卡片（模式/连续流入天数/机构特征/投机风险） ← <code>flowStructure</code>
+    <br/>风险警告区 ← <code>overheat.warnings</code>
+    <br/>过热指数进度条 ← <code>overheat.compositeOverheat</code>
+  </li>
+  <li><strong>数据图表区</strong>
+    <br/>趋势图 × 3（近3月/6月/1年）← QPainter 绘制
+    <br/>K线图 × 3（日K/周K/月K）← OHLC 蜡烛图
+    <br/>核心指标卡片（动量/估值分位/拥挤度） ← <code>tech / pePercentile / crowdingIndex</code>
+    <br/>成交量面板 / MACD面板 / 资金流面板 ← QPainter 绘制
+    <br/>策略回测表（5策略：交易次数/胜率/平均收益/最大回撤/当前信号） ← <code>backtestResults</code>
+  </li>
+  <li><strong>关键事件与新闻区</strong>
+    <br/>未来事件前瞻 ← <code>upcomingEvents</code>
+    <br/>事件驱动涨跌 ← <code>eventDrivenMoves</code>
+    <br/>新闻列表（按时间倒序，含情感标签+可点击链接） ← <code>newsEntries</code>
+  </li>
+</ol>
+
+<h3>完整数据流图</h3>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;overflow-x:auto;">
+<pre style="color:var(--text);font-size:.82em;line-height:1.9;margin:0;white-space:pre;">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           InvestInsight 数据流全景                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                                      │
+│  │ 新浪概念 │  │ 新浪行业 │  │ 东方财富 │ ← 板块列表来源                        │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘                                      │
+│       └──────────────┼──────────────┘                                           │
+│                      ▼                                                          │
+│  ┌──────────────────────────────┐                                               │
+│  │      SectorFetcher           │                                               │
+│  │  • 板块列表合并 (~200+)      │                                               │
+│  │  • ETF代理K线 (250根/板块)   │ ← Sina CN_MarketData.getKLineData            │
+│  │  • 资金流 (概念+行业双通道)  │ ← Sina MoneyFlow.ssl_bkzj_bk                 │
+│  │  • 估值百分位 (历史价格排序)  │ ← 从K线数据衍生计算                          │
+│  │  • 拥挤度 (换手+量+动量)     │                                               │
+│  └──────────────┬───────────────┘                                               │
+│                 │                                                               │
+│  ┌──────────────┴───────────────┐   ┌──────────────────────┐                    │
+│  │      MarketContext           │   │  RealFinanceNews     │                    │
+│  │  • 上证/深证/创业板 (腾讯)   │   │  • 10+ 新闻来源      │                    │
+│  │  • 美股三大指数 (Yahoo)      │   │  • 关键词→板块映射   │                    │
+│  │  • 涨跌家数 / 北向资金代理   │   │  • 情感极性判断      │                    │
+│  │  • 恐贪指数 / 风险评分       │   │                      │                    │
+│  └──────────────┬───────────────┘   └─────────┬────────────┘                    │
+│                 │                              │                                │
+│                 ▼                              ▼                                │
+│  ┌─────────────────────────────────────────────────────┐                        │
+│  │  MarketRegimeDetector                               │                        │
+│  │  牛市/熊市/高波动/低波动/轮动 → 动态因子权重        │                        │
+│  └──────────────────────┬──────────────────────────────┘                        │
+│                         ▼                                                       │
+│  ╔═════════════════════════════════════════════════════╗                        │
+│  ║         逐板块分析循环 (~200 个板块)                ║                        │
+│  ║                                                     ║                        │
+│  ║  ① 新闻聚合: sentimentSum / count / positive/neg   ║                        │
+│  ║  ② FormulaBreakdown: 10 因子 × 动态权重            ║                        │
+│  ║  ③ rawForecast → × 质量权重 × 一致性权重           ║                        │
+│  ║  ④ TechIndicators: MACD/RSI/KDJ/MA/BOLL → techScore║                        │
+│  ║  ⑤ 最终评分: forecastFinal → action (增配/持有/减仓)║                        │
+│  ║  ⑥ 策略回测: 5策略 × 250根K线历史                  ║                        │
+│  ║  ⑦ ATR(14) → 动态止盈止损                          ║                        │
+│  ║  ⑧ 累计收益: firstEarnDate → startPrice → return%  ║                        │
+│  ║  ⑨ TrendStageDetector → 7阶段生命周期              ║                        │
+│  ║  ⑩ TrendHealthAnalyzer → 5维健康度                 ║                        │
+│  ║  ⑪ OverheatDetector → 6维过热检测                  ║                        │
+│  ║  ⑫ FlowStructureAnalyzer → 资金结构模式            ║                        │
+│  ║  ⑬ ExplainabilityEngine → 推理链 + InvestmentState ║                        │
+│  ║  ⑭ Action 校正: InvestmentState 覆盖动量建议       ║                        │
+│  ║                                                     ║                        │
+│  ╚════════════════════════╤════════════════════════════╝                        │
+│                           ▼                                                     │
+│  ┌────────────────────────────────────────────┐                                 │
+│  │  RotationDetector → 板块轮动信号排名       │                                 │
+│  │  RiskRadar → 六维市场风险雷达              │                                 │
+│  │  AI Stage 2 → Top-N 板块深度分析 (可选)    │                                 │
+│  └───────────────────┬────────────────────────┘                                 │
+│                      ▼                                                          │
+│  ┌────────────────────────────────────────────┐                                 │
+│  │          AnalysisResult                    │                                 │
+│  │  • sectors: QList&lt;SectorSnapshot&gt;          │                                 │
+│  │  • marketCtx / rotationSignals / riskRadar │                                 │
+│  │  • marketRegime / aiOverallSummary         │                                 │
+│  └───────────────────┬────────────────────────┘                                 │
+│                      ▼                                                          │
+│  ┌────────────────────────────────────────────┐                                 │
+│  │          MainWindow UI 渲染                │                                 │
+│  │  • 数据总览 (今日盈亏/累计盈亏)            │                                 │
+│  │  • 投资策略 (评分排行/轮动/止盈止损)       │                                 │
+│  │  • 板块指数信息 (列表表格)                 │                                 │
+│  │  • 板块详情 (结论→生命周期→图表→新闻)      │                                 │
+│  │  • AI 助手 (对话式查询)                    │                                 │
+│  └────────────────────────────────────────────┘                                 │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+</section>
+
+</div>
+
+<footer>
+  <p>InvestInsight 主体流程与计算公式 | 生成时间：2026年5月16日 | 基于项目源码精确提取</p>
+</footer>
+
+</body>
+</html>
