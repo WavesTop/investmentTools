@@ -571,6 +571,35 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
             }
         }
 
+        // ---- 将事件驱动数据纳入投资建议因素 ----
+        if (!snap.eventDrivenMoves.isEmpty()) {
+            int bigUpDays = 0, bigDownDays = 0;
+            double maxUp = 0, maxDown = 0;
+            QString latestEventUp, latestEventDown;
+            for (const auto &edm : snap.eventDrivenMoves) {
+                if (edm.changePct > 0) {
+                    ++bigUpDays;
+                    if (edm.changePct > maxUp) { maxUp = edm.changePct; latestEventUp = edm.eventText; }
+                } else {
+                    ++bigDownDays;
+                    if (edm.changePct < maxDown) { maxDown = edm.changePct; latestEventDown = edm.eventText; }
+                }
+            }
+            if (bigUpDays > bigDownDays && bigUpDays >= 2) {
+                QString hint = QString::fromUtf8("近期事件驱动偏多（%1次大涨 vs %2次大跌）")
+                    .arg(bigUpDays).arg(bigDownDays);
+                if (!latestEventUp.isEmpty())
+                    hint += QString::fromUtf8("，最大涨幅+%1%（%2）").arg(maxUp, 0, 'f', 2).arg(latestEventUp);
+                snap.positiveFactors.push_back(hint);
+            } else if (bigDownDays > bigUpDays && bigDownDays >= 2) {
+                QString hint = QString::fromUtf8("近期事件驱动偏空（%1次大跌 vs %2次大涨）")
+                    .arg(bigDownDays).arg(bigUpDays);
+                if (!latestEventDown.isEmpty())
+                    hint += QString::fromUtf8("，最大跌幅%1%（%2）").arg(maxDown, 0, 'f', 2).arg(latestEventDown);
+                snap.negativeFactors.push_back(hint);
+            }
+        }
+
         // ---- 主力资金异动检测 ----
         if (si.fundFlowSeries.size() >= 5) {
             double flowMean = 0, flowStd = 0;

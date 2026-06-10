@@ -2686,22 +2686,6 @@ QString MainWindow::buildSectorHtml(const SectorSnapshot &s, bool aiAvailable, b
         }
     }
 
-    // 事件驱动涨跌
-    if (!s.eventDrivenMoves.isEmpty()) {
-        h += "<div style='margin:8px 0;font-size:12px;font-weight:700;color:" + t.sectionTitleColor + ";'>"
-            + QString::fromUtf8("事件驱动涨跌") + "</div>";
-        for (const SectorSnapshot::EventDrivenMove &edm : s.eventDrivenMoves) {
-            const QString pctClr = edm.changePct >= 0 ? "#EF4444" : "#3B82F6";
-            const QString bgClr = edm.changePct >= 0 ? "rgba(239,68,68,0.05)" : "rgba(59,130,246,0.05)";
-            h += "<div style='display:flex;align-items:center;padding:6px 10px;margin:3px 0;border-radius:8px;background:" + bgClr + ";'>"
-                "<div style='min-width:60px;text-align:center;'>"
-                "<div style='font-size:10px;color:" + t.mutedColor + ";'>" + edm.date + "</div>"
-                "<div style='font-size:14px;font-weight:800;color:" + pctClr + ";'>"
-                + (edm.changePct >= 0 ? "+" : "") + QString::number(edm.changePct, 'f', 2) + "%</div></div>"
-                "<div style='flex:1;margin-left:10px;font-size:12px;color:" + t.bodyColor + ";'>" + edm.eventText.toHtmlEscaped() + "</div></div>";
-        }
-    }
-
     // 新闻列表（带时间排序和链接）
     if (!s.newsEntries.isEmpty()) {
         h += "<div style='margin:10px 0 4px;font-size:12px;font-weight:700;color:" + t.sectionTitleColor + ";'>"
