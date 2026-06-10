@@ -884,7 +884,7 @@ QString MainWindow::buildDataDashboardHtml(const AnalysisResult &analysis) const
                 totalValue += amt;
                 totalConfirmed += confirmedAmt;
                 totalPending += (amt - confirmedAmt);
-                if (!anyMarketClosed)
+                if (!anyMarketClosed && s->todayChangePctValid)
                     totalPnl += confirmedAmt * s->todayChangePct / 100.0;
                 totalCumulPnl += confirmedAmt * s->cumulativeReturn / 100.0;
                 weightedForecast += amt * s->forecastScore;
@@ -975,7 +975,8 @@ QString MainWindow::buildDataDashboardHtml(const AnalysisResult &analysis) const
                 double amt = holdTotalBySector.value(s->industry, portfolio.value(s->industry));
                 double confirmedAmt = qMin(amt, holdConfirmedBySector.value(s->industry, amt));
                 double pendingAmt = amt - confirmedAmt;
-                double pnl = anyMarketClosed ? 0.0 : (confirmedAmt * s->todayChangePct / 100.0);
+                double pnl = (anyMarketClosed || !s->todayChangePctValid)
+                    ? 0.0 : (confirmedAmt * s->todayChangePct / 100.0);
 
                 // 生成一句话建议
                 QString oneliner;
@@ -1013,6 +1014,9 @@ QString MainWindow::buildDataDashboardHtml(const AnalysisResult &analysis) const
                     todayCell = QString::fromUtf8("<span style='color:") + t.mutedColor + ";'>休市</span>";
                 } else if (confirmedAmt <= 0 && pendingAmt > 0) {
                     todayCell = QString::fromUtf8("<span style='color:#D97706;'>全部待确认</span>");
+                } else if (!s->todayChangePctValid) {
+                    todayCell = QString::fromUtf8("<span style='color:") + t.mutedColor + ";'>"
+                        + QString::fromUtf8("数据缺失") + "</span>";
                 } else {
                     todayCell = pct(s->todayChangePct) + " (" + (pnl >= 0 ? "+" : "")
                         + QString::number(pnl, 'f', 2) + "¥)";
@@ -1021,7 +1025,7 @@ QString MainWindow::buildDataDashboardHtml(const AnalysisResult &analysis) const
                             + QString::number(pendingAmt, 'f', 0) + "</span>";
                     }
                 }
-                const QString todayCellClr = anyMarketClosed ? t.mutedColor : clr(s->todayChangePct);
+                const QString todayCellClr = (!s->todayChangePctValid || anyMarketClosed) ? t.mutedColor : clr(s->todayChangePct);
                 h += "<td style='text-align:right;color:" + todayCellClr + ";font-weight:700;'>"
                     + todayCell + "</td>";
                 double cumulPnl = confirmedAmt * s->cumulativeReturn / 100.0;
@@ -1613,7 +1617,13 @@ QString MainWindow::buildSectorTableHtml(const AnalysisResult &analysis) const
                     + (!s.missingDataItems.isEmpty() ? " <span style='font-size:10px;color:#D97706;' title='数据存在缺口'>&#9888;</span>" : "")
                     + "</td>";
             }
-            h += "<td style='text-align:right;color:" + clr(row.todayChange) + ";font-weight:700;'>" + pct(row.todayChange) + "</td>";
+            {
+                const bool pctOk = row.s ? row.s->todayChangePctValid : true;
+                if (pctOk)
+                    h += "<td style='text-align:right;color:" + clr(row.todayChange) + ";font-weight:700;'>" + pct(row.todayChange) + "</td>";
+                else
+                    h += "<td style='text-align:right;color:" + t.mutedColor + ";font-size:11px;'>—</td>";
+            }
             h += "<td style='text-align:right;color:" + clr(row.fiveDay) + ";font-weight:700;'>" + pct(row.fiveDay) + "</td>";
             h += "<td style='text-align:center;'>" + scoreBar(row.forecast) + "</td>";
             h += "<td style='text-align:center;'>" + (row.isIndex ? "-" : scoreBar(ts.techScore)) + "</td>";
@@ -1942,9 +1952,10 @@ QString MainWindow::buildStrategyHtml(const AnalysisResult &analysis) const
                     }
 
                     const double todayChangePct = ss ? ss->todayChangePct : 0.0;
+                    const bool todayPctOk = ss && ss->todayChangePctValid;
                     const double confirmedAmt   = hi.confirmedInvested;
                     const double pendingAmt     = hi.totalInvested - confirmedAmt;
-                    const double todayPnl       = stratMarketClosed ? 0.0 : (confirmedAmt * todayChangePct / 100.0);
+                    const double todayPnl       = (stratMarketClosed || !todayPctOk) ? 0.0 : (confirmedAmt * todayChangePct / 100.0);
                     const double cumulReturn    = ss ? ss->cumulativeReturn : 0.0;
                     const double cumulPnl       = confirmedAmt * cumulReturn / 100.0;
                     const QString pnlClr        = todayPnl >= 0 ? posClr : negClr;
@@ -1963,6 +1974,9 @@ QString MainWindow::buildStrategyHtml(const AnalysisResult &analysis) const
                         }
                     } else if (pendingAmt > 0 && confirmedAmt <= 0) {
                         pnlStr = QString::fromUtf8("<span style='color:#D97706;'>全部待确认</span>");
+                    } else if (!todayPctOk) {
+                        pnlStr = QString::fromUtf8("<b>今日</b> <span style='color:") + t.mutedColor + ";'>"
+                            + QString::fromUtf8("涨跌数据缺失") + "</span>";
                     } else {
                         pnlStr = "<b>今日</b> " + (todayPnl >= 0 ? QString("+") : QString(""))
                             + QString::number(todayPnl, 'f', 2) + " ¥"
@@ -2307,6 +2321,9 @@ QString MainWindow::buildSectorHtml(const SectorSnapshot &s, bool aiAvailable, b
     if (s.marketClosed) {
         h += "<h2>" + s.industry + " <span style='color:" + t.mutedColor + ";font-size:14px;'>"
             + QString::fromUtf8("休市（上一交易日 ") + pct(s.todayChangePct) + "）</span></h2>";
+    } else if (!s.todayChangePctValid) {
+        h += "<h2>" + s.industry + " <span style='color:" + t.mutedColor + ";font-size:14px;'>"
+            + QString::fromUtf8("涨跌数据缺失") + "</span></h2>";
     } else {
         h += "<h2>" + s.industry + " <span style='color:" + clr(s.todayChangePct) + ";font-size:16px;'>" + pct(s.todayChangePct) + "</span></h2>";
     }
@@ -2773,12 +2790,13 @@ QString MainWindow::buildIndexHtml(const IndexSnapshot &idx, bool aiAvailable, b
 
     SectorSnapshot s;
     s.industry = idx.name;
-    s.action = inferAction(idx.changePct);
+    s.action = idx.changePctValid ? inferAction(idx.changePct) : AdviceAction::Hold;
     s.todayChangePct = idx.changePct;
+    s.todayChangePctValid = idx.changePctValid;
     s.fiveDayMomentum = 0.0;
     s.twentyDayMomentum = 0.0;
-    s.forecastScore = qBound(-1.0, idx.changePct / 3.0, 1.0);
-    s.confidence = 90.0;
+    s.forecastScore = idx.changePctValid ? qBound(-1.0, idx.changePct / 3.0, 1.0) : 0.0;
+    s.confidence = idx.changePctValid ? 90.0 : 30.0;
     s.dataQualityScore = (idx.volume > 0 || idx.amount > 0) ? 95.0 : 85.0;
     s.dataQualityWeight = 1.0;
     s.dataQualityNote = QString::fromUtf8("指数快照与行情聚合数据");

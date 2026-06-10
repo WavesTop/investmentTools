@@ -21,6 +21,7 @@ struct SectorInfo
     QString name;
     QString eastmoneyCode;
     double changePct = 0.0;
+    bool changePctValid = false;    // 是否来自可信实时源（区分「真平盘」与「数据缺失」）
     double turnoverRate = 0.0;
     int upCount = 0;
     int downCount = 0;

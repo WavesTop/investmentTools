@@ -378,6 +378,7 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
             info.name = normalizeSectorName(parts[1].trimmed());
             if (info.name.isEmpty() || !isMeaningfulSector(info.name)) continue;
             info.changePct = parts[5].toDouble();
+            info.changePctValid = true;
             info.upCount = parts[2].toInt();
             info.hotScore = computeHotScore(info.changePct, info.turnoverRate, info.upCount, 0);
             info.sourceTag = tag;
@@ -401,8 +402,10 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
                 // 新浪内部合并：补充字段，但不做整行替换以保持changePct稳定
                 if (old.eastmoneyCode.isEmpty() && info.eastmoneyCode.isEmpty()) {
                     if (old.upCount == 0 && info.upCount > 0) old.upCount = info.upCount;
-                    if (qAbs(old.changePct) < 1e-9 && qAbs(info.changePct) > 1e-9)
+                    if (!old.changePctValid && info.changePctValid) {
                         old.changePct = info.changePct;
+                        old.changePctValid = true;
+                    }
                 }
             }
         }
@@ -452,6 +455,7 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
                 info.code = emCode;
                 info.sourceTag = QString::fromUtf8("东方财富");
                 info.changePct = obj.value("f3").toDouble();
+                info.changePctValid = true;
                 info.turnoverRate = obj.value("f8").toDouble();
                 info.upCount = obj.value("f104").toInt();
                 info.downCount = obj.value("f105").toInt();
@@ -472,6 +476,7 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
                     // 东方财富数据更权威：采信其changePct和结构化字段
                     old.eastmoneyCode = emCode;
                     old.changePct = info.changePct;
+                    old.changePctValid = true;
                     old.turnoverRate = info.turnoverRate;
                     old.upCount = info.upCount;
                     old.downCount = info.downCount;
@@ -668,23 +673,35 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
         if (fr.source.contains(QString::fromUtf8("东方财富"))) ++klineEmOk;
         else if (!fr.bars.isEmpty()) ++klineEtfOk;
 
-        // 用K线涨跌幅校验/补充实时changePct
-        if (si.dailyBars.size() >= 2) {
-            const double klinePct = si.dailyBars.last().changePct;
-            if (fr.source.contains(QString::fromUtf8("东方财富"))) {
-                // 东方财富板块K线的changePct是板块真实涨跌幅，优先采信
-                if (qAbs(si.changePct) < 1e-9 || qAbs(si.changePct - klinePct) > 1.0) {
-                    qDebug() << "[SectorFetcher] K线校正changePct:" << si.name
-                             << "原=" << si.changePct << "% K线=" << klinePct << "%";
-                    si.changePct = klinePct;
-                }
-            } else if (qAbs(si.changePct) < 1e-9) {
-                // ETF代理：仅在无实时数据时才用ETF涨跌幅补充
-                const double prev = si.dailyBars[si.dailyBars.size() - 2].close;
-                const double curr = si.dailyBars.last().close;
-                if (prev > 0) {
-                    si.changePct = (curr - prev) / prev * 100.0;
-                    qDebug() << "[SectorFetcher] ETF补充changePct:" << si.name << si.changePct << "%";
+        // K线仅在实时changePct缺失 且 K线含当日bar时才补充，避免用昨日数据冒充今日
+        if (si.dailyBars.size() >= 2 && qAbs(si.changePct) < 1e-9) {
+            const QString today = QDate::currentDate().toString("yyyy-MM-dd");
+            const QString lastBarDate = si.dailyBars.last().date;
+            if (lastBarDate == today) {
+                si.changePct = si.dailyBars.last().changePct;
+                si.changePctValid = true;
+                qDebug() << "[SectorFetcher] K线补充changePct(当日bar):" << si.name << si.changePct << "%";
+            } else {
+                qDebug() << "[SectorFetcher] K线非当日，不补充changePct:" << si.name
+                         << "(K线末日:" << lastBarDate << " 今日:" << today << ")";
+            }
+        }
+
+        // changePct仍无效时，通过ETF代理的腾讯实时行情补充
+        if (!si.changePctValid) {
+            const QString etfSym = findSinaSymbol(si.name);
+            if (!etfSym.isEmpty()) {
+                const QString qqCode = etfSym;
+                const QString rtUrl = "http://qt.gtimg.cn/q=" + qqCode;
+                const auto rtResult = HttpClient::getGbk(rtUrl, 5000, 1);
+                if (rtResult.ok && !rtResult.body.isEmpty()) {
+                    const QStringList parts = rtResult.body.split('~');
+                    if (parts.size() > 32) {
+                        si.changePct = parts[32].toDouble();
+                        si.changePctValid = true;
+                        qDebug() << "[SectorFetcher] ETF实时补充changePct:" << si.name
+                                 << "ETF=" << qqCode << si.changePct << "%";
+                    }
                 }
             }
         }
@@ -802,12 +819,9 @@ void SectorFetcher::fetchValuationData(QList<SectorInfo> &sectors) const
             si.pbPercentile = si.pePercentile;
             si.valuationSource = "历史价格分位";
             valOk++;
-        } else if (si.changePct != 0) {
-            si.pePercentile = 50.0 + si.changePct * 2.0;
-            si.pePercentile = qBound(5.0, si.pePercentile, 95.0);
-            si.pbPercentile = si.pePercentile;
-            si.valuationSource = "涨跌幅估算";
-            valOk++;
+        } else {
+            // K线不足且无真实PE数据时，保持默认50（中性），不做伪估算
+            si.valuationSource = "数据不足";
         }
 
         // 拥挤热度
@@ -861,10 +875,9 @@ void SectorFetcher::fetchValuationData(QList<SectorInfo> &sectors) const
                 + momFactor * 25.0;
             si.crowdingIndex = qBound(0.0, crowding, 100.0);
         } else {
+            // K线不足，拥挤度保持默认50（中性），不做伪估算
             si.avgTurnover5d = si.turnoverRate;
-            const double turnFactor = qMin(si.turnoverRate / 10.0, 1.0);
-            const double volFactor = qMin(qAbs(si.changePct) / 5.0, 1.0);
-            si.crowdingIndex = qBound(0.0, turnFactor * 50.0 + volFactor * 50.0, 100.0);
+            si.crowdingIndex = 50.0;
         }
 
         si.missingDataItems.clear();

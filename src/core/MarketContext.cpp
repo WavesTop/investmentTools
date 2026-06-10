@@ -218,8 +218,11 @@ void MarketContextFetcher::fetchIndices(MarketContext &ctx) const
             s.name = defs[i].name;
             s.code = defs[i].qqSymbol;
             if (parts.size() > 3) s.lastClose = parts[3].toDouble();
-            if (parts.size() > 32) s.changePct = parts[32].toDouble();
-            if (parts.size() > 37) s.amount = parts[37].toDouble(); // 成交额(亿)
+            if (parts.size() > 32) {
+                s.changePct = parts[32].toDouble();
+                s.changePctValid = true;
+            }
+            if (parts.size() > 37) s.amount = parts[37].toDouble();
         }
     }
 
@@ -237,16 +240,18 @@ void MarketContextFetcher::fetchIndices(MarketContext &ctx) const
         if (!s.dailyBars.isEmpty()) {
             fillIndexSeries(s);
             if (hasRt) {
-                // 实时行情可用时保留实时值，K线仅提供历史序列
                 s.lastClose = rtClose;
                 s.changePct = rtPct;
+                // changePctValid 已在实时获取阶段设置
             } else {
-                // 无实时行情时用K线推算
+                // 无实时行情，K线推算不标记valid（可能非当日数据）
+                const QString today = QDate::currentDate().toString("yyyy-MM-dd");
                 s.lastClose = s.dailyBars.last().close;
                 if (s.dailyBars.size() >= 2) {
                     const double prev = s.dailyBars[s.dailyBars.size() - 2].close;
                     if (prev > 0) s.changePct = (s.lastClose - prev) / prev * 100.0;
                 }
+                s.changePctValid = (s.dailyBars.last().date == today);
             }
         }
         qDebug() << "[Index]" << s.name << s.lastClose << s.changePct << "% bars:" << s.dailyBars.size()
@@ -274,16 +279,18 @@ void MarketContextFetcher::fetchUSIndices(MarketContext &ctx) const
             const double prev = d.snap->dailyBars[d.snap->dailyBars.size() - 2].close;
             d.snap->changePct = prev > 0 ? (d.snap->lastClose - prev) / prev * 100.0 : 0.0;
         }
+        d.snap->changePctValid = !d.snap->dailyBars.isEmpty();
         d.snap->volume = d.snap->dailyBars.last().volume / 1e8;
         fillIndexSeries(*d.snap);
         qDebug() << "[USIndex]" << d.name << d.snap->lastClose << d.snap->changePct << "%"
-                 << "bars:" << d.snap->dailyBars.size();
+                 << "bars:" << d.snap->dailyBars.size()
+                 << "lastDate:" << d.snap->dailyBars.last().date;
     }
 }
 
 void MarketContextFetcher::fetchNorthbound(MarketContext &ctx) const
 {
-    // 从新浪板块资金流接口获取市场资金流动数据（间接反映北向）
+    // 板块主力资金流合计（非真实北向资金，仅作市场情绪参考）
     const QString url =
         "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
         "MoneyFlow.ssl_bkzj_bk?page=1&num=20&sort=netamount&asc=0&fenlei=1";
@@ -299,10 +306,10 @@ void MarketContextFetcher::fetchNorthbound(MarketContext &ctx) const
             }
             ctx.northboundNetBuy = totalNetFlow / 1e8;
             ctx.northboundFlowValid = true;
+            qDebug() << "[MarketContext] 板块资金流合计:" << ctx.northboundNetBuy << "亿（非北向资金）";
         }
     }
 
-    // 北向历史不可用时，用当日数据估算趋势
     if (ctx.northboundFlowValid) {
         ctx.northboundSeries.push_back(ctx.northboundNetBuy);
         ctx.northbound5dAvg = ctx.northboundNetBuy;
@@ -312,101 +319,106 @@ void MarketContextFetcher::fetchNorthbound(MarketContext &ctx) const
 
 void MarketContextFetcher::fetchMarketBreadth(MarketContext &ctx) const
 {
-    // 从新浪获取A股总数
-    const auto countResult = HttpClient::get(
-        "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
-        "Market_Center.getHQNodeStockCount?node=hs_a", 8000, 1);
-    if (countResult.ok && !countResult.body.isEmpty()) {
-        const QString trimmed = countResult.body.trimmed().replace("\"", "");
-        ctx.totalStocks = trimmed.toInt();
+    // 优先：东方财富实时涨跌家数（真实统计）
+    const auto emUrl = QString(
+        "https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2"
+        "&fields=f1,f2,f3,f104,f105,f106&secids=1.000001,0.399001"
+        "&ut=fa5fd1943c7b386f172d6893dbbd1");
+    const auto emResult = HttpClient::get(emUrl, 8000, 2);
+    if (emResult.ok && !emResult.body.isEmpty()) {
+        const QJsonDocument doc = QJsonDocument::fromJson(emResult.body.toUtf8());
+        const QJsonArray diff = doc.object().value("data").toObject().value("diff").toArray();
+        if (!diff.isEmpty()) {
+            int totalAdv = 0, totalDec = 0, totalFlat = 0;
+            for (const QJsonValue &v : diff) {
+                const QJsonObject o = v.toObject();
+                totalAdv  += o.value("f104").toInt();
+                totalDec  += o.value("f105").toInt();
+                totalFlat += o.value("f106").toInt();
+            }
+            // 去重：上证+深证有交叉，取上证数据即可
+            const QJsonObject sh = diff[0].toObject();
+            ctx.advanceCount = sh.value("f104").toInt();
+            ctx.declineCount = sh.value("f105").toInt();
+            ctx.totalStocks = ctx.advanceCount + ctx.declineCount + sh.value("f106").toInt();
+            ctx.breadthEstimated = false;
+            qDebug() << "[MarketBreadth] 东方财富真实数据: adv=" << ctx.advanceCount
+                     << "dec=" << ctx.declineCount << "total=" << ctx.totalStocks;
+        }
     }
 
-    // 从腾讯实时行情提取涨跌统计 (上证/深证的成份信息)
-    // qt.gtimg.cn 字段中 parts[31]=涨家数 (有时不准确)
-    // 替代方案：通过新浪接口计算涨跌比
-    const auto upResult = HttpClient::get(
-        "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
-        "Market_Center.getHQNodeStockCount?node=hs_a&_s_r_a=page&_s_r_a_page=1", 8000, 1);
-
-    // 从新浪概念涨跌统计
-    const auto sinaUrl = QString(
-        "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
-        "Market_Center.getHQNodeData?page=1&num=1&sort=changepercent&asc=0"
-        "&node=hs_a&symbol=&_s_r_a=sort");
-    const auto sr = HttpClient::get(sinaUrl, 8000, 1);
-    if (sr.ok && !sr.body.isEmpty()) {
-        const QJsonDocument sdoc = QJsonDocument::fromJson(sr.body.toUtf8());
-        if (sdoc.isArray() && !sdoc.array().isEmpty()) {
-            // 获取市场大盘涨跌幅来估算涨跌比
-            const double shPct = ctx.shanghai.changePct;
-            if (ctx.totalStocks > 0) {
-                double advRatio = 0.5 + shPct / 10.0; // 粗估
-                advRatio = qBound(0.1, advRatio, 0.9);
-                ctx.advanceCount = static_cast<int>(ctx.totalStocks * advRatio);
-                ctx.declineCount = ctx.totalStocks - ctx.advanceCount;
-            }
+    // 回退：新浪获取A股总数 + 估算
+    if (ctx.advanceCount == 0 && ctx.declineCount == 0) {
+        const auto countResult = HttpClient::get(
+            "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
+            "Market_Center.getHQNodeStockCount?node=hs_a", 8000, 1);
+        if (countResult.ok && !countResult.body.isEmpty()) {
+            const QString trimmed = countResult.body.trimmed().replace("\"", "");
+            ctx.totalStocks = trimmed.toInt();
         }
+        if (ctx.totalStocks > 0 && ctx.shanghai.changePctValid) {
+            const double shPct = ctx.shanghai.changePct;
+            double advRatio = qBound(0.1, 0.5 + shPct / 10.0, 0.9);
+            ctx.advanceCount = static_cast<int>(ctx.totalStocks * advRatio);
+            ctx.declineCount = ctx.totalStocks - ctx.advanceCount;
+        }
+        ctx.breadthEstimated = true;
+        qDebug() << "[MarketBreadth] 回退估算: adv=" << ctx.advanceCount
+                 << "dec=" << ctx.declineCount << "(估算)";
     }
 
     if (ctx.advanceCount == 0 && ctx.declineCount == 0) {
-        if (ctx.totalStocks > 0) {
-            ctx.advanceCount = ctx.totalStocks / 2;
-            ctx.declineCount = ctx.totalStocks / 2;
-        } else {
-            ctx.advanceCount = 2500;
-            ctx.declineCount = 2500;
-        }
+        ctx.advanceCount = 2500;
+        ctx.declineCount = 2500;
+        ctx.breadthEstimated = true;
     }
     ctx.advanceDeclineRatio = ctx.declineCount > 0
         ? static_cast<double>(ctx.advanceCount) / ctx.declineCount : 1.0;
 
-    // 涨跌停数用涨幅估算
-    const double shPct = ctx.shanghai.changePct;
-    if (shPct > 2.0) {
-        ctx.limitUpCount = static_cast<int>(50 + (shPct - 2.0) * 30);
-        ctx.limitDownCount = 5;
-    } else if (shPct < -2.0) {
-        ctx.limitUpCount = 5;
-        ctx.limitDownCount = static_cast<int>(50 + (-shPct - 2.0) * 30);
-    } else {
-        ctx.limitUpCount = static_cast<int>(30 + shPct * 10);
-        ctx.limitDownCount = static_cast<int>(30 - shPct * 10);
+    // 涨跌停数：无可靠实时源时，不估算而是保持0
+    if (ctx.breadthEstimated) {
+        ctx.limitUpCount = 0;
+        ctx.limitDownCount = 0;
     }
-    ctx.limitUpCount = qMax(0, ctx.limitUpCount);
-    ctx.limitDownCount = qMax(0, ctx.limitDownCount);
 
     qDebug() << "[MarketBreadth] total:" << ctx.totalStocks
              << "adv:" << ctx.advanceCount << "dec:" << ctx.declineCount
-             << "limitUp:" << ctx.limitUpCount << "limitDown:" << ctx.limitDownCount;
+             << "limitUp:" << ctx.limitUpCount << "limitDown:" << ctx.limitDownCount
+             << (ctx.breadthEstimated ? "(估算)" : "(真实)");
 }
 
 void MarketContextFetcher::computeRiskScore(MarketContext &ctx) const
 {
     double score = 50.0;
 
-    // 1) 大盘涨跌贡献 ±15
-    if (ctx.shanghai.changePct > 2.0) score += 12;
-    else if (ctx.shanghai.changePct > 1.0) score += 8;
-    else if (ctx.shanghai.changePct > 0.3) score += 4;
-    else if (ctx.shanghai.changePct < -2.0) score -= 12;
-    else if (ctx.shanghai.changePct < -1.0) score -= 8;
-    else if (ctx.shanghai.changePct < -0.3) score -= 4;
+    // 1) 大盘涨跌贡献 ±15（仅在实时数据有效时参与）
+    if (ctx.shanghai.changePctValid) {
+        if (ctx.shanghai.changePct > 2.0) score += 12;
+        else if (ctx.shanghai.changePct > 1.0) score += 8;
+        else if (ctx.shanghai.changePct > 0.3) score += 4;
+        else if (ctx.shanghai.changePct < -2.0) score -= 12;
+        else if (ctx.shanghai.changePct < -1.0) score -= 8;
+        else if (ctx.shanghai.changePct < -0.3) score -= 4;
+    }
 
-    // 2) 涨跌家数比贡献 ±6（估算值，权重降低避免放大噪声）
-    if (ctx.advanceDeclineRatio > 3.0) score += 5;
-    else if (ctx.advanceDeclineRatio > 2.0) score += 3;
-    else if (ctx.advanceDeclineRatio > 1.2) score += 1;
-    else if (ctx.advanceDeclineRatio < 0.33) score -= 5;
-    else if (ctx.advanceDeclineRatio < 0.5) score -= 3;
-    else if (ctx.advanceDeclineRatio < 0.8) score -= 1;
+    // 2) 涨跌家数比贡献：真实数据±10，估算数据±3
+    const int breadthWeight = ctx.breadthEstimated ? 1 : 3;
+    if (ctx.advanceDeclineRatio > 3.0) score += 4 * breadthWeight;
+    else if (ctx.advanceDeclineRatio > 2.0) score += 2 * breadthWeight;
+    else if (ctx.advanceDeclineRatio > 1.2) score += 1 * breadthWeight;
+    else if (ctx.advanceDeclineRatio < 0.33) score -= 4 * breadthWeight;
+    else if (ctx.advanceDeclineRatio < 0.5) score -= 2 * breadthWeight;
+    else if (ctx.advanceDeclineRatio < 0.8) score -= 1 * breadthWeight;
 
-    // 3) 涨停/跌停贡献 ±4（估算值，权重降低）
-    if (ctx.limitUpCount > 60) score += 3;
-    else if (ctx.limitUpCount > 30) score += 1;
-    if (ctx.limitDownCount > 60) score -= 3;
-    else if (ctx.limitDownCount > 30) score -= 1;
+    // 3) 涨停/跌停贡献：仅真实数据参与
+    if (!ctx.breadthEstimated) {
+        if (ctx.limitUpCount > 60) score += 5;
+        else if (ctx.limitUpCount > 30) score += 2;
+        if (ctx.limitDownCount > 60) score -= 5;
+        else if (ctx.limitDownCount > 30) score -= 2;
+    }
 
-    // 4) 板块资金流贡献 ±5（非真实北向资金，降权处理）
+    // 4) 板块资金流贡献 ±5
     if (ctx.northboundFlowValid) {
         if (ctx.northboundNetBuy > 80) score += 4;
         else if (ctx.northboundNetBuy > 30) score += 2;

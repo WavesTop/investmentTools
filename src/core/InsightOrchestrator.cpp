@@ -375,9 +375,10 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         if (si.monthSeries.size() >= 4)
             monthMom = (si.monthSeries.last() - si.monthSeries[si.monthSeries.size() - 4]) / si.monthSeries[si.monthSeries.size() - 4] * 100.0;
 
-        const double todayPct = si.changePct;
+        const double todayPct = si.changePctValid ? si.changePct : 0.0;
+        const bool hasTodayPct = si.changePctValid;
         const double newsSentiment = na.count > 0 ? na.sentimentSum / static_cast<double>(na.count) : 0.0;
-        const double trendBias = mom5d * 0.6 + todayPct * 0.4;
+        const double trendBias = hasTodayPct ? (mom5d * 0.6 + todayPct * 0.4) : (mom5d * 1.0);
         const double trendDirection = trendBias > 0.3 ? 1.0 : (trendBias < -0.3 ? -1.0 : 0.0);
         const double newsRatio = na.count >= 2 ? static_cast<double>(na.positiveCount - na.negativeCount) / na.count : 0.0;
 
@@ -391,7 +392,7 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
 
         FormulaBreakdown fb;
         fb.momentumFactor = mom5d * 0.015 + mom20d * 0.008;
-        fb.todayFactor = todayPct * 0.015;
+        fb.todayFactor = hasTodayPct ? (todayPct * 0.015) : 0.0;
         fb.sentimentFactor = newsSentiment * 0.6 + newsRatio * 0.15;
         fb.newsIntensityFactor = qMin(na.count / 8.0, 1.0) * 0.08 * (newsSentiment > 0 ? 1.0 : -1.0);
         fb.fundFlowFactor = flowSignal * 0.10;
@@ -434,6 +435,7 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         SectorSnapshot snap;
         snap.industry = si.name;
         snap.todayChangePct = todayPct;
+        snap.todayChangePctValid = hasTodayPct;
         snap.fiveDayMomentum = mom5d;
         snap.twentyDayMomentum = mom20d;
         snap.newsSentiment = newsSentiment;
@@ -504,7 +506,7 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         if (mom20d > 3.0) snap.positiveFactors.push_back("近20日上涨 " + QString::number(mom20d, 'f', 2) + "%，中期趋势向好");
         if (weekMom > 2.0) snap.positiveFactors.push_back("近5周上涨 " + QString::number(weekMom, 'f', 2) + "%，周线走势偏多");
         if (monthMom > 5.0) snap.positiveFactors.push_back("近3月上涨 " + QString::number(monthMom, 'f', 2) + "%，月线趋势向好");
-        if (todayPct > 1.0) snap.positiveFactors.push_back("今日涨幅 " + QString::number(todayPct, 'f', 2) + "%，市场情绪积极");
+        if (hasTodayPct && todayPct > 1.0) snap.positiveFactors.push_back("今日涨幅 " + QString::number(todayPct, 'f', 2) + "%，市场情绪积极");
         if (na.positiveCount > na.negativeCount && na.count >= 2) snap.positiveFactors.push_back("正面新闻（" + QString::number(na.positiveCount) + " 条）多于负面（" + QString::number(na.negativeCount) + " 条）");
         if (si.hotScore > 20) snap.positiveFactors.push_back("板块热度较高（" + QString::number(si.hotScore, 'f', 1) + "），市场关注度集中");
         if (si.pePercentile < 30 && si.peRatio > 0)
@@ -516,21 +518,25 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         if (mom20d < -3.0) snap.negativeFactors.push_back("近20日下跌 " + QString::number(qAbs(mom20d), 'f', 2) + "%，中期趋势承压");
         if (weekMom < -2.0) snap.negativeFactors.push_back("近5周下跌 " + QString::number(qAbs(weekMom), 'f', 2) + "%，周线走势偏空");
         if (monthMom < -5.0) snap.negativeFactors.push_back("近3月下跌 " + QString::number(qAbs(monthMom), 'f', 2) + "%，月线趋势承压");
-        if (todayPct < -1.0) snap.negativeFactors.push_back("今日跌幅 " + QString::number(qAbs(todayPct), 'f', 2) + "%，市场情绪谨慎");
+        if (hasTodayPct && todayPct < -1.0) snap.negativeFactors.push_back("今日跌幅 " + QString::number(qAbs(todayPct), 'f', 2) + "%，市场情绪谨慎");
         if (na.negativeCount > na.positiveCount && na.count >= 2) snap.negativeFactors.push_back("负面新闻（" + QString::number(na.negativeCount) + " 条）多于正面（" + QString::number(na.positiveCount) + " 条）");
         if (mom5d > 5.0) snap.negativeFactors.push_back("近5日涨幅 " + QString::number(mom5d, 'f', 2) + "%，短期累积涨幅较大，存在回调风险");
         if (mom20d > 15.0) snap.negativeFactors.push_back("近20日涨幅 " + QString::number(mom20d, 'f', 2) + "%，中期累积涨幅过大，需警惕获利回吐");
         if (weekMom > 8.0) snap.negativeFactors.push_back("近5周涨幅 " + QString::number(weekMom, 'f', 2) + "%，周线短期过热");
         if (monthMom > 20.0) snap.negativeFactors.push_back("近3月涨幅 " + QString::number(monthMom, 'f', 2) + "%，中长期涨幅过大，需注意高位风险");
-        if (todayPct > 3.0) snap.negativeFactors.push_back("今日涨幅 " + QString::number(todayPct, 'f', 2) + "%，单日波动过大");
+        if (hasTodayPct && todayPct > 3.0) snap.negativeFactors.push_back("今日涨幅 " + QString::number(todayPct, 'f', 2) + "%，单日波动过大");
         if (si.pePercentile > 70 && si.peRatio > 0)
             snap.negativeFactors.push_back("PE估值分位 " + QString::number(si.pePercentile, 'f', 0) + "%，处于历史高位，估值偏贵");
         if (si.crowdingIndex > 70)
             snap.negativeFactors.push_back("拥挤度 " + QString::number(si.crowdingIndex, 'f', 0) + "%，交易过热，回调概率增大");
 
         if (snap.positiveFactors.isEmpty() && snap.negativeFactors.isEmpty()) {
-            snap.positiveFactors.push_back("暂无显著看多信号");
-            snap.negativeFactors.push_back("暂无显著看空信号");
+            if (!hasTodayPct)
+                snap.positiveFactors.push_back("今日涨跌数据缺失，判断依据不足");
+            else {
+                snap.positiveFactors.push_back("暂无显著看多信号");
+                snap.negativeFactors.push_back("暂无显著看空信号");
+            }
         }
 
         snap.dailyBars = si.dailyBars;

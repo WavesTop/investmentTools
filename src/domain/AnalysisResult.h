@@ -144,6 +144,7 @@ struct SectorSnapshot
     AdviceAction action = AdviceAction::Hold;
 
     double todayChangePct = 0.0;
+    bool todayChangePctValid = false;
     double fiveDayMomentum = 0.0;
     double twentyDayMomentum = 0.0;
     double newsSentiment = 0.0;

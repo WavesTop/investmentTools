@@ -10,6 +10,7 @@ struct IndexSnapshot
     QString code;
     double lastClose = 0;
     double changePct = 0;
+    bool changePctValid = false;
     double volume = 0;       // 亿元
     double amount = 0;       // 亿元
     QVector<KBar> dailyBars;
@@ -38,13 +39,14 @@ struct MarketContext
     double northbound20dAvg = 0;     // 近20日均值
     bool northboundFlowValid = false;
 
-    // 市场广度
+    // 市场广度（注意：当前为估算值，非真实统计）
     int totalStocks = 0;
-    int advanceCount = 0;    // 上涨家数
-    int declineCount = 0;    // 下跌家数
-    int limitUpCount = 0;    // 涨停家数
-    int limitDownCount = 0;  // 跌停家数
+    int advanceCount = 0;
+    int declineCount = 0;
+    int limitUpCount = 0;
+    int limitDownCount = 0;
     double advanceDeclineRatio = 1.0;
+    bool breadthEstimated = true;   // true=估算值, false=真实统计
 
     // 市场风险评分 [0, 100]：0=极度恐慌, 50=中性, 100=极度贪婪
     double marketRiskScore = 50.0;
