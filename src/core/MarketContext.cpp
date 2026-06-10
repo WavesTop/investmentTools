@@ -223,22 +223,34 @@ void MarketContextFetcher::fetchIndices(MarketContext &ctx) const
         }
     }
 
-    // 获取 K线（腾讯优先，新浪回退）
+    // 获取 K线（腾讯优先，新浪回退），仅用于历史序列，不覆盖实时行情
     for (const auto &d : defs) {
         IndexSnapshot &s = *d.snap;
+        const double rtClose = s.lastClose;
+        const double rtPct   = s.changePct;
+        const bool   hasRt   = rtClose > 0;
+
         s.dailyBars = fetchTencentIndexDailyBars(d.qqKline, 130);
         if (s.dailyBars.isEmpty()) {
             s.dailyBars = fetchSinaIndexDailyBars(d.sinaSymbol, 130);
         }
         if (!s.dailyBars.isEmpty()) {
-            s.lastClose = s.dailyBars.last().close;
-            if (s.dailyBars.size() >= 2) {
-                const double prev = s.dailyBars[s.dailyBars.size() - 2].close;
-                if (prev > 0) s.changePct = (s.lastClose - prev) / prev * 100.0;
-            }
             fillIndexSeries(s);
+            if (hasRt) {
+                // 实时行情可用时保留实时值，K线仅提供历史序列
+                s.lastClose = rtClose;
+                s.changePct = rtPct;
+            } else {
+                // 无实时行情时用K线推算
+                s.lastClose = s.dailyBars.last().close;
+                if (s.dailyBars.size() >= 2) {
+                    const double prev = s.dailyBars[s.dailyBars.size() - 2].close;
+                    if (prev > 0) s.changePct = (s.lastClose - prev) / prev * 100.0;
+                }
+            }
         }
-        qDebug() << "[Index]" << s.name << s.lastClose << s.changePct << "% bars:" << s.dailyBars.size();
+        qDebug() << "[Index]" << s.name << s.lastClose << s.changePct << "% bars:" << s.dailyBars.size()
+                 << (hasRt ? "实时" : "K线推算");
     }
 }
 
@@ -380,28 +392,28 @@ void MarketContextFetcher::computeRiskScore(MarketContext &ctx) const
     else if (ctx.shanghai.changePct < -1.0) score -= 8;
     else if (ctx.shanghai.changePct < -0.3) score -= 4;
 
-    // 2) 涨跌家数比贡献 ±15
-    if (ctx.advanceDeclineRatio > 3.0) score += 12;
-    else if (ctx.advanceDeclineRatio > 2.0) score += 8;
-    else if (ctx.advanceDeclineRatio > 1.2) score += 4;
-    else if (ctx.advanceDeclineRatio < 0.33) score -= 12;
-    else if (ctx.advanceDeclineRatio < 0.5) score -= 8;
-    else if (ctx.advanceDeclineRatio < 0.8) score -= 4;
+    // 2) 涨跌家数比贡献 ±6（估算值，权重降低避免放大噪声）
+    if (ctx.advanceDeclineRatio > 3.0) score += 5;
+    else if (ctx.advanceDeclineRatio > 2.0) score += 3;
+    else if (ctx.advanceDeclineRatio > 1.2) score += 1;
+    else if (ctx.advanceDeclineRatio < 0.33) score -= 5;
+    else if (ctx.advanceDeclineRatio < 0.5) score -= 3;
+    else if (ctx.advanceDeclineRatio < 0.8) score -= 1;
 
-    // 3) 涨停/跌停贡献 ±10
-    if (ctx.limitUpCount > 60) score += 8;
-    else if (ctx.limitUpCount > 30) score += 4;
-    if (ctx.limitDownCount > 60) score -= 8;
-    else if (ctx.limitDownCount > 30) score -= 4;
+    // 3) 涨停/跌停贡献 ±4（估算值，权重降低）
+    if (ctx.limitUpCount > 60) score += 3;
+    else if (ctx.limitUpCount > 30) score += 1;
+    if (ctx.limitDownCount > 60) score -= 3;
+    else if (ctx.limitDownCount > 30) score -= 1;
 
-    // 4) 北向资金贡献 ±10
+    // 4) 板块资金流贡献 ±5（非真实北向资金，降权处理）
     if (ctx.northboundFlowValid) {
-        if (ctx.northboundNetBuy > 80) score += 8;
-        else if (ctx.northboundNetBuy > 30) score += 5;
-        else if (ctx.northboundNetBuy > 0) score += 2;
-        else if (ctx.northboundNetBuy < -80) score -= 8;
-        else if (ctx.northboundNetBuy < -30) score -= 5;
-        else if (ctx.northboundNetBuy < 0) score -= 2;
+        if (ctx.northboundNetBuy > 80) score += 4;
+        else if (ctx.northboundNetBuy > 30) score += 2;
+        else if (ctx.northboundNetBuy > 0) score += 1;
+        else if (ctx.northboundNetBuy < -80) score -= 4;
+        else if (ctx.northboundNetBuy < -30) score -= 2;
+        else if (ctx.northboundNetBuy < 0) score -= 1;
     }
 
     ctx.marketRiskScore = qBound(0.0, score, 100.0);

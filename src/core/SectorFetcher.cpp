@@ -398,8 +398,11 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
                 const double diff = qAbs(old.changePct - info.changePct);
                 const double consistency = qBound(35.0, 100.0 - diff * 15.0, 98.0);
                 old.sourceConsistencyScore = qMax(old.sourceConsistencyScore, consistency);
-                if (old.eastmoneyCode.isEmpty() && info.hotScore > old.hotScore) {
-                    old = info;
+                // 新浪内部合并：补充字段，但不做整行替换以保持changePct稳定
+                if (old.eastmoneyCode.isEmpty() && info.eastmoneyCode.isEmpty()) {
+                    if (old.upCount == 0 && info.upCount > 0) old.upCount = info.upCount;
+                    if (qAbs(old.changePct) < 1e-9 && qAbs(info.changePct) > 1e-9)
+                        old.changePct = info.changePct;
                 }
             }
         }
@@ -463,11 +466,18 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
                     ++catCount;
                 } else {
                     SectorInfo &old = sectors[it.value()];
-                    old.eastmoneyCode = emCode;
                     old.crossSourceValidated = true;
-                    old.altChangePct = info.changePct;
+                    old.altChangePct = old.changePct;
                     old.hasAltChangePct = true;
-                    if (info.hotScore > old.hotScore) old = info;
+                    // 东方财富数据更权威：采信其changePct和结构化字段
+                    old.eastmoneyCode = emCode;
+                    old.changePct = info.changePct;
+                    old.turnoverRate = info.turnoverRate;
+                    old.upCount = info.upCount;
+                    old.downCount = info.downCount;
+                    old.hotScore = info.hotScore;
+                    old.sourceTag = info.sourceTag;
+                    old.sourceConsistencyScore = qMax(old.sourceConsistencyScore, info.sourceConsistencyScore);
                 }
             }
             return catCount;

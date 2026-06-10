@@ -1747,13 +1747,21 @@ QString MainWindow::buildStrategyHtml(const AnalysisResult &analysis) const
         h += "<hr class='divider'/>";
         h += "<div class='section-title'>市场操作建议</div>";
 
-        QList<StrategyItem> sorted = rows;
-        std::sort(sorted.begin(), sorted.end(), [](const StrategyItem &a, const StrategyItem &b) {
+        // 板块和指数分开排序，避免指数挤占板块推荐
+        QList<StrategyItem> sectorSorted, indexSorted;
+        for (const StrategyItem &it : rows) {
+            if (it.isIndex) indexSorted.push_back(it);
+            else sectorSorted.push_back(it);
+        }
+        std::sort(sectorSorted.begin(), sectorSorted.end(), [](const StrategyItem &a, const StrategyItem &b) {
+            return a.forecastScore > b.forecastScore;
+        });
+        std::sort(indexSorted.begin(), indexSorted.end(), [](const StrategyItem &a, const StrategyItem &b) {
             return a.forecastScore > b.forecastScore;
         });
 
         int bullCount = 0, bearCount = 0;
-        for (const StrategyItem &it : sorted) {
+        for (const StrategyItem &it : sectorSorted) {
             if (it.forecastScore > 0.1) ++bullCount;
             if (it.forecastScore < -0.1) ++bearCount;
         }
@@ -1767,32 +1775,41 @@ QString MainWindow::buildStrategyHtml(const AnalysisResult &analysis) const
         h += "<div style='display:flex;gap:16px;margin-top:8px;'>";
 
         h += "<div style='flex:1;'>";
-        h += "<div style='font-size:12px;font-weight:700;color:#059669;margin-bottom:6px;'>&#9650; 推荐关注 Top5</div>";
-        h += "<table class='fund'><tr><th>对象</th><th>评分</th><th>策略</th></tr>";
-        for (int i = 0; i < qMin(5, sorted.size()); ++i) {
-            const StrategyItem &it = sorted[i];
-            const QString nameHtml = it.isIndex
-                ? ("<a href='jumpi-" + it.indexKey + "'>" + it.name + "</a> <span style='font-size:10px;color:#7C3AED;'>[指数]</span>")
-                : ("<a href='jump-" + QString::number(it.origIdx) + "'>" + it.name + "</a>");
+        h += "<div style='font-size:12px;font-weight:700;color:#059669;margin-bottom:6px;'>&#9650; 推荐关注板块 Top5</div>";
+        h += "<table class='fund'><tr><th>板块</th><th>评分</th><th>策略</th></tr>";
+        for (int i = 0; i < qMin(5, sectorSorted.size()); ++i) {
+            const StrategyItem &it = sectorSorted[i];
+            const QString nameHtml = "<a href='jump-" + QString::number(it.origIdx) + "'>" + it.name + "</a>";
             h += "<tr><td>" + nameHtml + "</td><td style='color:" + clr(it.forecastScore) + ";font-weight:700;'>" + num(it.forecastScore) + "</td>"
                 "<td style='font-size:11px;'>" + it.strategyLabel + "</td></tr>";
         }
         h += "</table></div>";
 
         h += "<div style='flex:1;'>";
-        h += "<div style='font-size:12px;font-weight:700;color:#DC2626;margin-bottom:6px;'>&#9660; 建议回避 Top5</div>";
-        h += "<table class='fund'><tr><th>对象</th><th>评分</th><th>策略</th></tr>";
-        for (int i = sorted.size() - 1; i >= qMax(0, sorted.size() - 5); --i) {
-            const StrategyItem &it = sorted[i];
-            const QString nameHtml = it.isIndex
-                ? ("<a href='jumpi-" + it.indexKey + "'>" + it.name + "</a> <span style='font-size:10px;color:#7C3AED;'>[指数]</span>")
-                : ("<a href='jump-" + QString::number(it.origIdx) + "'>" + it.name + "</a>");
+        h += "<div style='font-size:12px;font-weight:700;color:#DC2626;margin-bottom:6px;'>&#9660; 建议回避板块 Top5</div>";
+        h += "<table class='fund'><tr><th>板块</th><th>评分</th><th>策略</th></tr>";
+        for (int i = sectorSorted.size() - 1; i >= qMax(0, sectorSorted.size() - 5); --i) {
+            const StrategyItem &it = sectorSorted[i];
+            const QString nameHtml = "<a href='jump-" + QString::number(it.origIdx) + "'>" + it.name + "</a>";
             h += "<tr><td>" + nameHtml + "</td><td style='color:" + clr(it.forecastScore) + ";font-weight:700;'>" + num(it.forecastScore) + "</td>"
                 "<td style='font-size:11px;'>" + it.strategyLabel + "</td></tr>";
         }
         h += "</table></div>";
 
         h += "</div>";
+
+        // 指数方向参考（独立展示）
+        if (!indexSorted.isEmpty()) {
+            h += "<div style='margin-top:10px;'>";
+            h += "<div style='font-size:12px;font-weight:700;color:#7C3AED;margin-bottom:6px;'>&#9679; 指数方向参考</div>";
+            h += "<table class='fund'><tr><th>指数</th><th>评分</th><th>方向</th></tr>";
+            for (const StrategyItem &it : indexSorted) {
+                const QString nameHtml = "<a href='jumpi-" + it.indexKey + "'>" + it.name + "</a>";
+                h += "<tr><td>" + nameHtml + "</td><td style='color:" + clr(it.forecastScore) + ";font-weight:700;'>" + num(it.forecastScore) + "</td>"
+                    "<td style='font-size:11px;'>" + it.strategyLabel + "</td></tr>";
+            }
+            h += "</table></div>";
+        }
 
         h += "<div style='margin-top:8px;padding:10px 14px;border:1px solid " + t.cardBorder + ";border-radius:10px;font-size:12px;background:" + t.narrativeBg + ";'>"
             "<b style='color:" + t.sectionTitleColor + ";'>仓位建议</b> &nbsp;";
@@ -2135,21 +2152,22 @@ QString MainWindow::buildStrategyHtml(const AnalysisResult &analysis) const
             int increaseN = 0, holdN = 0, decreaseN = 0;
             double avgForecast = 0;
             QStringList topBuy, topSell;
-            for (const StrategyItem &it : sorted) {
+            // 仅用板块数据统计，指数单独展示方向参考
+            for (const StrategyItem &it : sectorSorted) {
                 if (it.action == AdviceAction::Increase) ++increaseN;
                 else if (it.action == AdviceAction::Decrease) ++decreaseN;
                 else ++holdN;
                 avgForecast += it.forecastScore;
             }
-            avgForecast /= qMax(1, sorted.size());
+            avgForecast /= qMax(1, sectorSorted.size());
 
-            for (int i = 0; i < qMin(3, sorted.size()); ++i) {
-                if (sorted[i].forecastScore > 0.05)
-                    topBuy.push_back(sorted[i].name + (sorted[i].isIndex ? QString::fromUtf8("（指数）") : ""));
+            for (int i = 0; i < qMin(3, sectorSorted.size()); ++i) {
+                if (sectorSorted[i].forecastScore > 0.05)
+                    topBuy.push_back(sectorSorted[i].name);
             }
-            for (int i = sorted.size() - 1; i >= qMax(0, sorted.size() - 3); --i) {
-                if (sorted[i].forecastScore < -0.05)
-                    topSell.push_back(sorted[i].name + (sorted[i].isIndex ? QString::fromUtf8("（指数）") : ""));
+            for (int i = sectorSorted.size() - 1; i >= qMax(0, sectorSorted.size() - 3); --i) {
+                if (sectorSorted[i].forecastScore < -0.05)
+                    topSell.push_back(sectorSorted[i].name);
             }
 
             QString strategyLevel;
@@ -2208,7 +2226,7 @@ QString MainWindow::buildStrategyHtml(const AnalysisResult &analysis) const
             int totalStrategies = 0;
             double bestOverallWR = 0;
             QString bestOverallName, bestOverallSector;
-            for (const StrategyItem &it : sorted) {
+            for (const StrategyItem &it : sectorSorted) {
                 if (!it.sector) continue;
                 for (const StrategyBacktest &bt : it.sector->backtestResults) {
                     ++totalStrategies;

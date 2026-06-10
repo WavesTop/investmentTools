@@ -57,18 +57,18 @@ void reportProgress(const ProgressCallback &cb, int pct, const QString &stage)
 
 AdviceAction chooseAction(double forecast)
 {
-    if (forecast >= 0.15) return AdviceAction::Increase;
-    if (forecast <= -0.12) return AdviceAction::Decrease;
+    // 阈值加宽+对称，减少盘中微小波动导致的标签跳变
+    if (forecast >= 0.22) return AdviceAction::Increase;
+    if (forecast <= -0.22) return AdviceAction::Decrease;
     return AdviceAction::Hold;
 }
 
 QString toTrendSummary(double forecast, double todayPct, double mom5d)
 {
-    // 与 chooseAction 使用相同阈值边界: >=0.15 增配, <=-0.12 减配
-    if (forecast >= 0.30 && mom5d > 1.5) return "强势看多";
-    if (forecast >= 0.15) return "偏多";
-    if (forecast <= -0.25 && mom5d < -1.5) return "强势看空";
-    if (forecast <= -0.12) return "偏空";
+    if (forecast >= 0.40 && mom5d > 1.5) return "强势看多";
+    if (forecast >= 0.22) return "偏多";
+    if (forecast <= -0.40 && mom5d < -1.5) return "强势看空";
+    if (forecast <= -0.22) return "偏空";
     if (qAbs(forecast) < 0.05 && qAbs(todayPct) < 0.5 && qAbs(mom5d) < 1.0) return "横盘震荡";
     return "方向不明";
 }
