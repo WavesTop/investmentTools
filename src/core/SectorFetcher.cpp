@@ -222,6 +222,159 @@ QVector<KBar> fetchSinaBars(const QString &sinaSymbol, int datalen)
     return bars;
 }
 
+// 腾讯K线API——支持ETF/股票/指数，稳定性最高
+QVector<KBar> fetchTencentEtfBars(const QString &qqSymbol, int limit = 250)
+{
+    if (qqSymbol.isEmpty()) return {};
+    const QString url = QString(
+        "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?"
+        "param=%1,day,,,%2,qfq").arg(qqSymbol).arg(limit);
+    const auto r = HttpClient::get(url, 10000, 1);
+    if (!r.ok || r.body.isEmpty()) return {};
+    const QJsonDocument doc = QJsonDocument::fromJson(r.body.toUtf8());
+    if (doc.isNull()) return {};
+    const QJsonObject data = doc.object().value("data").toObject();
+    const QJsonObject symData = data.value(qqSymbol).toObject();
+    QJsonArray dayArr = symData.value("day").toArray();
+    if (dayArr.isEmpty()) dayArr = symData.value("qfqday").toArray();
+    if (dayArr.isEmpty()) return {};
+    QVector<KBar> bars;
+    bars.reserve(dayArr.size());
+    for (const QJsonValue &v : dayArr) {
+        const QJsonArray row = v.toArray();
+        if (row.size() < 6) continue;
+        KBar b;
+        b.date   = row[0].toString();
+        b.open   = row[1].toString().toDouble();
+        b.close  = row[2].toString().toDouble();
+        b.high   = row[3].toString().toDouble();
+        b.low    = row[4].toString().toDouble();
+        b.volume = row[5].toString().toDouble();
+        if (b.close > 0) bars.push_back(b);
+    }
+    for (int i = 1; i < bars.size(); ++i) {
+        const double prev = bars[i-1].close;
+        if (prev > 0) bars[i].changePct = (bars[i].close - prev) / prev * 100.0;
+    }
+    return bars;
+}
+
+// 同花顺板块K线映射（板块名 -> THS板块代码）
+// prefix: "bk" = 二级行业/概念板块，"hs" = 一级行业
+struct ThsMapping { QString keyword; QString thsCode; QString prefix; };
+static const QList<ThsMapping> kThsCodeMap = {
+    // 一级行业 (hs_1Bxxxx) — 用户通常对照的大类
+    { "有色金属",   "1B0819", "hs" }, { "有色",       "1B0819", "hs" },
+    // 二级行业 (bk_881xxx)
+    { "半导体",     "881121", "bk" }, { "煤炭",       "881105", "bk" },
+    { "钢铁",       "881112", "bk" }, { "建筑材料",   "881115", "bk" }, { "建材",       "881115", "bk" },
+    { "电力设备",   "881120", "bk" }, { "电力",       "881145", "bk" },
+    { "光学",       "881122", "bk" }, { "消费电子",   "881124", "bk" },
+    { "汽车",       "881125", "bk" }, { "汽车零部件", "881126", "bk" },
+    { "通信设备",   "881129", "bk" }, { "通信",       "881129", "bk" },
+    { "计算机",     "881130", "bk" }, { "计算机应用", "881130", "bk" },
+    { "白色家电",   "881131", "bk" }, { "家电",       "881131", "bk" },
+    { "食品饮料",   "881133", "bk" }, { "食品",       "881134", "bk" },
+    { "纺织服装",   "881135", "bk" }, { "纺织",       "881135", "bk" },
+    { "中药",       "881141", "bk" }, { "生物",       "881142", "bk" },
+    { "医疗器械",   "881144", "bk" }, { "银行",       "881155", "bk" },
+    { "保险",       "881156", "bk" }, { "证券",       "881157", "bk" },
+    { "房地产",     "881153", "bk" }, { "地产",       "881153", "bk" },
+    { "旅游",       "881160", "bk" }, { "文化传媒",   "881164", "bk" }, { "传媒",       "881164", "bk" },
+    { "军工",       "881166", "bk" }, { "工业金属",   "881168", "bk" },
+    { "贵金属",     "881169", "bk" }, { "黄金",       "881169", "bk" },
+    { "小金属",     "881170", "bk" }, { "稀土",       "881170", "bk" },
+    { "白酒",       "881273", "bk" }, { "游戏",       "881275", "bk" },
+    { "软件",       "881272", "bk" }, { "化学原料",   "881108", "bk" },
+    { "化学制品",   "881109", "bk" }, { "化工",       "881108", "bk" },
+    { "养殖",       "881102", "bk" }, { "农业",       "881101", "bk" },
+    { "环保",       "881181", "bk" }, { "物流",       "881152", "bk" },
+    { "建筑",       "881116", "bk" }, { "电子",       "881123", "bk" },
+    { "医药",       "881140", "bk" }, { "创新药",     "886015", "bk" },
+    // 概念板块 (884xxx)
+    { "光伏",       "884302", "bk" }, { "锂电池",     "884309", "bk" },
+    { "风电",       "884307", "bk" }, { "水泥",       "884060", "bk" },
+    { "玻璃",       "884059", "bk" }, { "铝",         "884053", "bk" },
+    { "铜",         "884054", "bk" },
+    // 概念板块 (885xxx)
+    { "5G",         "885556", "bk" }, { "军工概念",   "885700", "bk" },
+    { "消费电子概念", "885800", "bk" }, { "芯片",     "885756", "bk" },
+    { "信创",       "886013", "bk" }, { "猪肉",       "885573", "bk" },
+    { "核电",       "885571", "bk" }, { "无人机",     "885564", "bk" },
+    // 概念板块 (886xxx)
+    { "人工智能",   "886019", "bk" }, { "ChatGPT",    "886031", "bk" },
+    { "机器人",     "886069", "bk" }, { "人形机器人", "886069", "bk" },
+    { "低空经济",   "886067", "bk" }, { "商业航天",   "886078", "bk" },
+    { "算力",       "886050", "bk" }, { "液冷",       "886044", "bk" },
+    { "固态电池",   "886032", "bk" }, { "DeepSeek",   "886100", "bk" },
+    { "AI应用",     "886108", "bk" }, { "AI智能体",   "886099", "bk" },
+    { "存储",       "886042", "bk" }, { "光刻",       "886054", "bk" },
+    { "储能",       "884312", "bk" }, { "新能源",     "884150", "bk" },
+    { "充电桩",     "886001", "bk" }, { "碳中和",     "884302", "bk" },
+    { "数据中心",   "886044", "bk" },
+};
+
+struct ThsCodeResult { QString code; QString prefix; };
+ThsCodeResult findThsCode(const QString &sectorName)
+{
+    for (const ThsMapping &m : kThsCodeMap) {
+        if (sectorName.contains(m.keyword)) return { m.thsCode, m.prefix };
+    }
+    return {};
+}
+
+// 同花顺K线API: d.10jqka.com.cn (JSONP格式)
+// prefix: "bk" = 板块, "hs" = 一级行业指数
+QVector<KBar> fetchThsKline(const QString &thsCode, const QString &prefix = "bk", int limit = 250)
+{
+    if (thsCode.isEmpty()) return {};
+    const QString url = QString("https://d.10jqka.com.cn/v4/line/%1_%2/01/last.js").arg(prefix, thsCode);
+    const auto r = HttpClient::get(url, 8000, 1);
+    if (!r.ok || r.body.isEmpty()) return {};
+
+    // JSONP -> JSON: quotebridge_v4_line_bk_XXXXXX_01_last({...})
+    const int lp = r.body.indexOf('(');
+    const int rp = r.body.lastIndexOf(')');
+    if (lp < 0 || rp <= lp) return {};
+    const QJsonDocument doc = QJsonDocument::fromJson(r.body.mid(lp + 1, rp - lp - 1).toUtf8());
+    if (doc.isNull()) return {};
+    const QJsonObject root = doc.object();
+    const QString dataStr = root.value("data").toString();
+    if (dataStr.isEmpty()) return {};
+
+    const QStringList records = dataStr.split(';');
+    QVector<KBar> bars;
+    bars.reserve(records.size());
+    for (const QString &rec : records) {
+        const QStringList parts = rec.split(',');
+        if (parts.size() < 5) continue;
+        KBar b;
+        // THS格式: date,open,high,low,close,volume,amount,...
+        const QString dateRaw = parts[0].trimmed();
+        if (dateRaw.length() == 8) {
+            b.date = dateRaw.left(4) + "-" + dateRaw.mid(4, 2) + "-" + dateRaw.mid(6, 2);
+        } else {
+            b.date = dateRaw;
+        }
+        b.open   = parts[1].toDouble();
+        b.high   = parts[2].toDouble();
+        b.low    = parts[3].toDouble();
+        b.close  = parts[4].toDouble();
+        if (parts.size() > 5) b.volume = parts[5].toDouble();
+        if (parts.size() > 6) b.amount = parts[6].toDouble();
+        if (b.close > 0) bars.push_back(b);
+    }
+    // 计算changePct
+    for (int i = 1; i < bars.size(); ++i) {
+        const double prev = bars[i-1].close;
+        if (prev > 0) bars[i].changePct = (bars[i].close - prev) / prev * 100.0;
+    }
+    if (bars.size() > limit) bars = bars.mid(bars.size() - limit);
+    qDebug() << "[ThsKline] OK:" << thsCode << "name:" << root.value("name").toString()
+             << "bars:" << bars.size();
+    return bars;
+}
+
 QVector<double> closesFromBars(const QVector<KBar> &bars)
 {
     QVector<double> closes;
@@ -278,45 +431,108 @@ QVector<KBar> fetchEmSectorDailyBars(const QString &emCode, int limit = 250)
 
 struct SinaEtfMapping { QString keyword; QString sinaSymbol; };
 static const QList<SinaEtfMapping> kSinaEtfMap = {
+    // 酒类
     { "酿酒", "sz161725" }, { "白酒", "sz161725" },
+    // 半导体&芯片
     { "半导体", "sh512480" }, { "芯片", "sz159995" },
+    // 新能源
     { "光伏", "sh515790" }, { "新能源", "sh516160" }, { "锂电池", "sz159840" },
+    { "风电", "sh516660" }, { "电网", "sz159611" }, { "碳中和", "sz159790" },
+    { "储能", "sz159566" }, { "充电桩", "sz159515" },
+    // 医药健康
     { "医药", "sh512010" }, { "医疗", "sh512170" }, { "创新药", "sz159992" },
-    { "中药", "sh560080" }, { "生物", "sh515120" },
-    { "汽车", "sh516110" }, { "煤炭", "sh515220" }, { "钢铁", "sh515210" },
-    { "有色", "sh512400" }, { "稀土", "sh516150" }, { "黄金", "sh518880" },
-    { "石油", "sz162719" }, { "化工", "sh516020" },
+    { "中药", "sh560080" }, { "生物", "sh515120" }, { "医疗器械", "sh516580" },
+    { "CRO", "sz159992" },
+    // 汽车&制造
+    { "汽车", "sh516110" }, { "新能源汽车", "sh516110" },
+    { "机械", "sh516960" }, { "电气", "sh516850" }, { "电气设备", "sh516850" },
+    // 周期资源
+    { "煤炭", "sh515220" }, { "钢铁", "sh515210" }, { "有色", "sh512400" },
+    { "稀土", "sh516150" }, { "黄金", "sh518880" }, { "石油", "sz162719" },
+    { "化工", "sh516020" }, { "建材", "sz159745" }, { "水泥", "sz159745" },
+    { "玻璃", "sz159514" },
+    // 金融
     { "军工", "sh512660" }, { "银行", "sh512800" }, { "证券", "sh512880" },
     { "保险", "sh512070" }, { "金融", "sh512640" },
-    { "房地产", "sh512200" }, { "地产", "sh512200" },
-    { "建材", "sz159745" }, { "建筑", "sz159639" },
+    // 地产&基建
+    { "房地产", "sh512200" }, { "地产", "sh512200" }, { "建筑", "sz159639" },
+    { "基建", "sz159638" }, { "一带一路", "sz159638" },
+    // 电力&电子
     { "电力", "sz159611" }, { "电子", "sz159997" }, { "家电", "sz159996" },
-    { "食品", "sh515710" }, { "传媒", "sh512980" }, { "游戏", "sh516190" },
-    { "旅游", "sz159766" }, { "消费", "sz159928" },
+    // 消费
+    { "食品", "sh515710" }, { "食品饮料", "sh515710" }, { "消费", "sz159928" },
+    { "消费电子", "sz159732" }, { "旅游", "sz159766" },
+    { "纺织", "sz159928" }, { "服装", "sz159928" }, { "养老", "sz159928" },
+    // 传媒&娱乐
+    { "传媒", "sh512980" }, { "游戏", "sh516190" },
+    // 交通&物流
     { "交运", "sz159666" }, { "物流", "sz159666" }, { "交通", "sz159666" },
-    { "机械", "sh516960" }, { "环保", "sh516570" }, { "通信", "sh515880" },
-    { "计算机", "sh512720" }, { "软件", "sh512720" },
+    { "航空", "sz159666" }, { "港口", "sz159666" },
+    // 科技
+    { "计算机", "sh512720" }, { "软件", "sh512720" }, { "计算机应用", "sh512720" },
     { "人工智能", "sz159819" }, { "机器人", "sh562500" },
-    { "储能", "sz159566" }, { "农业", "sz159825" },
     { "科技", "sh515000" }, { "互联网", "sh513050" },
-    { "航空", "sz159819" }, { "港口", "sz159666" },
-    { "电气", "sz159611" }, { "农林", "sz159825" },
     { "算力", "sz159530" }, { "数据中心", "sz159530" },
-    { "风电", "sh516660" }, { "电网", "sz159611" },
-    { "碳中和", "sz159790" }, { "自动驾驶", "sz159530" },
+    { "自动驾驶", "sz159530" }, { "ChatGPT", "sz159819" },
     { "云计算", "sh516510" }, { "信创", "sh562030" },
     { "数字经济", "sh562560" }, { "低空经济", "sz159730" },
-    { "跨境电商", "sz159792" }, { "消费电子", "sz159732" },
+    // 电信&通信
+    { "通信", "sh515880" }, { "电信", "sh515880" }, { "5G", "sh515050" },
+    { "物联网", "sz159786" },
+    // 安全&区块链
+    { "区块链", "sz159523" }, { "网络安全", "sz159729" },
+    // 农业
+    { "农业", "sz159825" }, { "农林", "sz159825" }, { "乡村振兴", "sz159825" },
     { "养殖", "sh516670" }, { "猪肉", "sh516670" },
-    { "水泥", "sz159745" }, { "玻璃", "sz159514" },
+    // 军工&航天
     { "商业航天", "sh515060" }, { "航天", "sh515060" },
-    { "纺织", "sz159928" }, { "服装", "sz159928" },
-    { "电信", "sh515880" }, { "5G", "sh515050" },
-    { "物联网", "sz159786" }, { "区块链", "sz159523" },
-    { "网络安全", "sz159729" }, { "CRO", "sz159992" },
+    // 央企&主题
     { "中字头", "sh512270" }, { "央企", "sh512270" },
-    { "一带一路", "sz159638" }, { "基建", "sz159638" },
-    { "乡村振兴", "sz159825" }, { "养老", "sz159928" },
+    { "跨境电商", "sz159792" },
+    // 环保
+    { "环保", "sh516570" },
+    // 其他概念板块
+    { "稀缺资源", "sh512400" }, { "有色金属", "sh512400" },
+    { "贵金属", "sh518880" }, { "大金融", "sh512640" },
+    { "大消费", "sz159928" }, { "国防", "sh512660" },
+    { "装备制造", "sh516960" }, { "工业母机", "sh516960" },
+    { "新材料", "sh516020" }, { "化学", "sh516020" },
+    { "能源", "sh516160" }, { "电池", "sz159840" },
+    { "光学", "sz159997" }, { "显示", "sz159997" },
+    { "车联网", "sz159530" }, { "智能驾驶", "sz159530" },
+    { "无人驾驶", "sz159530" }, { "卫星", "sh515060" },
+    { "导航", "sh515060" }, { "北斗", "sh515060" },
+    { "华为", "sz159819" }, { "鸿蒙", "sz159819" },
+    { "苹果", "sz159732" }, { "特斯拉", "sh516110" },
+    { "元宇宙", "sh516190" }, { "虚拟现实", "sh516190" },
+    { "VR", "sh516190" }, { "AR", "sh516190" },
+    { "OLED", "sz159997" }, { "面板", "sz159997" },
+    { "PCB", "sz159997" }, { "被动元件", "sz159997" },
+    { "功率", "sh512480" }, { "第三代半导体", "sh512480" },
+    { "EDA", "sh512480" }, { "封测", "sh512480" },
+    { "光刻", "sh512480" },
+    { "存储", "sz159530" }, { "内存", "sz159530" },
+    { "固态电池", "sz159840" }, { "钠离子", "sz159840" },
+    { "氢能", "sz159566" }, { "绿电", "sz159611" },
+    { "核电", "sz159611" }, { "火电", "sz159611" },
+    { "天然气", "sz162719" }, { "油气", "sz162719" },
+    { "铜", "sh512400" }, { "铝", "sh512400" }, { "锌", "sh512400" },
+    { "锂", "sh516150" }, { "钴", "sh516150" }, { "镍", "sh512400" },
+    { "白银", "sh518880" },
+    { "养猪", "sh516670" }, { "畜牧", "sh516670" },
+    { "种业", "sz159825" }, { "转基因", "sz159825" },
+    { "粮食", "sz159825" }, { "大豆", "sz159825" },
+    { "教育", "sz159928" }, { "在线教育", "sz159928" },
+    { "酒店", "sz159766" }, { "餐饮", "sz159766" },
+    { "快递", "sz159666" }, { "航运", "sz159666" },
+    { "铁路", "sz159666" }, { "公路", "sz159666" },
+    { "地铁", "sz159666" }, { "城轨", "sz159666" },
+    { "工程", "sz159639" }, { "装修", "sz159745" }, { "家装", "sz159745" },
+    { "家居", "sz159996" }, { "小家电", "sz159996" },
+    { "白色家电", "sz159996" }, { "厨电", "sz159996" },
+    { "乳业", "sh515710" }, { "调味品", "sh515710" },
+    { "预制菜", "sh515710" }, { "零食", "sh515710" },
+    { "啤酒", "sh515710" }, { "饮料", "sh515710" },
 };
 
 QString findSinaSymbol(const QString &sectorName)
@@ -416,7 +632,7 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
     qDebug() << "[SectorFetcher] === 拉取新浪概念板块 (newFLJK) ===";
     {
         const HttpClient::HttpResult cr = HttpClient::getGbk(
-            "http://money.finance.sina.com.cn/q/view/newFLJK.php?param=class", 12000, 2);
+            "https://money.finance.sina.com.cn/q/view/newFLJK.php?param=class", 12000, 2);
         if (cr.ok && !cr.body.isEmpty()) {
             const int added = parseSinaVarData(cr.body, QString::fromUtf8("新浪概念"));
             qDebug() << "[SectorFetcher] 新浪概念板块获取:" << added << "个";
@@ -516,28 +732,41 @@ QList<SectorInfo> SectorFetcher::fetchSectorList() const
     // 行业板块(t:3)和概念板块(t:2)使用不同的BK编码体系
     // 代码会随东方财富更新而变化，实际运行时以push2实时返回为准
     static const QList<QPair<QString, QString>> kEssentialSectors = {
-        {"BK1036", "半导体"},
-        {"BK1408", "机器人"},
-        {"BK1131", "人工智能"},
-        {"BK1155", "算力"},
-        {"BK1011", "光伏"},
-        {"BK0574", "锂电池"},
-        {"BK0989", "储能"},
-        {"BK1157", "数据中心"},
-        {"BK0493", "军工"},
-        {"BK0896", "白酒"},
-        {"BK0465", "医药"},
-        {"BK0478", "新能源"},
-        {"BK0438", "消费"},
-        {"BK0475", "银行"},
-        {"BK0473", "证券"},
-        {"BK0428", "房地产"},
-        {"BK0474", "保险"},
-        {"BK0437", "煤炭"},
-        {"BK0478", "新能源汽车"},
-        {"BK0447", "化工"},
-        {"BK0448", "钢铁"},
-        {"BK0466", "家电"},
+        // 科技
+        {"BK1036", "半导体"}, {"BK1131", "人工智能"}, {"BK1155", "算力"},
+        {"BK1157", "数据中心"}, {"BK1408", "机器人"}, {"BK0720", "芯片"},
+        {"BK0849", "云计算"}, {"BK0891", "信创"}, {"BK1009", "数字经济"},
+        {"BK0930", "物联网"}, {"BK0929", "网络安全"}, {"BK1145", "ChatGPT"},
+        {"BK0715", "计算机应用"}, {"BK0802", "5G"},
+        // 新能源
+        {"BK1011", "光伏"}, {"BK0574", "锂电池"}, {"BK0989", "储能"},
+        {"BK0478", "新能源"}, {"BK0485", "新能源汽车"}, {"BK0814", "风电"},
+        {"BK1097", "碳中和"}, {"BK0850", "充电桩"},
+        // 消费&医药
+        {"BK0896", "白酒"}, {"BK0438", "消费"}, {"BK0465", "医药"},
+        {"BK0808", "创新药"}, {"BK0659", "中药"}, {"BK0826", "医疗器械"},
+        {"BK0816", "食品饮料"}, {"BK0466", "家电"}, {"BK0482", "旅游"},
+        {"BK0764", "消费电子"},
+        // 金融
+        {"BK0475", "银行"}, {"BK0473", "证券"}, {"BK0474", "保险"},
+        {"BK0476", "金融"},
+        // 周期
+        {"BK0437", "煤炭"}, {"BK0448", "钢铁"}, {"BK0447", "化工"},
+        {"BK0428", "房地产"}, {"BK0477", "有色金属"}, {"BK0484", "稀土"},
+        {"BK0868", "黄金"}, {"BK0468", "石油"}, {"BK0460", "电力"},
+        {"BK0446", "建材"}, {"BK0500", "水泥"},
+        // 军工&航天
+        {"BK0493", "军工"}, {"BK0953", "商业航天"}, {"BK1191", "低空经济"},
+        // 传媒&互联网
+        {"BK0456", "传媒"}, {"BK0832", "游戏"}, {"BK0796", "互联网"},
+        // 交通&物流
+        {"BK0479", "汽车"}, {"BK0494", "交运"}, {"BK0487", "电气设备"},
+        // 农业
+        {"BK0480", "农业"}, {"BK0843", "养殖"},
+        // 其他
+        {"BK0969", "区块链"}, {"BK0713", "通信"}, {"BK0459", "纺织服装"},
+        {"BK0469", "机械"}, {"BK0455", "环保"}, {"BK0462", "建筑"},
+        {"BK0483", "电子"}, {"BK1052", "中字头"},
     };
     int fallbackAdded = 0;
     for (const auto &pair : kEssentialSectors) {
@@ -594,7 +823,7 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
     const QHash<QString, SinaFlowEntry> flowMap = fetchSinaFlowBatch();
 
     const int kDailyBars = 250;
-    const int kMaxConcurrent = 4;
+    const int kMaxConcurrent = 3;
     QSemaphore semaphore(kMaxConcurrent);
     QAtomicInt requestCounter(0);
 
@@ -602,6 +831,8 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
         int index;
         QVector<KBar> bars;
         QString source;
+        double thsChangePct = 0.0;
+        bool   thsChangePctValid = false;
     };
 
     QMutex resultMutex;
@@ -619,31 +850,52 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
                                               &requestCounter]() {
             semaphore.acquire();
 
-            // 防限流: 每4个请求后稍作等待
             const int seq = requestCounter.fetchAndAddRelaxed(1);
-            if (seq > 0 && seq % 4 == 0) {
-                QThread::msleep(300);
+            if (seq > 0 && seq % 3 == 0) {
+                QThread::msleep(150);
             }
 
             FetchResult fr;
             fr.index = i;
 
-            // 优先: 东方财富板块原生K线（真实板块综合价格）
-            if (!emCode.isEmpty()) {
+            // === 最高优先: 同花顺板块K线（真实板块指数，数据最准确）===
+            const ThsCodeResult thsResult = findThsCode(name);
+            if (!thsResult.code.isEmpty()) {
+                QVector<KBar> thsBars = fetchThsKline(thsResult.code, thsResult.prefix, kDailyBars);
+                if (thsBars.size() >= 2) {
+                    fr.bars = thsBars;
+                    fr.source = QString::fromUtf8("同花顺板块");
+                    const double prevClose = thsBars[thsBars.size() - 2].close;
+                    const double lastClose = thsBars.last().close;
+                    if (prevClose > 0) {
+                        fr.thsChangePct = (lastClose - prevClose) / prevClose * 100.0;
+                        fr.thsChangePctValid = true;
+                    }
+                }
+            }
+
+            // 回退1: 腾讯ETF代理（稳定性最高，几乎不限流）
+            const QString etfSym = findSinaSymbol(name);
+            if (fr.bars.isEmpty() && !etfSym.isEmpty()) {
+                fr.bars = fetchTencentEtfBars(etfSym, kDailyBars);
+                if (!fr.bars.isEmpty()) {
+                    fr.source = QString::fromUtf8("腾讯ETF代理");
+                }
+            }
+
+            // 回退2: 东方财富板块原生K线
+            if (fr.bars.isEmpty() && !emCode.isEmpty()) {
                 fr.bars = fetchEmSectorDailyBars(emCode, kDailyBars);
                 if (!fr.bars.isEmpty()) {
                     fr.source = QString::fromUtf8("东方财富板块");
                 }
             }
 
-            // 回退: 新浪ETF代理（仅当东方财富无数据时）
-            if (fr.bars.isEmpty()) {
-                const QString sinaSym = findSinaSymbol(name);
-                if (!sinaSym.isEmpty()) {
-                    fr.bars = fetchSinaBars(sinaSym, kDailyBars);
-                    if (!fr.bars.isEmpty()) {
-                        fr.source = QString::fromUtf8("新浪ETF代理");
-                    }
+            // 回退3: 新浪ETF代理
+            if (fr.bars.isEmpty() && !etfSym.isEmpty()) {
+                fr.bars = fetchSinaBars(etfSym, kDailyBars);
+                if (!fr.bars.isEmpty()) {
+                    fr.source = QString::fromUtf8("新浪ETF代理");
                 }
             }
 
@@ -658,7 +910,8 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
     for (QFuture<void> &f : futures)
         f.waitForFinished();
 
-    int klineEmOk = 0, klineEtfOk = 0, flowOk = 0;
+    int klineThsOk = 0, klineEmOk = 0, klineTencentOk = 0, klineSinaOk = 0, flowOk = 0;
+    int thsChangePctCorrected = 0;
     for (const FetchResult &fr : results) {
         SectorInfo &si = sectors[fr.index];
         const QVector<double> allCloses = closesFromBars(fr.bars);
@@ -670,11 +923,24 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
         if (!si.dailyBars.isEmpty()) {
             si.lastDataDate = si.dailyBars.last().date;
         }
-        if (fr.source.contains(QString::fromUtf8("东方财富"))) ++klineEmOk;
-        else if (!fr.bars.isEmpty()) ++klineEtfOk;
+        if (fr.source.contains(QString::fromUtf8("同花顺"))) ++klineThsOk;
+        else if (fr.source.contains(QString::fromUtf8("东方财富"))) ++klineEmOk;
+        else if (fr.source.contains(QString::fromUtf8("腾讯"))) ++klineTencentOk;
+        else if (fr.source.contains(QString::fromUtf8("新浪"))) ++klineSinaOk;
 
-        // K线仅在实时changePct缺失 且 K线含当日bar时才补充，避免用昨日数据冒充今日
-        if (si.dailyBars.size() >= 2 && qAbs(si.changePct) < 1e-9) {
+        // 同花顺changePct最权威：当THS给出了有效的changePct时，用它覆盖
+        if (fr.thsChangePctValid) {
+            if (si.changePctValid && qAbs(si.changePct - fr.thsChangePct) > 0.5) {
+                qDebug() << "[SectorFetcher] THS修正changePct:" << si.name
+                         << "旧值:" << si.changePct << "% 新值:" << fr.thsChangePct << "%";
+            }
+            si.changePct = fr.thsChangePct;
+            si.changePctValid = true;
+            ++thsChangePctCorrected;
+        }
+
+        // K线仅在changePct仍缺失 且 K线含当日bar时才补充
+        if (!si.changePctValid && si.dailyBars.size() >= 2) {
             const QString today = QDate::currentDate().toString("yyyy-MM-dd");
             const QString lastBarDate = si.dailyBars.last().date;
             if (lastBarDate == today) {
@@ -788,9 +1054,13 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
         }
     }
 
-    qDebug() << "[SectorFetcher] MarketData: 东方财富K线" << klineEmOk
-             << "ETF代理K线" << klineEtfOk
-             << "总" << (klineEmOk + klineEtfOk) << "/" << sectors.size()
+    const int totalKline = klineThsOk + klineEmOk + klineTencentOk + klineSinaOk;
+    qDebug() << "[SectorFetcher] MarketData: 同花顺K线" << klineThsOk
+             << "东方财富K线" << klineEmOk
+             << "腾讯K线" << klineTencentOk
+             << "新浪K线" << klineSinaOk
+             << "总" << totalKline << "/" << sectors.size()
+             << "THS修正changePct" << thsChangePctCorrected
              << "资金流" << flowOk;
 }
 
