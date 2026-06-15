@@ -2854,8 +2854,8 @@ QString MainWindow::buildIndexHtml(const IndexSnapshot &idx, bool aiAvailable, b
         if (closes.size() >= 21 && closes[closes.size() - 21] > 0) {
             s.twentyDayMomentum = (closes.last() - closes[closes.size() - 21]) / closes[closes.size() - 21] * 100.0;
         }
-        // 用成交量构建资金流代理序列（最近20日）
-        const int start = qMax(0, s.dailyBars.size() - 20);
+        const int flowSpan = qMin(s.dailyBars.size(), 60);
+        const int start = s.dailyBars.size() - flowSpan;
         for (int i = start; i < s.dailyBars.size(); ++i) {
             s.fundFlowSeries.push_back(s.dailyBars[i].volume / 1e8);
         }
@@ -2932,7 +2932,10 @@ QString MainWindow::buildIndexHtml(const IndexSnapshot &idx, bool aiAvailable, b
     return buildSectorHtml(s, aiAvailable, simpleMode);
 }
 
-// 绘制单个子面板（series、panelRect、标题、颜色）
+static void drawDateLabels(QPainter &painter, const QVector<KBar> &bars,
+                           int barOffset, int barCount,
+                           const QRectF &dataRect, const QColor &textColor, int labelCount = 5);
+
 static void drawSubPanel(QPainter &painter, const QVector<double> &series,
                          const QRectF &panelRect, const QString &title,
                          const QColor &lineColor, const QColor &gridColor,
@@ -3043,15 +3046,18 @@ static void drawSubPanel(QPainter &painter, const QVector<double> &series,
         "区间: " + changeStr);
 }
 
-// 绘制资金流柱状面板（正=流入红色，负=流出蓝色）
 static void drawFundFlowPanel(QPainter &painter, const QVector<double> &series,
                                const QRectF &panelRect, const QColor &gridColor,
-                               const QColor &axisTextColor, const QColor &bgColor)
+                               const QColor &axisTextColor, const QColor &bgColor,
+                               int alignedSlots = 0,
+                               const QVector<KBar> *barsForDates = nullptr,
+                               int dateOffset = 0, int dateCount = 0)
 {
     const double marginLeft = 52.0;
     const double marginRight = 12.0;
     const double titleH = 18.0;
-    const double bottomPad = 8.0;
+    const bool showDates = (barsForDates != nullptr && dateCount > 0);
+    const double bottomPad = showDates ? 14.0 : 8.0;
     const QRectF dataRect(
         panelRect.left() + marginLeft,
         panelRect.top() + titleH,
@@ -3064,29 +3070,30 @@ static void drawFundFlowPanel(QPainter &painter, const QVector<double> &series,
     painter.setPen(axisTextColor);
     painter.drawText(QRectF(panelRect.left() + marginLeft, panelRect.top(), 240, titleH),
                      Qt::AlignLeft | Qt::AlignVCenter,
-                     "主力资金流（近30日，亿元）");
+                     QString::fromUtf8("主力资金流（亿元）"));
 
     if (series.size() < 2) {
         QFont sf; sf.setPixelSize(11); painter.setFont(sf);
         painter.setPen(axisTextColor);
-        painter.drawText(dataRect, Qt::AlignCenter, "暂无资金流数据（仅限东方财富板块）");
+        painter.drawText(dataRect, Qt::AlignCenter, QString::fromUtf8("暂无资金流数据"));
+        if (showDates)
+            drawDateLabels(painter, *barsForDates, dateOffset, dateCount, dataRect, axisTextColor, 5);
         return;
     }
+
+    const int totalSlots = alignedSlots > 0 ? alignedSlots : series.size();
 
     double minV = *std::min_element(series.begin(), series.end());
     double maxV = *std::max_element(series.begin(), series.end());
     if (qFuzzyCompare(minV, maxV)) { minV -= 1.0; maxV += 1.0; }
-    // 使 0 轴在合适位置
     const double absMax = qMax(qAbs(minV), qAbs(maxV)) * 1.1;
     minV = -absMax; maxV = absMax;
     const double range = maxV - minV;
 
-    // 零轴
     const double zeroY = dataRect.bottom() - dataRect.height() * (-minV) / range;
     painter.setPen(QPen(gridColor, 1, Qt::DashLine));
     painter.drawLine(QPointF(dataRect.left(), zeroY), QPointF(dataRect.right(), zeroY));
 
-    // Y轴标签
     QFont sf; sf.setPixelSize(9); painter.setFont(sf);
     for (int i = 0; i <= 4; ++i) {
         double yFrac = static_cast<double>(i) / 4;
@@ -3100,14 +3107,15 @@ static void drawFundFlowPanel(QPainter &painter, const QVector<double> &series,
                          QString::number(val, 'f', 1));
     }
 
-    // 柱状图
-    const double barW = qMax(2.0, dataRect.width() / series.size() - 1.5);
-    const double dx = dataRect.width() / series.size();
+    const int flowStart = totalSlots - series.size();
+    const double dx = dataRect.width() / static_cast<double>(totalSlots);
+    const double barW = qMax(2.0, dx - 1.5);
     double totalFlow = 0;
     for (int i = 0; i < series.size(); ++i) {
         const double val = series[i];
         totalFlow += val;
-        const double barX = dataRect.left() + dx * i + (dx - barW) / 2.0;
+        const int slot = flowStart + i;
+        const double barX = dataRect.left() + dx * slot + (dx - barW) / 2.0;
         const double barY = val >= 0 ? dataRect.bottom() - dataRect.height() * (val - minV) / range
                                      : zeroY;
         const double barH = qAbs(val) / range * dataRect.height();
@@ -3115,13 +3123,17 @@ static void drawFundFlowPanel(QPainter &painter, const QVector<double> &series,
         painter.fillRect(QRectF(barX, barY, barW, barH), barColor);
     }
 
-    // 累计流入标注
     painter.setPen(totalFlow >= 0 ? QColor("#EF4444") : QColor("#3B82F6"));
     painter.setFont(tf);
-    const QString totalStr = (totalFlow >= 0 ? "累计净流入+" : "累计净流出")
-                            + QString::number(qAbs(totalFlow), 'f', 1) + "亿";
+    const QString totalStr = (totalFlow >= 0 ? QString::fromUtf8("累计净流入+")
+                                             : QString::fromUtf8("累计净流出"))
+                            + QString::number(qAbs(totalFlow), 'f', 1)
+                            + QString::fromUtf8("亿");
     painter.drawText(QRectF(dataRect.left() + 160, panelRect.top(), 200, titleH),
                      Qt::AlignLeft | Qt::AlignVCenter, totalStr);
+
+    if (showDates)
+        drawDateLabels(painter, *barsForDates, dateOffset, dateCount, dataRect, axisTextColor, 5);
 }
 
 static void drawSeriesLine(QPainter &painter, const QVector<double> &series,
@@ -3143,9 +3155,11 @@ static void drawSeriesLine(QPainter &painter, const QVector<double> &series,
 
 static void drawMACDPanel(QPainter &painter, const MACDResult &macd, int offset,
                           const QRectF &panelRect, const QColor &gridColor,
-                          const QColor &axisTextColor, const QColor &bgColor)
+                          const QColor &axisTextColor, const QColor &bgColor,
+                          const QVector<KBar> *barsForDates = nullptr, int dateOffset = 0, int dateCount = 0)
 {
-    const double marginLeft = 52.0, marginRight = 12.0, titleH = 18.0, bottomPad = 4.0;
+    const double marginLeft = 52.0, marginRight = 12.0, titleH = 18.0;
+    const double bottomPad = (barsForDates ? 14.0 : 4.0);
     const QRectF dataRect(panelRect.left() + marginLeft, panelRect.top() + titleH,
                           panelRect.width() - marginLeft - marginRight,
                           panelRect.height() - titleH - bottomPad);
@@ -3187,14 +3201,19 @@ static void drawMACDPanel(QPainter &painter, const MACDResult &macd, int offset,
     QVector<double> deaSlice = macd.dea.mid(offset);
     drawSeriesLine(painter, difSlice, dataRect, minV, range, QColor("#FF6F00"), 1.4);
     drawSeriesLine(painter, deaSlice, dataRect, minV, range, QColor("#3B82F6"), 1.4);
+
+    if (barsForDates && dateCount > 0)
+        drawDateLabels(painter, *barsForDates, dateOffset, dateCount, dataRect, axisTextColor, 5);
 }
 
 static void drawVolumePanel(QPainter &painter, const QVector<KBar> &bars, int offset,
                             const QVector<double> &volMA5, const QVector<double> &volMA10,
                             const QRectF &panelRect, const QColor &gridColor,
-                            const QColor &axisTextColor, const QColor &bgColor)
+                            const QColor &axisTextColor, const QColor &bgColor,
+                            bool showDateLabels = false)
 {
-    const double marginLeft = 52.0, marginRight = 12.0, titleH = 18.0, bottomPad = 4.0;
+    const double marginLeft = 52.0, marginRight = 12.0, titleH = 18.0;
+    const double bottomPad = showDateLabels ? 14.0 : 4.0;
     const QRectF dataRect(panelRect.left() + marginLeft, panelRect.top() + titleH,
                           panelRect.width() - marginLeft - marginRight,
                           panelRect.height() - titleH - bottomPad);
@@ -3233,11 +3252,14 @@ static void drawVolumePanel(QPainter &painter, const QVector<KBar> &bars, int of
         QVector<double> slice = volMA10.mid(offset);
         drawSeriesLine(painter, slice, dataRect, 0, maxVol, QColor("#42A5F5"), 1.0);
     }
+
+    if (showDateLabels)
+        drawDateLabels(painter, bars, offset, cnt, dataRect, axisTextColor, 5);
 }
 
 static void drawDateLabels(QPainter &painter, const QVector<KBar> &bars,
                            int barOffset, int barCount,
-                           const QRectF &dataRect, const QColor &textColor, int labelCount = 4)
+                           const QRectF &dataRect, const QColor &textColor, int labelCount)
 {
     if (barCount < 2) return;
     QFont df; df.setPixelSize(8); painter.setFont(df);
@@ -3353,7 +3375,7 @@ static void drawCandlestickChart(QPainter &painter, const QVector<KBar> &bars,
         }
     }
 
-    drawDateLabels(painter, bars, barOffset, count, dataRect, axisTextColor, 4);
+    drawDateLabels(painter, bars, barOffset, count, dataRect, axisTextColor, 5);
 
     const double chg = (bars[barOffset + count - 1].close - bars[barOffset].close)
                      / bars[barOffset].close * 100.0;
@@ -3388,7 +3410,7 @@ static QVector<KBar> synthesizeKBars(const QVector<KBar> &daily, int groupDays)
 QPixmap MainWindow::buildTrendChart(const SectorSnapshot &snap, int width, int height) const
 {
     const ThemeColors &t = *s_theme;
-    const int totalH = 1600;
+    const int totalH = 2000;
     QPixmap pixmap(width, totalH);
     pixmap.fill(QColor(t.chartBg));
     QPainter painter(&pixmap);
@@ -3401,12 +3423,12 @@ QPixmap MainWindow::buildTrendChart(const SectorSnapshot &snap, int width, int h
     const QVector<KBar> &bars = snap.dailyBars;
     const int gap = 6;
     int y = 0;
-    const int trendH = 180, klineH = 200, volH = 100, macdH = 100, flowH = 110;
+    const int trendH = 180, klineH = 240, volH = 120, macdH = 120, flowH = 130;
+    const int weekMonthH = 180;
 
-    // ======== 趋势图组（相邻排列）========
+    // ======== 趋势概览（3图并排）========
     {
         const int panelW = width / 3 - 2;
-        // 近3月(~65交易日), 近6月(~130), 近1年(~250)
         drawTrendWithDates(painter, bars, 65, QRectF(0, y, panelW, trendH),
             QString::fromUtf8("近3月趋势"), QColor("#EF4444"), gridColor, axisTextColor, bgColor);
         drawTrendWithDates(painter, bars, 130, QRectF(panelW + 2, y, panelW, trendH),
@@ -3418,67 +3440,72 @@ QPixmap MainWindow::buildTrendChart(const SectorSnapshot &snap, int width, int h
         painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
     }
 
-    // ======== K线图组（相邻排列）========
+    const int dispBars = qMin(bars.size(), 60);
+    const int offset   = bars.size() - dispBars;
+
+    // ======== 日K线（全宽，统一时间轴）========
     {
-        const int panelW = width / 3 - 2;
-        int dispDaily = qMin(60, bars.size());
-        int dailyOff = bars.size() - dispDaily;
-        drawCandlestickChart(painter, bars, dailyOff, dispDaily,
-            QRectF(0, y, panelW, klineH), QString::fromUtf8("日K线"), gridColor, axisTextColor, bgColor);
-
-        QVector<KBar> weekBars = synthesizeKBars(bars, 5);
-        int dispWeek = qMin(52, weekBars.size());
-        int weekOff = weekBars.size() - dispWeek;
-        drawCandlestickChart(painter, weekBars, weekOff, dispWeek,
-            QRectF(panelW + 2, y, panelW, klineH), QString::fromUtf8("周K线"), gridColor, axisTextColor, bgColor);
-
-        QVector<KBar> monthBars = synthesizeKBars(bars, 22);
-        int dispMonth = qMin(12, monthBars.size());
-        int monthOff = monthBars.size() - dispMonth;
-        drawCandlestickChart(painter, monthBars, monthOff, dispMonth,
-            QRectF(2 * (panelW + 2), y, panelW, klineH), QString::fromUtf8("月K线"), gridColor, axisTextColor, bgColor);
+        drawCandlestickChart(painter, bars, offset, dispBars,
+            QRectF(0, y, width, klineH), QString::fromUtf8("日K线"), gridColor, axisTextColor, bgColor);
         y += klineH + gap;
         painter.setPen(QPen(gridColor, 1));
         painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
     }
 
-    // ======== 成交量面板 ========
+    // ======== 成交量（统一时间轴）========
     {
-        const int dispBars = qMin(bars.size(), 60);
-        const int offset = bars.size() - dispBars;
         const QRectF panelRect(0, y, width, volH);
         const auto vm5 = TechIndicators::calcVolMA(bars, 5);
         const auto vm10 = TechIndicators::calcVolMA(bars, 10);
-        drawVolumePanel(painter, bars, offset, vm5, vm10, panelRect, gridColor, axisTextColor, bgColor);
-        painter.setPen(QPen(gridColor, 1));
+        drawVolumePanel(painter, bars, offset, vm5, vm10, panelRect, gridColor, axisTextColor, bgColor, true);
         y += volH + gap;
+        painter.setPen(QPen(gridColor, 1));
         painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
     }
 
-    // ======== MACD 面板 ========
+    // ======== MACD（统一时间轴）========
     {
-        const int dispBars = qMin(bars.size(), 60);
-        const int offset = bars.size() - dispBars;
         const QRectF panelRect(0, y, width, macdH);
         if (bars.size() >= 26) {
             const auto macd = TechIndicators::calcMACD(bars);
-            drawMACDPanel(painter, macd, offset, panelRect, gridColor, axisTextColor, bgColor);
+            drawMACDPanel(painter, macd, offset, panelRect, gridColor, axisTextColor, bgColor,
+                          &bars, offset, dispBars);
         } else {
             painter.fillRect(panelRect, bgColor);
             QFont sf; sf.setPixelSize(11); painter.setFont(sf);
             painter.setPen(axisTextColor);
-            painter.drawText(panelRect, Qt::AlignCenter, "MACD 数据不足");
+            painter.drawText(panelRect, Qt::AlignCenter, QString::fromUtf8("MACD 数据不足"));
         }
         y += macdH + gap;
         painter.setPen(QPen(gridColor, 1));
         painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
     }
 
-    // ======== 资金流面板 ========
+    // ======== 主力资金流（统一时间轴，右对齐）========
     {
         const QRectF flowRect(0, y, width, flowH);
-        drawFundFlowPanel(painter, snap.fundFlowSeries, flowRect, gridColor, axisTextColor, bgColor);
+        drawFundFlowPanel(painter, snap.fundFlowSeries, flowRect, gridColor, axisTextColor, bgColor,
+                          dispBars, &bars, offset, dispBars);
         y += flowH + gap;
+        painter.setPen(QPen(gridColor, 1));
+        painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
+    }
+
+    // ======== 周K线 / 月K线（补充参考，并排）========
+    {
+        const int panelW = width / 2 - 2;
+        QVector<KBar> weekBars = synthesizeKBars(bars, 5);
+        int dispWeek = qMin(52, weekBars.size());
+        int weekOff = weekBars.size() - dispWeek;
+        drawCandlestickChart(painter, weekBars, weekOff, dispWeek,
+            QRectF(0, y, panelW, weekMonthH), QString::fromUtf8("周K线"), gridColor, axisTextColor, bgColor);
+
+        QVector<KBar> monthBars = synthesizeKBars(bars, 22);
+        int dispMonth = qMin(12, monthBars.size());
+        int monthOff = monthBars.size() - dispMonth;
+        drawCandlestickChart(painter, monthBars, monthOff, dispMonth,
+            QRectF(panelW + 4, y, panelW, weekMonthH), QString::fromUtf8("月K线"), gridColor, axisTextColor, bgColor);
+        y += weekMonthH + gap;
     }
 
     return pixmap.copy(0, 0, width, y);

@@ -16,15 +16,31 @@ else()
     set(QT_LIBS Qt6::Core Qt6::Widgets Qt6::Network Qt6::Concurrent)
 
     # Work around macOS SDKs where AGL.framework is removed.
-    foreach(_qt6_gui_tgt Qt6::Gui Qt6::GuiPrivate)
-        if(TARGET ${_qt6_gui_tgt})
-            foreach(_prop INTERFACE_LINK_LIBRARIES INTERFACE_LINK_OPTIONS)
-                get_target_property(_vals ${_qt6_gui_tgt} ${_prop})
+    foreach(_qt6_tgt Qt6::Gui Qt6::GuiPrivate Qt6::Widgets Qt6::WidgetsPrivate
+                     Qt6::Core Qt6::CorePrivate Qt6::OpenGL Qt6::OpenGLPrivate
+                     Qt6::QCocoaIntegrationPlugin Qt6::QCocoaWindowPlugin)
+        if(TARGET ${_qt6_tgt})
+            foreach(_prop INTERFACE_LINK_LIBRARIES INTERFACE_LINK_OPTIONS
+                          IMPORTED_LINK_DEPENDENT_LIBRARIES IMPORTED_LINK_INTERFACE_LIBRARIES)
+                get_target_property(_vals ${_qt6_tgt} ${_prop})
                 if(_vals)
                     list(FILTER _vals EXCLUDE REGEX "[Aa][Gg][Ll]")
-                    set_target_properties(${_qt6_gui_tgt} PROPERTIES ${_prop} "${_vals}")
+                    set_target_properties(${_qt6_tgt} PROPERTIES ${_prop} "${_vals}")
                 endif()
             endforeach()
+            get_target_property(_cfgs ${_qt6_tgt} IMPORTED_CONFIGURATIONS)
+            if(_cfgs)
+                foreach(_cfg ${_cfgs})
+                    foreach(_prop IMPORTED_LINK_DEPENDENT_LIBRARIES_${_cfg}
+                                  IMPORTED_LINK_INTERFACE_LIBRARIES_${_cfg})
+                        get_target_property(_vals ${_qt6_tgt} ${_prop})
+                        if(_vals)
+                            list(FILTER _vals EXCLUDE REGEX "[Aa][Gg][Ll]")
+                            set_target_properties(${_qt6_tgt} PROPERTIES ${_prop} "${_vals}")
+                        endif()
+                    endforeach()
+                endforeach()
+            endif()
         endif()
     endforeach()
 endif()
@@ -62,5 +78,10 @@ target_include_directories(InvestInsight
 )
 
 target_link_options(InvestInsight PRIVATE -F${CMAKE_SOURCE_DIR}/third_party)
+set_target_properties(InvestInsight PROPERTIES
+    BUILD_RPATH "${CMAKE_SOURCE_DIR}/third_party"
+    INSTALL_RPATH "${CMAKE_SOURCE_DIR}/third_party"
+    BUILD_WITH_INSTALL_RPATH OFF
+)
 
 target_link_libraries(InvestInsight PRIVATE ${QT_LIBS})

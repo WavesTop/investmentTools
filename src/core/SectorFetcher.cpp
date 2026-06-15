@@ -990,16 +990,14 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
                 const SinaFlowEntry &fe = it.value();
                 const double netFlow = fe.netAmount / 1e8;
                 si.fundFlowSeries.push_back(netFlow);
-                si.fundFlowSource = "新浪资金流";
+                si.fundFlowSource = QString::fromUtf8("新浪资金流");
                 ++flowOk;
                 flowMatched = true;
-                qDebug() << "[SectorFetcher] 资金流匹配:" << si.name << "<->" << it.key()
-                         << "净流入:" << netFlow << "亿";
                 break;
             }
         }
 
-        // 读取/合并历史资金流数据（存储在QSettings中）
+        // 读取/合并历史实时资金流缓存
         {
             QSettings s("InvestInsight", "InvestInsight");
             const QString flowKey = "cache/flow_history_" + si.name;
@@ -1029,39 +1027,59 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
                 s.setValue(flowKey, QString::fromUtf8(QJsonDocument(histArr).toJson(QJsonDocument::Compact)));
             }
 
-            // 用历史数据填充 fundFlowSeries
             si.fundFlowSeries.clear();
             for (const QJsonValue &v : histArr) {
                 si.fundFlowSeries.push_back(v.toObject().value("v").toDouble());
             }
             if (!si.fundFlowSeries.isEmpty() && si.fundFlowSource.isEmpty())
-                si.fundFlowSource = "历史缓存";
+                si.fundFlowSource = QString::fromUtf8("历史缓存");
         }
 
-        if (!flowMatched && si.dailyBars.size() >= 2) {
-            double volNetFlow = 0;
-            for (int vi = qMax(0, si.dailyBars.size() - 20); vi < si.dailyBars.size(); ++vi) {
-                const KBar &b = si.dailyBars[vi];
-                double sign = (b.close >= b.open) ? 1.0 : -1.0;
-                double dayFlow = sign * b.volume / 1e8;
-                if (si.fundFlowSeries.isEmpty() || si.fundFlowSeries.size() <= (vi - qMax(0, si.dailyBars.size() - 20)))
-                    si.fundFlowSeries.push_back(dayFlow);
-            }
-            if (!si.fundFlowSeries.isEmpty()) {
-                si.fundFlowSource = "量价估算";
-                volNetFlow = si.fundFlowSeries.last();
+        // 用K线量价数据补齐资金流至60条（向前填充）
+        {
+            const int targetLen = qMin(si.dailyBars.size(), 60);
+            const int existing  = si.fundFlowSeries.size();
+            if (existing < targetLen && si.dailyBars.size() >= 2) {
+                const int needPrepend = targetLen - existing;
+                const int barStart = si.dailyBars.size() - targetLen;
+                QVector<double> estimated;
+                estimated.reserve(needPrepend);
+                for (int vi = barStart; vi < barStart + needPrepend; ++vi) {
+                    if (vi < 0 || vi >= si.dailyBars.size()) {
+                        estimated.push_back(0.0);
+                        continue;
+                    }
+                    const KBar &b = si.dailyBars[vi];
+                    double sign = (b.close >= b.open) ? 1.0 : -1.0;
+                    estimated.push_back(sign * b.volume / 1e8);
+                }
+                estimated.append(si.fundFlowSeries);
+                si.fundFlowSeries = estimated;
+                if (si.fundFlowSource.isEmpty())
+                    si.fundFlowSource = QString::fromUtf8("量价估算");
+                else if (!si.fundFlowSource.contains(QString::fromUtf8("量价补齐")))
+                    si.fundFlowSource += QString::fromUtf8("+量价补齐");
             }
         }
     }
 
     const int totalKline = klineThsOk + klineEmOk + klineTencentOk + klineSinaOk;
+    int flowFull = 0, flowPartial = 0, flowEmpty = 0;
+    for (const auto &si : sectors) {
+        if (si.fundFlowSeries.size() >= 60) ++flowFull;
+        else if (!si.fundFlowSeries.isEmpty()) ++flowPartial;
+        else ++flowEmpty;
+    }
     qDebug() << "[SectorFetcher] MarketData: 同花顺K线" << klineThsOk
              << "东方财富K线" << klineEmOk
              << "腾讯K线" << klineTencentOk
              << "新浪K线" << klineSinaOk
              << "总" << totalKline << "/" << sectors.size()
              << "THS修正changePct" << thsChangePctCorrected
-             << "资金流" << flowOk;
+             << "资金流实时" << flowOk
+             << "资金流≥60:" << flowFull
+             << "部分:" << flowPartial
+             << "缺失:" << flowEmpty;
 }
 
 // ========== 阶段 2.5: 估值 + 拥挤度（基于K线数据计算，不依赖push2） ==========
