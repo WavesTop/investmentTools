@@ -77,6 +77,20 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QtGlobal>
+#include <QProxyStyle>
+
+class PaddedTabStyle : public QProxyStyle {
+public:
+    using QProxyStyle::QProxyStyle;
+    QSize sizeFromContents(ContentsType type, const QStyleOption *opt,
+                           const QSize &sz, const QWidget *w) const override {
+        QSize s = QProxyStyle::sizeFromContents(type, opt, sz, w);
+        if (type == CT_TabBarTab)
+            s.rwidth() += 28;
+        return s;
+    }
+};
+
 // --------------- ClickableBrowser ---------------
 
 ClickableBrowser::ClickableBrowser(QWidget *parent) : QTextBrowser(parent) {}
@@ -184,27 +198,27 @@ static bool detectDarkMode()
 
 static QString buildWidgetStyleSheet(const ThemeColors &t)
 {
-    return QString(R"(
-    QMainWindow { background: %1; }
+    QString s = QLatin1String(R"(
+    QMainWindow { background: @winBg@; }
     QTabWidget::pane {
-        border: 1px solid %2; border-top: none;
-        background: %3; border-radius: 0 0 10px 10px;
+        border: 1px solid @border@; border-top: none;
+        background: @pane@; border-radius: 0 0 10px 10px;
     }
     QTabBar { qproperty-drawBase: 0; background: transparent; }
     QTabBar::tab {
-        padding: 7px 16px; font-size: 12px;
-        background: transparent; color: %5;
+        padding: 10px 18px; font-size: 12px;
+        background: transparent; color: @text@;
         border: none; border-bottom: 2px solid transparent;
         margin-right: 2px;
-        min-width: 50px; max-width: 220px;
+        min-width: 50px;
     }
     QTabBar::tab:hover {
-        color: %6;
+        color: @accent@;
         border-bottom: 2px solid rgba(99,102,241,0.35);
     }
     QTabBar::tab:selected {
-        color: %6; font-weight: 600;
-        border-bottom: 2.5px solid %6;
+        color: @accent@; font-weight: 600;
+        border-bottom: 2.5px solid @accent@;
     }
     QTabBar::close-button {
         image: url(nofile); border: none;
@@ -216,36 +230,37 @@ static QString buildWidgetStyleSheet(const ThemeColors &t)
     QTabBar QToolButton { width: 0px; border: none; }
 
     QPushButton {
-        background: %7; color: white; border: none; border-radius: 8px;
-        padding: 7px 18px; font-size: 12px; font-weight: 600;
+        background: @btn@; color: white; border: none; border-radius: 8px;
+        padding: 9px 18px; font-size: 12px; font-weight: 600;
     }
-    QPushButton:hover { background: %8; }
-    QPushButton:pressed { background: %8; padding-top: 8px; }
-    QPushButton:disabled { background: %9; color: rgba(255,255,255,0.4); }
+    QPushButton:hover { background: @btnH@; }
+    QPushButton:pressed { background: @btnH@; padding-top: 8px; }
+    QPushButton:disabled { background: @btnD@; color: rgba(255,255,255,0.4); }
     QPushButton#refreshBtn {
         padding: 8px 28px; font-size: 13px; font-weight: 700;
         border-radius: 8px;
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 %7,stop:1 %12);
+        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @btn@,stop:1 @chunk1@);
     }
     QPushButton#refreshBtn:hover {
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 %8,stop:1 %7);
+        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @btnH@,stop:1 @btn@);
     }
 
     QLineEdit {
-        border: 1px solid rgba(0,0,0,0.14); border-radius: 8px; padding: 6px 12px;
-        font-size: 12px; background: %3; color: %5;
+        border: 1px solid rgba(0,0,0,0.14); border-radius: 8px; padding: 8px 12px;
+        font-size: 12px; background: @pane@; color: @text@;
+        min-height: 18px;
         selection-background-color: rgba(99,102,241,0.18);
     }
-    QLineEdit:focus { border-color: %7; }
-    QLineEdit:disabled { background: %4; color: rgba(0,0,0,0.35); }
+    QLineEdit:focus { border-color: @btn@; }
+    QLineEdit:disabled { background: @tabBg@; color: rgba(0,0,0,0.35); }
 
     QComboBox {
-        border: 1px solid %2; border-radius: 8px; padding: 5px 32px 5px 10px;
-        font-size: 12px; background: %3; color: %5;
-        min-height: 24px;
+        border: 1px solid @border@; border-radius: 8px; padding: 7px 32px 7px 10px;
+        font-size: 12px; background: @pane@; color: @text@;
+        min-height: 28px;
     }
     QComboBox:hover { border-color: rgba(99,102,241,0.5); }
-    QComboBox:focus { border-color: %7; }
+    QComboBox:focus { border-color: @btn@; }
     QComboBox::drop-down {
         subcontrol-origin: padding;
         subcontrol-position: top right;
@@ -257,44 +272,45 @@ static QString buildWidgetStyleSheet(const ThemeColors &t)
         width: 10px; height: 10px;
     }
     QComboBox QAbstractItemView {
-        border: 1px solid %2; border-radius: 8px;
-        background: %3; color: %5;
+        border: 1px solid @border@; border-radius: 8px;
+        background: @pane@; color: @text@;
         selection-background-color: rgba(99,102,241,0.12);
         outline: none; padding: 4px;
         font-size: 12px;
     }
     QComboBox QAbstractItemView::item {
         padding: 6px 12px; min-height: 28px; border-radius: 4px;
-        color: %5; background: transparent;
+        color: @text@; background: transparent;
     }
     QComboBox QAbstractItemView::item:hover {
-        background: rgba(99,102,241,0.08); color: %5;
+        background: rgba(99,102,241,0.08); color: @text@;
     }
     QComboBox QAbstractItemView::item:selected {
-        background: rgba(99,102,241,0.14); color: %5;
+        background: rgba(99,102,241,0.14); color: @text@;
     }
 
     QSpinBox {
-        border: 1px solid %2; border-radius: 8px; padding: 5px 10px;
-        font-size: 12px; background: %3; color: %5;
+        border: 1px solid @border@; border-radius: 8px; padding: 7px 10px;
+        font-size: 12px; background: @pane@; color: @text@;
+        min-height: 18px;
     }
-    QSpinBox:focus { border-color: %7; }
+    QSpinBox:focus { border-color: @btn@; }
 
-    QCheckBox { font-size: 12px; spacing: 6px; }
+    QCheckBox { font-size: 12px; spacing: 6px; padding: 4px 0px; }
 
     QTableWidget {
-        border: 1px solid %2; border-radius: 10px;
-        gridline-color: transparent; background: %3; color: %5;
+        border: 1px solid @border@; border-radius: 10px;
+        gridline-color: transparent; background: @pane@; color: @text@;
         font-size: 12px;
         selection-background-color: rgba(99,102,241,0.06);
         alternate-background-color: rgba(0,0,0,0.015);
     }
-    QTableWidget::item { padding: 5px 8px; border: none; }
-    QTableWidget::item:selected { background: rgba(99,102,241,0.07); color: %5; }
+    QTableWidget::item { padding: 6px 8px; border: none; }
+    QTableWidget::item:selected { background: rgba(99,102,241,0.07); color: @text@; }
     QTableWidget::item:focus { border: none; outline: none; }
     QHeaderView::section {
-        background: %3; color: %5; border: none;
-        border-bottom: 1.5px solid %2; padding: 7px 10px;
+        background: @pane@; color: @text@; border: none;
+        border-bottom: 1.5px solid @border@; padding: 8px 10px;
         font-size: 11px; font-weight: 600;
     }
 
@@ -318,24 +334,24 @@ static QString buildWidgetStyleSheet(const ThemeColors &t)
     QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: none; }
 
     QGroupBox {
-        border: 1px solid %2; border-radius: 12px;
-        margin-top: 14px; padding-top: 22px;
+        border: 1px solid @border@; border-radius: 12px;
+        margin-top: 36px; padding-top: 14px;
         font-weight: 600; font-size: 13px;
     }
     QGroupBox::title {
         subcontrol-origin: margin; subcontrol-position: top left;
-        left: 16px; top: 6px; padding: 2px 10px;
-        background: %3; color: %7; font-weight: 700;
+        left: 16px; top: 4px; padding: 6px 14px;
+        background: @pane@; color: @btn@; font-weight: 700;
     }
 
     QPushButton#secondaryBtn {
-        background: transparent; color: %5;
-        border: 1px solid %2; border-radius: 8px;
+        background: transparent; color: @text@;
+        border: 1px solid @border@; border-radius: 8px;
         font-weight: 500;
     }
     QPushButton#secondaryBtn:hover {
         background: rgba(99,102,241,0.06); border-color: rgba(99,102,241,0.3);
-        color: %7;
+        color: @btn@;
     }
     QPushButton#dangerBtn {
         background: transparent; color: #DC2626;
@@ -346,25 +362,45 @@ static QString buildWidgetStyleSheet(const ThemeColors &t)
     }
 
     QProgressBar {
-        border: none; border-radius: 2.5px; background: %10;
+        border: none; border-radius: 2.5px; background: @barBg@;
         max-height: 5px;
     }
     QProgressBar::chunk {
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 %12,stop:1 %13);
+        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @chunk1@,stop:1 @chunk2@);
         border-radius: 2.5px;
     }
-    QLabel#statusLabel { color: %14; font-size: 11px; font-weight: 500; }
+    QLabel#statusLabel { color: @status@; font-size: 11px; font-weight: 500; }
 
     QToolButton {
-        border: 1px solid %2; border-radius: 6px; background: transparent;
+        border: 1px solid @border@; border-radius: 6px; background: transparent;
         font-size: 12px; padding: 3px;
     }
     QToolButton:checked { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3); }
     QToolButton:hover { background: rgba(128,128,128,0.06); }
-    )")
-    .arg(t.winBg, t.paneBorder, t.paneBg, t.tabBg, t.bodyColor, t.tabSelectedColor,
-         t.btnBg, t.btnHover, t.btnDisabled)
-    .arg(t.barBg, t.barText, t.barChunk1, t.barChunk2, t.statusColor);
+
+    QTextBrowser {
+        border: none;
+        background: @pane@;
+    }
+    QScrollArea {
+        border: none;
+        background: transparent;
+    }
+    )");
+    s.replace(QLatin1String("@winBg@"),  t.winBg);
+    s.replace(QLatin1String("@border@"), t.paneBorder);
+    s.replace(QLatin1String("@pane@"),   t.paneBg);
+    s.replace(QLatin1String("@tabBg@"),  t.tabBg);
+    s.replace(QLatin1String("@text@"),   t.bodyColor);
+    s.replace(QLatin1String("@accent@"), t.tabSelectedColor);
+    s.replace(QLatin1String("@btn@"),    t.btnBg);
+    s.replace(QLatin1String("@btnH@"),   t.btnHover);
+    s.replace(QLatin1String("@btnD@"),   t.btnDisabled);
+    s.replace(QLatin1String("@barBg@"),  t.barBg);
+    s.replace(QLatin1String("@chunk1@"), t.barChunk1);
+    s.replace(QLatin1String("@chunk2@"), t.barChunk2);
+    s.replace(QLatin1String("@status@"), t.statusColor);
+    return s;
 }
 
 static QString buildHtmlCss(const ThemeColors &t)
@@ -506,7 +542,8 @@ table.formula tr:last-child td { border-bottom: none; }
          t.tableHoverBg, t.linkColor, t.linkHoverColor, t.formulaHeaderBg);
 }
 
-static const ThemeColors *s_theme = nullptr;
+static ThemeColors s_themeStorage;
+static const ThemeColors *s_theme = &s_themeStorage;
 
 namespace {
 QString actionText(AdviceAction a)
@@ -578,8 +615,8 @@ QString tc(const QString &fallback)
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     m_darkMode = detectDarkMode();
-    static ThemeColors currentTheme = m_darkMode ? darkTheme() : lightTheme();
-    s_theme = &currentTheme;
+    s_themeStorage = m_darkMode ? darkTheme() : lightTheme();
+    s_theme = &s_themeStorage;
     buildUi();
 }
 
@@ -3043,10 +3080,12 @@ static void drawSubPanel(QPainter &painter, const QVector<double> &series,
     const QString changeStr = (changePct >= 0 ? "+" : "") + QString::number(changePct, 'f', 2) + "%";
     painter.setPen(lineColor);
     painter.setFont(tf);
+    const QString changeLabel = QString::fromUtf8("区间: ") + changeStr;
+    const double changeLabelW = QFontMetrics(tf).horizontalAdvance(changeLabel) + 8;
     painter.drawText(
-        QRectF(dataRect.left() + 140, panelRect.top(), 160, titleH),
-        Qt::AlignLeft | Qt::AlignVCenter,
-        "区间: " + changeStr);
+        QRectF(panelRect.right() - changeLabelW - 4, panelRect.top(), changeLabelW, titleH),
+        Qt::AlignRight | Qt::AlignVCenter,
+        changeLabel);
 }
 
 static void drawFundFlowPanel(QPainter &painter, const QVector<double> &series,
@@ -3607,6 +3646,7 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
     auto *configTabs = new QTabWidget(content);
     configTabs->setDocumentMode(true);
     configTabs->setElideMode(Qt::ElideNone);
+    configTabs->tabBar()->setStyle(new PaddedTabStyle(configTabs->tabBar()->style()));
 
     // ──────────────── Tab A: AI接入配置 ────────────────
     auto *aiTabWidget = new QWidget(configTabs);
@@ -4050,6 +4090,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_tabWidget->setTabsClosable(false);
     m_tabWidget->tabBar()->setExpanding(false);
     m_tabWidget->setDocumentMode(true);
+    m_tabWidget->tabBar()->setStyle(new PaddedTabStyle(m_tabWidget->tabBar()->style()));
 
     // ---- 综合总览：3个子Tab（数据总览 / 板块&指数信息 / 投资策略）----
     auto *overviewContainer = new QWidget(m_mainPage);
@@ -4061,6 +4102,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_overviewSubTabs->setDocumentMode(true);
     m_overviewSubTabs->setElideMode(Qt::ElideNone);
     m_overviewSubTabs->tabBar()->setExpanding(false);
+    m_overviewSubTabs->tabBar()->setStyle(new PaddedTabStyle(m_overviewSubTabs->tabBar()->style()));
 
     // -- 子Tab 1: 数据总览 --
     m_dashboardBrowser = new ClickableBrowser(m_overviewSubTabs);
