@@ -95,7 +95,11 @@ protected:
         p.drawLine(m, m, width() - m, height() - m);
         p.drawLine(width() - m, m, m, height() - m);
     }
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     void enterEvent(QEnterEvent *) override { update(); }
+#else
+    void enterEvent(QEvent *) override { update(); }
+#endif
     void leaveEvent(QEvent *) override { update(); }
 };
 
@@ -129,7 +133,11 @@ public:
     std::function<void(const QString &)> onIndexJump;
 
 protected:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     void doSetSource(const QUrl &url, QTextDocument::ResourceType type) override;
+#else
+    void setSource(const QUrl &url) override;
+#endif
 };
 
 class MainWindow : public QMainWindow

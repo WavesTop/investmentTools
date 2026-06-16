@@ -140,7 +140,7 @@ QVector<KBar> fetchYahooDailyBars(const QString &symbol, const QString &range = 
         if (closes[i].isNull()) continue;
         KBar b;
         const qint64 t = static_cast<qint64>(ts[i].toDouble());
-        b.date = QDateTime::fromSecsSinceEpoch(t, QTimeZone::UTC).date().toString("yyyy-MM-dd");
+        b.date = QDateTime::fromSecsSinceEpoch(t, Qt::UTC).date().toString("yyyy-MM-dd");
         b.open = opens[i].toDouble();
         b.high = highs[i].toDouble();
         b.low = lows[i].toDouble();

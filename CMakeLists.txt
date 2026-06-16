@@ -77,11 +77,17 @@ target_include_directories(InvestInsight
         src
 )
 
-target_link_options(InvestInsight PRIVATE -F${CMAKE_SOURCE_DIR}/third_party)
+if(MSVC)
+    target_compile_options(InvestInsight PRIVATE /utf-8)
+endif()
 set_target_properties(InvestInsight PROPERTIES
     BUILD_RPATH "${CMAKE_SOURCE_DIR}/third_party"
     INSTALL_RPATH "${CMAKE_SOURCE_DIR}/third_party"
     BUILD_WITH_INSTALL_RPATH OFF
 )
+
+if(APPLE)
+    target_link_options(InvestInsight PRIVATE -F${CMAKE_SOURCE_DIR}/third_party)
+endif()
 
 target_link_libraries(InvestInsight PRIVATE ${QT_LIBS})

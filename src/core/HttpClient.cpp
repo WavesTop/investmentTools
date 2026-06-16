@@ -6,7 +6,11 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QStringDecoder>
+#else
+#include <QTextCodec>
+#endif
 #include <QThread>
 #include <QTimer>
 
@@ -158,8 +162,13 @@ HttpClient::HttpResult HttpClient::getGbk(const QString &url, int timeoutMs, int
         if (reply->error() == QNetworkReply::NoError && lastResult.statusCode >= 200 && lastResult.statusCode < 300) {
             const QByteArray raw = reply->readAll();
             lastResult.ok = true;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             QStringDecoder decoder("GBK");
             lastResult.body = decoder(raw);
+#else
+            QTextCodec *codec = QTextCodec::codecForName("GBK");
+            lastResult.body = codec ? codec->toUnicode(raw) : QString::fromUtf8(raw);
+#endif
             lastResult.errorMessage.clear();
             reply->deleteLater();
             return lastResult;

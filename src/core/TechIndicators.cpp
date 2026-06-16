@@ -89,9 +89,9 @@ KDJResult TechIndicators::calcKDJ(const QVector<KBar> &bars, int n, int m1, int 
     KDJResult r;
     const int sz = bars.size();
     if (sz < n) return r;
-    r.k.resize(sz, 50.0);
-    r.d.resize(sz, 50.0);
-    r.j.resize(sz, 50.0);
+    r.k.resize(sz); std::fill(r.k.begin(), r.k.end(), 50.0);
+    r.d.resize(sz); std::fill(r.d.begin(), r.d.end(), 50.0);
+    r.j.resize(sz); std::fill(r.j.begin(), r.j.end(), 50.0);
     double prevK = 50.0, prevD = 50.0;
     for (int i = n - 1; i < sz; ++i) {
         double highest = bars[i].high, lowest = bars[i].low;

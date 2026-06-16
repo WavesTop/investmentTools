@@ -13,17 +13,84 @@ A 股板块分析与投资辅助桌面工具，基于 Qt/C++17 构建。
 ## 环境要求
 
 - C++17、CMake ≥ 3.16
-- Qt5 或 Qt6（Core、Widgets、Network、Concurrent）
+- Qt5（≥ 5.15）或 Qt6（Core、Widgets、Network、Concurrent）
+- 编译器：GCC / Clang / MSVC（Visual Studio 2019+）
+
+### macOS
 
 ```bash
-# macOS
 brew install cmake qt
+```
 
-# Ubuntu / Debian
+### Ubuntu / Debian
+
+```bash
 sudo apt install cmake qt6-base-dev libqt6-concurrent6
 ```
 
-## 编译与运行
+### Windows
+
+Windows 下推荐使用 **vcpkg + Visual Studio + CMake** 的组合。以下为完整步骤：
+
+#### 1. 安装 Visual Studio
+
+从 [Visual Studio 官网](https://visualstudio.microsoft.com/) 下载 Community 版（免费），安装时勾选 **"使用 C++ 的桌面开发"** 工作负载。
+
+#### 2. 安装 CMake
+
+从 [CMake 官网](https://cmake.org/download/) 下载安装，安装时勾选 **"Add CMake to the system PATH"**。
+
+或使用 winget：
+
+```powershell
+winget install Kitware.CMake
+```
+
+#### 3. 安装 vcpkg 并安装 Qt5
+
+```powershell
+# 克隆 vcpkg 到 C:\vcpkg（路径可自选，建议不含中文和空格）
+git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+C:\vcpkg\bootstrap-vcpkg.bat
+
+# 安装 Qt5（包含 Core、Widgets、Network、Concurrent，约需 15 分钟）
+C:\vcpkg\vcpkg.exe install qt5-base:x64-windows
+```
+
+> 首次安装 vcpkg 会自动编译 OpenSSL、zlib、freetype 等依赖，耗时较长属正常现象。
+
+#### 4. 配置与编译
+
+```powershell
+cd C:\code\investmentTools
+mkdir build
+cd build
+
+# CMake 配置（指定 vcpkg 工具链）
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+# 编译（/m 启用并行编译）
+cmake --build . --config Release -- /m
+```
+
+编译产物位于 `build\Release\InvestInsight.exe`。
+
+#### 5. 运行
+
+```powershell
+.\Release\InvestInsight.exe
+```
+
+#### Windows 常见问题
+
+| 问题 | 解决方案 |
+|------|----------|
+| CMake 找不到 Qt | 确认 `cmake` 命令带了 `-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake` |
+| 中文乱码编译错误 | CMakeLists.txt 已包含 MSVC `/utf-8` 编译选项，若仍有问题确认源文件以 UTF-8 BOM 保存 |
+| 缺少 DLL 无法启动 | 将 `C:\vcpkg\installed\x64-windows\bin` 加入系统 PATH，或将其中的 Qt5*.dll 复制到 exe 同目录 |
+| `cl.exe` 未找到 | 使用 Visual Studio 的 "Developer PowerShell" 或 "x64 Native Tools Command Prompt" 执行编译命令 |
+
+## 编译与运行（macOS / Linux）
 
 ```bash
 ./run_gui.sh

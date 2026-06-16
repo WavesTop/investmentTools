@@ -81,7 +81,11 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 
 ClickableBrowser::ClickableBrowser(QWidget *parent) : QTextBrowser(parent) {}
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 void ClickableBrowser::doSetSource(const QUrl &url, QTextDocument::ResourceType /*type*/)
+#else
+void ClickableBrowser::setSource(const QUrl &url)
+#endif
 {
     const QString s = url.toString();
     if (s.startsWith("jumpi-")) {
@@ -368,7 +372,7 @@ static QString buildHtmlCss(const ThemeColors &t)
     return QString(R"(
 * { box-sizing: border-box; }
 body {
-    font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Inter', 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Inter', 'Helvetica Neue', sans-serif;
     margin: 0; padding: 20px 24px; background: %1; color: %2;
     font-size: 13px; line-height: 1.7; -webkit-font-smoothing: antialiased;
 }
@@ -487,7 +491,7 @@ table.formula th {
 }
 table.formula td {
     padding: 6px 12px; border-bottom: 1px solid %9;
-    font-family: 'SF Mono', 'Menlo', 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', 'JetBrains Mono', monospace; font-size: 11px;
 }
 table.formula tr:last-child td { border-bottom: none; }
 
@@ -2819,12 +2823,11 @@ QString MainWindow::buildIndexHtml(const IndexSnapshot &idx, bool aiAvailable, b
     s.lastDataDate = QDate::currentDate().toString("yyyy-MM-dd");
     s.sectorTier = 0;
     s.sectorTierLabel = QString::fromUtf8("指数");
-    s.newsHeadlines = {
-        QString::fromUtf8("指数代码：") + (idx.code.isEmpty() ? QString("-") : idx.code),
-        QString::fromUtf8("最新点位：") + num(idx.lastClose, 2),
-        QString::fromUtf8("成交量(亿)：") + num(idx.volume, 0),
-        QString::fromUtf8("成交额(亿)：") + num(idx.amount, 0)
-    };
+    s.newsHeadlines = QStringList()
+        << (QString::fromUtf8("指数代码：") + (idx.code.isEmpty() ? QString("-") : idx.code))
+        << (QString::fromUtf8("最新点位：") + num(idx.lastClose, 2))
+        << (QString::fromUtf8("成交量(亿)：") + num(idx.volume, 0))
+        << (QString::fromUtf8("成交额(亿)：") + num(idx.amount, 0));
     s.peRatio = 0.0;
     s.pbRatio = 0.0;
     s.pePercentile = 50.0;
