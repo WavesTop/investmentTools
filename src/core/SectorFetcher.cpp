@@ -317,10 +317,15 @@ static const QList<ThsMapping> kThsCodeMap = {
 struct ThsCodeResult { QString code; QString prefix; };
 ThsCodeResult findThsCode(const QString &sectorName)
 {
+    ThsCodeResult best;
+    int bestLen = 0;
     for (const ThsMapping &m : kThsCodeMap) {
-        if (sectorName.contains(m.keyword)) return { m.thsCode, m.prefix };
+        if (sectorName.contains(m.keyword) && m.keyword.length() > bestLen) {
+            best = { m.thsCode, m.prefix };
+            bestLen = m.keyword.length();
+        }
     }
-    return {};
+    return best;
 }
 
 // 同花顺K线API: d.10jqka.com.cn (JSONP格式)
@@ -373,6 +378,50 @@ QVector<KBar> fetchThsKline(const QString &thsCode, const QString &prefix = "bk"
     qDebug() << "[ThsKline] OK:" << thsCode << "name:" << root.value("name").toString()
              << "bars:" << bars.size();
     return bars;
+}
+
+struct ThsRealtimeResult {
+    double changePct = 0.0;
+    double preClose  = 0.0;
+    double lastPrice = 0.0;
+    QString date;
+    bool valid = false;
+};
+
+static ThsRealtimeResult fetchThsRealtimeChangePct(const QString &thsCode, const QString &prefix = "bk")
+{
+    ThsRealtimeResult result;
+    if (thsCode.isEmpty()) return result;
+    const QString url = QString("https://d.10jqka.com.cn/v4/time/%1_%2/last.js").arg(prefix, thsCode);
+    const auto r = HttpClient::get(url, 6000, 1);
+    if (!r.ok || r.body.isEmpty()) return result;
+
+    const int lp = r.body.indexOf('(');
+    const int rp = r.body.lastIndexOf(')');
+    if (lp < 0 || rp <= lp) return result;
+    const QJsonDocument doc = QJsonDocument::fromJson(r.body.mid(lp + 1, rp - lp - 1).toUtf8());
+    if (doc.isNull()) return result;
+
+    const QJsonObject root = doc.object();
+    const QJsonObject inner = root.begin().value().toObject();
+    if (inner.isEmpty()) return result;
+
+    result.preClose = inner.value("pre").toString().toDouble();
+    result.date = inner.value("date").toString();
+    const QString dataStr = inner.value("data").toString();
+    if (result.preClose <= 0 || dataStr.isEmpty()) return result;
+
+    const int lastSemi = dataStr.lastIndexOf(';');
+    const QString lastPt = (lastSemi >= 0) ? dataStr.mid(lastSemi + 1) : dataStr;
+    const QStringList fields = lastPt.split(',');
+    if (fields.size() >= 2) {
+        result.lastPrice = fields[1].toDouble();
+        if (result.lastPrice > 0) {
+            result.changePct = (result.lastPrice - result.preClose) / result.preClose * 100.0;
+            result.valid = true;
+        }
+    }
+    return result;
 }
 
 QVector<double> closesFromBars(const QVector<KBar> &bars)
@@ -858,17 +907,28 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
             FetchResult fr;
             fr.index = i;
 
-            // === 最高优先: 同花顺板块K线（真实板块指数，数据最准确）===
+            // === 最高优先: 同花顺板块K线（用于图表）+ 实时分时（用于changePct）===
             const ThsCodeResult thsResult = findThsCode(name);
             if (!thsResult.code.isEmpty()) {
                 QVector<KBar> thsBars = fetchThsKline(thsResult.code, thsResult.prefix, kDailyBars);
                 if (thsBars.size() >= 2) {
                     fr.bars = thsBars;
                     fr.source = QString::fromUtf8("同花顺板块");
-                    const double prevClose = thsBars[thsBars.size() - 2].close;
-                    const double lastClose = thsBars.last().close;
-                    if (prevClose > 0) {
-                        fr.thsChangePct = (lastClose - prevClose) / prevClose * 100.0;
+
+                    const QString todayStr = QDate::currentDate().toString("yyyyMMdd");
+                    const QString lastBarDate = thsBars.last().date.remove('-');
+                    if (lastBarDate == todayStr) {
+                        const double prevClose = thsBars[thsBars.size() - 2].close;
+                        if (prevClose > 0) {
+                            fr.thsChangePct = (thsBars.last().close - prevClose) / prevClose * 100.0;
+                            fr.thsChangePctValid = true;
+                        }
+                    }
+                }
+                if (!fr.thsChangePctValid) {
+                    const ThsRealtimeResult rt = fetchThsRealtimeChangePct(thsResult.code, thsResult.prefix);
+                    if (rt.valid) {
+                        fr.thsChangePct = rt.changePct;
                         fr.thsChangePctValid = true;
                     }
                 }
