@@ -6,7 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
-set(CMAKE_AUTORCC OFF)
+set(CMAKE_AUTORCC ON)
+
+option(INVESTINSIGHT_WIN32_SUBSYSTEM "Build Windows executable with GUI subsystem" OFF)
+
+set(APP_ICON_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/assets/windows/app-icon.rc")
+set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/assets/macos/app-icon.icns")
 
 find_package(Qt5 COMPONENTS Core Widgets Network Concurrent QUIET)
 if(Qt5_FOUND)
@@ -45,7 +50,7 @@ else()
     endforeach()
 endif()
 
-add_executable(InvestInsight
+set(APP_SOURCES
     src/main.cpp
     src/ui/MainWindow.cpp
     src/core/InsightOrchestrator.cpp
@@ -70,6 +75,26 @@ add_executable(InvestInsight
     src/core/ExplainabilityEngine.cpp
     src/providers/RealFinanceNewsProvider.cpp
     src/providers/RealLinkageProvider.cpp
+    assets/app.qrc
+)
+
+if(WIN32)
+    list(APPEND APP_SOURCES "${APP_ICON_WINDOWS}")
+endif()
+
+if(APPLE)
+    list(APPEND APP_SOURCES "${APP_ICON_MACOS}")
+    set_source_files_properties("${APP_ICON_MACOS}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+endif()
+
+set(APP_EXECUTABLE_OPTIONS MACOSX_BUNDLE)
+if(WIN32 AND INVESTINSIGHT_WIN32_SUBSYSTEM)
+    list(APPEND APP_EXECUTABLE_OPTIONS WIN32)
+endif()
+
+add_executable(InvestInsight ${APP_EXECUTABLE_OPTIONS}
+    ${APP_SOURCES}
 )
 
 target_include_directories(InvestInsight
@@ -84,6 +109,11 @@ set_target_properties(InvestInsight PROPERTIES
     BUILD_RPATH "${CMAKE_SOURCE_DIR}/third_party"
     INSTALL_RPATH "${CMAKE_SOURCE_DIR}/third_party"
     BUILD_WITH_INSTALL_RPATH OFF
+    MACOSX_BUNDLE_ICON_FILE "app-icon.icns"
+    MACOSX_BUNDLE_BUNDLE_NAME "InvestInsight"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.investinsight.app"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+    MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0"
 )
 
 if(APPLE)

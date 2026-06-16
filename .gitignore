@@ -1,6 +1,9 @@
 # 构建目录
 build/
 build_*/
+build-macos/
+build-package-windows/
+tmp/
 
 # 编译产物
 *.o
@@ -10,6 +13,10 @@ build_*/
 *.dylib
 *.exe
 InvestInsight
+InvestInsight-Windows*/
+InvestInsight-Windows*.zip
+InvestInsight-macOS*.app/
+InvestInsight-macOS*.zip
 
 # macOS AGL stub（运行时生成）
 third_party/AGL.framework/

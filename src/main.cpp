@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QCoreApplication>
+#include <QIcon>
 #include <QTextStream>
 #ifdef Q_OS_WIN
 #include <QPalette>
@@ -73,6 +74,7 @@ int main(int argc, char *argv[])
     }
 
     QApplication app(argc, argv);
+    app.setWindowIcon(QIcon(":/icons/app-icon.png"));
 
 #ifdef Q_OS_WIN
     app.setStyle(QStyleFactory::create("Fusion"));
