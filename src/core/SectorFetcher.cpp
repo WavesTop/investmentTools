@@ -411,14 +411,15 @@ static ThsRealtimeResult fetchThsRealtimeChangePct(const QString &thsCode, const
     const QString dataStr = inner.value("data").toString();
     if (result.preClose <= 0 || dataStr.isEmpty()) return result;
 
-    const int lastSemi = dataStr.lastIndexOf(';');
-    const QString lastPt = (lastSemi >= 0) ? dataStr.mid(lastSemi + 1) : dataStr;
-    const QStringList fields = lastPt.split(',');
-    if (fields.size() >= 2) {
+    const QStringList points = dataStr.split(';', Qt::SkipEmptyParts);
+    for (int i = points.size() - 1; i >= 0; --i) {
+        const QStringList fields = points[i].split(',');
+        if (fields.size() < 2) continue;
         result.lastPrice = fields[1].toDouble();
         if (result.lastPrice > 0) {
             result.changePct = (result.lastPrice - result.preClose) / result.preClose * 100.0;
             result.valid = true;
+            break;
         }
     }
     return result;
@@ -907,29 +908,30 @@ void SectorFetcher::fetchMarketData(QList<SectorInfo> &sectors) const
             FetchResult fr;
             fr.index = i;
 
-            // === 最高优先: 同花顺板块K线（用于图表）+ 实时分时（用于changePct）===
+            // === 最高优先: 同花顺实时分时（用于changePct）+ 板块K线（用于图表）===
             const ThsCodeResult thsResult = findThsCode(name);
             if (!thsResult.code.isEmpty()) {
+                const ThsRealtimeResult rt = fetchThsRealtimeChangePct(thsResult.code, thsResult.prefix);
+                if (rt.valid) {
+                    fr.thsChangePct = rt.changePct;
+                    fr.thsChangePctValid = true;
+                }
+
                 QVector<KBar> thsBars = fetchThsKline(thsResult.code, thsResult.prefix, kDailyBars);
                 if (thsBars.size() >= 2) {
                     fr.bars = thsBars;
                     fr.source = QString::fromUtf8("同花顺板块");
 
-                    const QString todayStr = QDate::currentDate().toString("yyyyMMdd");
-                    const QString lastBarDate = thsBars.last().date.remove('-');
-                    if (lastBarDate == todayStr) {
-                        const double prevClose = thsBars[thsBars.size() - 2].close;
-                        if (prevClose > 0) {
-                            fr.thsChangePct = (thsBars.last().close - prevClose) / prevClose * 100.0;
-                            fr.thsChangePctValid = true;
+                    if (!fr.thsChangePctValid) {
+                        const QString todayStr = QDate::currentDate().toString("yyyyMMdd");
+                        const QString lastBarDate = thsBars.last().date.remove('-');
+                        if (lastBarDate == todayStr) {
+                            const double prevClose = thsBars[thsBars.size() - 2].close;
+                            if (prevClose > 0) {
+                                fr.thsChangePct = (thsBars.last().close - prevClose) / prevClose * 100.0;
+                                fr.thsChangePctValid = true;
+                            }
                         }
-                    }
-                }
-                if (!fr.thsChangePctValid) {
-                    const ThsRealtimeResult rt = fetchThsRealtimeChangePct(thsResult.code, thsResult.prefix);
-                    if (rt.valid) {
-                        fr.thsChangePct = rt.changePct;
-                        fr.thsChangePctValid = true;
                     }
                 }
             }
