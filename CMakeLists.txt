@@ -54,6 +54,7 @@ set(APP_SOURCES
     src/main.cpp
     src/ui/AppTheme.cpp
     src/ui/MainWindow.cpp
+    src/ui/renderers/ChartRenderer.cpp
     src/core/InsightOrchestrator.cpp
     src/core/DataCollector.cpp
     src/core/SignalExtractor.cpp
@@ -125,7 +126,10 @@ target_link_libraries(InvestInsight PRIVATE ${QT_LIBS})
 
 add_executable(InvestInsightUiSmoke
     tests/ui/AppThemeSmoke.cpp
+    tests/ui/ChartRendererSmoke.cpp
     src/ui/AppTheme.cpp
+    src/ui/renderers/ChartRenderer.cpp
+    src/core/TechIndicators.cpp
 )
 
 target_include_directories(InvestInsightUiSmoke

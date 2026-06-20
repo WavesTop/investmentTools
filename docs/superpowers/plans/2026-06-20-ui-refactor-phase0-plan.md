@@ -38,7 +38,7 @@
 - 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
-当前进度：0.1a、0.1b 和 0.1c 已完成，下一片进入图表绘制拆分。
+当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试，下一片让 `MainWindow::buildTrendChart` 委托该 renderer。
 
 验证：
 

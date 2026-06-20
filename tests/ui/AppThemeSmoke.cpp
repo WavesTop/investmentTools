@@ -35,6 +35,8 @@ void verifyTheme(const InvestInsight::Ui::ThemeColors &theme, const QString &nam
 
 } // namespace
 
+int runChartRendererSmoke();
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -47,6 +49,11 @@ int main(int argc, char *argv[])
 
     expect(light.bodyBg != dark.bodyBg, "light and dark themes use different body backgrounds");
     expect(light.btnBg != dark.btnBg, "light and dark themes use different button backgrounds");
+
+    const int chartResult = runChartRendererSmoke();
+    if (chartResult != 0) {
+        ++failures;
+    }
 
     if (failures > 0) {
         QTextStream(stderr) << failures << " UI smoke check(s) failed.\n";
