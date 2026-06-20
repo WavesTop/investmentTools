@@ -38,6 +38,8 @@
 - 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
+当前进度：0.1a 和 0.1b 已完成，下一片继续移动 HTML 基础 CSS。
+
 验证：
 
 ```powershell

@@ -27,5 +27,6 @@ struct ThemeColors {
 ThemeColors lightTheme();
 ThemeColors darkTheme();
 bool detectDarkMode();
+QString buildWidgetStyleSheet(const ThemeColors &theme);
 
 } // namespace InvestInsight::Ui
