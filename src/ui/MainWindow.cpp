@@ -1,5 +1,6 @@
 ﻿#include "ui/MainWindow.h"
 #include "ui/AppTheme.h"
+#include "ui/renderers/ChartRenderer.h"
 #include "core/TechIndicators.h"
 
 #include <algorithm>
@@ -3031,108 +3032,8 @@ static QVector<KBar> synthesizeKBars(const QVector<KBar> &daily, int groupDays)
 
 QPixmap MainWindow::buildTrendChart(const SectorSnapshot &snap, int width, int height) const
 {
-    const ThemeColors &t = *s_theme;
-    const int totalH = 2000;
-    QPixmap pixmap(width, totalH);
-    pixmap.fill(QColor(t.chartBg));
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-
-    const QColor gridColor(t.chartGrid);
-    const QColor axisTextColor(t.chartAxisText);
-    const QColor bgColor(t.chartBg);
-
-    const QVector<KBar> &bars = snap.dailyBars;
-    const int gap = 6;
-    int y = 0;
-    const int trendH = 180, klineH = 240, volH = 120, macdH = 120, flowH = 130;
-    const int weekMonthH = 180;
-
-    // ======== 趋势概览（3图并排）========
-    {
-        const int panelW = width / 3 - 2;
-        drawTrendWithDates(painter, bars, 65, QRectF(0, y, panelW, trendH),
-            QString::fromUtf8("近3月趋势"), QColor("#EF4444"), gridColor, axisTextColor, bgColor);
-        drawTrendWithDates(painter, bars, 130, QRectF(panelW + 2, y, panelW, trendH),
-            QString::fromUtf8("近6月趋势"), QColor("#F59E0B"), gridColor, axisTextColor, bgColor);
-        drawTrendWithDates(painter, bars, 250, QRectF(2 * (panelW + 2), y, panelW, trendH),
-            QString::fromUtf8("近1年趋势"), QColor("#8B5CF6"), gridColor, axisTextColor, bgColor);
-        y += trendH + gap;
-        painter.setPen(QPen(gridColor, 1));
-        painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
-    }
-
-    const int dispBars = qMin(bars.size(), 60);
-    const int offset   = bars.size() - dispBars;
-
-    // ======== 日K线（全宽，统一时间轴）========
-    {
-        drawCandlestickChart(painter, bars, offset, dispBars,
-            QRectF(0, y, width, klineH), QString::fromUtf8("日K线"), gridColor, axisTextColor, bgColor);
-        y += klineH + gap;
-        painter.setPen(QPen(gridColor, 1));
-        painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
-    }
-
-    // ======== 成交量（统一时间轴）========
-    {
-        const QRectF panelRect(0, y, width, volH);
-        const auto vm5 = TechIndicators::calcVolMA(bars, 5);
-        const auto vm10 = TechIndicators::calcVolMA(bars, 10);
-        drawVolumePanel(painter, bars, offset, vm5, vm10, panelRect, gridColor, axisTextColor, bgColor, true);
-        y += volH + gap;
-        painter.setPen(QPen(gridColor, 1));
-        painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
-    }
-
-    // ======== MACD（统一时间轴）========
-    {
-        const QRectF panelRect(0, y, width, macdH);
-        if (bars.size() >= 26) {
-            const auto macd = TechIndicators::calcMACD(bars);
-            drawMACDPanel(painter, macd, offset, panelRect, gridColor, axisTextColor, bgColor,
-                          &bars, offset, dispBars);
-        } else {
-            painter.fillRect(panelRect, bgColor);
-            QFont sf; sf.setPixelSize(11); painter.setFont(sf);
-            painter.setPen(axisTextColor);
-            painter.drawText(panelRect, Qt::AlignCenter, QString::fromUtf8("MACD 数据不足"));
-        }
-        y += macdH + gap;
-        painter.setPen(QPen(gridColor, 1));
-        painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
-    }
-
-    // ======== 主力资金流（统一时间轴，右对齐）========
-    {
-        const QRectF flowRect(0, y, width, flowH);
-        drawFundFlowPanel(painter, snap.fundFlowSeries, flowRect, gridColor, axisTextColor, bgColor,
-                          dispBars, &bars, offset, dispBars);
-        y += flowH + gap;
-        painter.setPen(QPen(gridColor, 1));
-        painter.drawLine(QPointF(0, y - gap / 2), QPointF(width, y - gap / 2));
-    }
-
-    // ======== 周K线 / 月K线（补充参考，并排）========
-    {
-        const int panelW = width / 2 - 2;
-        QVector<KBar> weekBars = synthesizeKBars(bars, 5);
-        int dispWeek = qMin(52, weekBars.size());
-        int weekOff = weekBars.size() - dispWeek;
-        drawCandlestickChart(painter, weekBars, weekOff, dispWeek,
-            QRectF(0, y, panelW, weekMonthH), QString::fromUtf8("周K线"), gridColor, axisTextColor, bgColor);
-
-        QVector<KBar> monthBars = synthesizeKBars(bars, 22);
-        int dispMonth = qMin(12, monthBars.size());
-        int monthOff = monthBars.size() - dispMonth;
-        drawCandlestickChart(painter, monthBars, monthOff, dispMonth,
-            QRectF(panelW + 4, y, panelW, weekMonthH), QString::fromUtf8("月K线"), gridColor, axisTextColor, bgColor);
-        y += weekMonthH + gap;
-    }
-
-    return pixmap.copy(0, 0, width, y);
+    return UiTheme::ChartRenderer::buildTrendChart(snap, *s_theme, width, height);
 }
-
 void MainWindow::buildUi()
 {
     setWindowTitle("InvestInsight");
