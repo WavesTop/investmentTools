@@ -32,7 +32,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | 文件 | 责任 |
 | --- | --- |
 | `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze` 和 `--dump-sector-changes` 诊断命令。 |
-| `src/ui/AppTheme.cpp` | UI 主题颜色、Widget 样式和系统暗色模式检测；后续 HTML 基础 CSS 也优先沉到这里。 |
+| `src/ui/AppTheme.cpp` | UI 主题颜色、Widget 样式、HTML 基础 CSS 和系统暗色模式检测。 |
 | `src/ui/MainWindow.cpp` | Qt 主界面；配置页、主页面、刷新进度、结果渲染、板块详情、持仓相关 UI。 |
 | `src/core/InsightOrchestrator.cpp` | 核心编排器；并发拉取行情/新闻/市场环境，聚合评分，生成最终 `AnalysisResult`。 |
 | `src/core/SectorFetcher.cpp` | 板块列表、行情、K 线、今日涨幅、资金流、估值分位、拥挤度。 |
@@ -116,7 +116,7 @@ AI 两个阶段：
 
 `MainWindow` 当前以手动刷新为主。`m_progressPollTimer` 用于轮询后台分析进度；`m_autoRefreshTimer` 在头文件中存在，但当前没有形成完整的后台常驻刷新产品能力。后续如果实现定时刷新、系统托盘或提醒，需要同步更新产品说明。
 
-当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主题颜色和暗色模式检测已拆到 `src/ui/AppTheme.cpp`。后续事件雷达、板块详情重排和主导航优化应参考 `docs/design/InvestInsight-ui-redesign-mockup.md`。该设计稿建议把主界面组织为左侧导航、顶部状态条、关键事件雷达、板块机会与风险、风险与失效条件、事件传导路径和板块详情首屏布局，并额外提供策略跟踪、AI 助手、配置页和板块详情长图。实现时优先把大段 HTML 渲染拆到 renderer/panel 文件。
+当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主题颜色、Widget 样式、HTML 基础 CSS 和暗色模式检测已拆到 `src/ui/AppTheme.cpp`。后续事件雷达、板块详情重排和主导航优化应参考 `docs/design/InvestInsight-ui-redesign-mockup.md`。该设计稿建议把主界面组织为左侧导航、顶部状态条、关键事件雷达、板块机会与风险、风险与失效条件、事件传导路径和板块详情首屏布局，并额外提供策略跟踪、AI 助手、配置页和板块详情长图。实现时优先把大段 HTML 渲染拆到 renderer/panel 文件。
 
 板块详情页重构时不要删减当前已有量化信息。新的详情长图要求保留投资信号、短中长期收益、核心评分、技术指标、阶段收益/回测、资金流、相关板块、新闻证据和数据质量。
 

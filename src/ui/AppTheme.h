@@ -28,5 +28,6 @@ ThemeColors lightTheme();
 ThemeColors darkTheme();
 bool detectDarkMode();
 QString buildWidgetStyleSheet(const ThemeColors &theme);
+QString buildHtmlCss(const ThemeColors &theme);
 
 } // namespace InvestInsight::Ui

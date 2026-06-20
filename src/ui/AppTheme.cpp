@@ -262,6 +262,145 @@ QString buildWidgetStyleSheet(const ThemeColors &t)
     return s;
 }
 
+QString buildHtmlCss(const ThemeColors &t)
+{
+    return QString(R"(
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Inter', 'Helvetica Neue', sans-serif;
+    margin: 0; padding: 20px 24px; background: %1; color: %2;
+    font-size: 13px; line-height: 1.7; -webkit-font-smoothing: antialiased;
+}
+h1 {
+    font-size: 20px; color: %3; margin: 0 0 1px 0; font-weight: 700;
+    letter-spacing: -0.3px;
+}
+h2 {
+    font-size: 16px; color: %3; margin: 0 0 2px 0; font-weight: 700;
+    letter-spacing: -0.2px;
+}
+.meta {
+    font-size: 11px; color: %4; margin-bottom: 16px;
+    letter-spacing: 0.2px;
+}
+.divider {
+    border: none; border-top: 1px solid %5; margin: 16px 0;
+}
+
+.section-title {
+    font-size: 13px; font-weight: 700; color: %6;
+    border-left: 3px solid %7; padding-left: 10px;
+    margin: 20px 0 10px 0; letter-spacing: 0.2px;
+}
+
+.tag {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; color: #FFFFFF;
+    vertical-align: middle; letter-spacing: 0.3px;
+}
+.tag-up { background: #EF4444; }
+.tag-down { background: #3B82F6; }
+.tag-hold { background: #94A3B8; }
+
+.kv { margin: 5px 0; }
+.kv .label { color: %8; font-size: 11px; display: inline-block; min-width: 80px; }
+.kv .value { font-weight: 700; font-size: 13px; }
+
+.factor-list { margin: 4px 0 4px 14px; padding: 0; }
+.factor-list li { margin-bottom: 3px; font-size: 12px; line-height: 1.65; color: %8; }
+
+.news-item {
+    padding: 7px 12px; margin: 2px 0; border-radius: 8px;
+    background: %10; font-size: 12px; line-height: 1.65;
+    border: 1px solid transparent;
+}
+.news-item:hover { border-color: %13; }
+
+.narrative {
+    background: %10; border-radius: 10px; padding: 14px 18px;
+    font-size: 13px; line-height: 1.8; color: %11; margin: 10px 0;
+    white-space: pre-wrap; border: 1px solid %5;
+}
+
+.ai-badge {
+    display: inline-block; padding: 1px 7px; border-radius: 10px;
+    font-size: 9px; font-weight: 700; color: #FFFFFF;
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+    vertical-align: middle; margin-left: 5px;
+    letter-spacing: 0.3px;
+}
+
+table.overview {
+    border-collapse: separate; border-spacing: 0;
+    width: 100%%; font-size: 12px; margin-top: 6px;
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid %13;
+}
+table.overview th {
+    background: %12; padding: 8px 12px; text-align: left;
+    font-weight: 600; font-size: 10px; text-transform: uppercase;
+    border-bottom: 1px solid %13; white-space: nowrap;
+    letter-spacing: 0.5px; color: %8;
+}
+table.overview td {
+    padding: 8px 12px; border-bottom: 1px solid %9;
+    font-size: 12px;
+}
+table.overview tr:last-child td { border-bottom: none; }
+table.overview tr:hover td { background: %14; }
+table.overview a {
+    color: %15; text-decoration: none; font-weight: 600;
+}
+table.overview a:hover { color: %16; text-decoration: none; }
+
+table.fund {
+    border-collapse: separate; border-spacing: 0;
+    width: 100%%; font-size: 12px; margin-top: 6px;
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid %13;
+}
+table.fund th {
+    background: %12; padding: 7px 12px; text-align: left;
+    font-weight: 600; font-size: 10px; text-transform: uppercase;
+    border-bottom: 1px solid %13; letter-spacing: 0.5px; color: %8;
+}
+table.fund td { padding: 7px 12px; border-bottom: 1px solid %9; }
+table.fund tr:last-child td { border-bottom: none; }
+table.fund tr:hover td { background: %14; }
+
+.bar {
+    display: inline-block; height: 4px; border-radius: 2px;
+    background: %7; vertical-align: middle;
+}
+
+table.formula {
+    border-collapse: separate; border-spacing: 0;
+    width: auto; font-size: 11px; margin-top: 6px;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid %13;
+}
+table.formula th {
+    background: %17; padding: 6px 12px; text-align: left;
+    font-weight: 600; font-size: 10px; text-transform: uppercase;
+    border-bottom: 1px solid %13; letter-spacing: 0.5px; color: %8;
+}
+table.formula td {
+    padding: 6px 12px; border-bottom: 1px solid %9;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', 'JetBrains Mono', monospace; font-size: 11px;
+}
+table.formula tr:last-child td { border-bottom: none; }
+
+.card {
+    border: 1px solid %13; border-radius: 10px; padding: 12px 16px;
+    background: %10;
+}
+)")
+    .arg(t.bodyBg, t.bodyColor, t.headingColor, t.metaColor, t.dividerColor,
+         t.sectionTitleColor, t.sectionBorderColor, t.mutedColor, t.newsItemBorder,
+         t.narrativeBg, t.narrativeColor, t.tableHeaderBg, t.tableBorder,
+         t.tableHoverBg, t.linkColor, t.linkHoverColor, t.formulaHeaderBg);
+}
+
 bool detectDarkMode()
 {
     return QApplication::palette().color(QPalette::Window).lightness() < 128;
