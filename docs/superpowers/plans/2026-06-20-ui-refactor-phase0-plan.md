@@ -43,7 +43,7 @@
 验证：
 
 ```powershell
-cmake --build build --config Release -- /m
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 ```
 
 预期提交信息：
@@ -69,7 +69,7 @@ refactor(ui): 拆分主题和基础样式
 验证：
 
 ```powershell
-cmake --build build --config Release -- /m
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 ```
 
 预期提交信息：
@@ -96,7 +96,7 @@ refactor(ui): 拆分板块图表渲染
 验证：
 
 ```powershell
-cmake --build build --config Release -- /m
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 ```
 
 ## 切片 0.4：详情页 renderer 拆分
@@ -116,7 +116,7 @@ cmake --build build --config Release -- /m
 验证：
 
 ```powershell
-cmake --build build --config Release -- /m
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 ```
 
 ## 切片 0.5：页面骨架和视觉对齐
@@ -129,7 +129,7 @@ cmake --build build --config Release -- /m
 验证：
 
 ```powershell
-cmake --build build --config Release -- /m
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 ```
 
 验收时需要人工或截图检查 1366x768、1920x1080 下文字不重叠，主信息可扫描。

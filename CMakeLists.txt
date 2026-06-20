@@ -122,3 +122,19 @@ if(APPLE)
 endif()
 
 target_link_libraries(InvestInsight PRIVATE ${QT_LIBS})
+
+add_executable(InvestInsightUiSmoke
+    tests/ui/AppThemeSmoke.cpp
+    src/ui/AppTheme.cpp
+)
+
+target_include_directories(InvestInsightUiSmoke
+    PRIVATE
+        src
+)
+
+if(MSVC)
+    target_compile_options(InvestInsightUiSmoke PRIVATE /utf-8)
+endif()
+
+target_link_libraries(InvestInsightUiSmoke PRIVATE ${QT_LIBS})

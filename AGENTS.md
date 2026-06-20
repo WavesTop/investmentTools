@@ -29,4 +29,5 @@
 - 板块“今日涨幅”以同花顺实时分时数据为最高优先级；日 K 线主要用于图表和兜底，不能在已有实时涨幅时覆盖它。
 - 涉及板块行情口径时，修改后运行 `build\Release\InvestInsight.exe --dump-sector-changes`，重点核对有色金属、半导体、锂电池。
 - 常规代码修改后运行 `cmake --build build --config Release -- /m`。
+- UI 重构或界面样式修改后运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1`。
 - 不要提交 AI Key、个人持仓明细或本地缓存数据。

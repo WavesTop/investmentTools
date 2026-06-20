@@ -20,10 +20,12 @@
 ```powershell
 cmake --build build --config Release -- /m
 .\build\Release\InvestInsight.exe --dump-sector-changes
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 ```
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
+第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS 的关键输出。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -47,6 +49,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `package_macos.sh` | macOS 1.0 发布打包脚本；在 macOS 上生成根目录 `.app` 和 zip。 |
 | `assets/` | 应用图标源、Windows `.ico`、macOS `.icns`、Qt qrc 图标资源。 |
 | `tools/generate_app_icons.py` | 图标资源生成脚本，需要 Pillow。 |
+| `tools/verify_ui_smoke.ps1` | UI 重构 smoke 验证脚本；构建主程序和 UI smoke 测试程序。 |
+| `tests/ui/AppThemeSmoke.cpp` | UI 基础样式 smoke 测试，覆盖 `AppTheme` 的主题和 CSS 输出。 |
 | `docs/release/PACKAGING.md` | Windows/macOS 打包和使用说明。 |
 | `docs/design/InvestInsight-ui-redesign-mockup.md` | UI 优化设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
 | `docs/superpowers/plans/2026-06-20-ui-refactor-phase0-plan.md` | UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
