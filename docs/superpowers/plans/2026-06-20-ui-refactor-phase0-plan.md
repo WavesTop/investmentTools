@@ -38,7 +38,7 @@
 - 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
-当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer，下一片分批删除旧静态绘图 helper。
+当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper。
 
 验证：
 
