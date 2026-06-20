@@ -25,7 +25,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 ```
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
-第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS 的关键输出。
+第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS、图表渲染，以及主窗口关键 Tab/按钮是否存在。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 
 | 文件 | 责任 |
 | --- | --- |
-| `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze` 和 `--dump-sector-changes` 诊断命令。 |
+| `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze`、`--dump-sector-changes` 和 `--ui-smoke` 诊断命令。 |
 | `src/ui/AppTheme.cpp` | UI 主题颜色、Widget 样式、HTML 基础 CSS 和系统暗色模式检测。 |
 | `src/ui/renderers/ChartRenderer.cpp` | 板块详情趋势图、K 线、成交量、MACD、资金流和周/月参考图的独立渲染器。 |
 | `src/ui/MainWindow.cpp` | Qt 主界面；配置页、主页面、刷新进度、结果渲染、板块详情、持仓相关 UI。 |

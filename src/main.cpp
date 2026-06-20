@@ -1,6 +1,8 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QIcon>
+#include <QPushButton>
+#include <QTabWidget>
 #include <QTextStream>
 #ifdef Q_OS_WIN
 #include <QPalette>
@@ -60,6 +62,67 @@ int dumpSectorChanges(int argc, char *argv[])
     return 0;
 }
 
+bool containsTabText(QTabWidget *tabs, const QString &text)
+{
+    if (!tabs) return false;
+    for (int i = 0; i < tabs->count(); ++i) {
+        if (tabs->tabText(i).contains(text)) return true;
+    }
+    return false;
+}
+
+int runUiSmoke()
+{
+    QTextStream out(stdout);
+    QTextStream err(stderr);
+
+    MainWindow window;
+    QStringList missing;
+
+    const QList<QTabWidget *> tabWidgets = window.findChildren<QTabWidget *>();
+    auto hasTab = [&tabWidgets](const QString &text) {
+        for (QTabWidget *tabs : tabWidgets) {
+            if (containsTabText(tabs, text)) return true;
+        }
+        return false;
+    };
+
+    const QStringList requiredTabs = {
+        QString::fromUtf8("总览工作台"),
+        QString::fromUtf8("总览"),
+        QString::fromUtf8("板块机会"),
+        QString::fromUtf8("策略跟踪")
+    };
+    for (const QString &tab : requiredTabs) {
+        if (!hasTab(tab)) missing << QString::fromUtf8("tab:") + tab;
+    }
+
+    const QList<QPushButton *> buttons = window.findChildren<QPushButton *>();
+    auto hasButton = [&buttons](const QString &text) {
+        for (QPushButton *button : buttons) {
+            if (button->text().contains(text)) return true;
+        }
+        return false;
+    };
+
+    const QStringList requiredButtons = {
+        QString::fromUtf8("开始分析"),
+        QString::fromUtf8("AI 助手"),
+        QString::fromUtf8("配置中心")
+    };
+    for (const QString &button : requiredButtons) {
+        if (!hasButton(button)) missing << QString::fromUtf8("button:") + button;
+    }
+
+    if (!missing.isEmpty()) {
+        err << "Main window smoke failed. Missing: " << missing.join(", ") << '\n';
+        return 1;
+    }
+
+    out << "Main window smoke passed.\n";
+    return 0;
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -99,6 +162,10 @@ int main(int argc, char *argv[])
         app.setPalette(p);
     }
 #endif
+
+    if (hasArgument(argc, argv, "--ui-smoke")) {
+        return runUiSmoke();
+    }
 
     MainWindow window;
     window.show();
