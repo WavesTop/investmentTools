@@ -52,6 +52,7 @@ endif()
 
 set(APP_SOURCES
     src/main.cpp
+    src/ui/AppTheme.cpp
     src/ui/MainWindow.cpp
     src/core/InsightOrchestrator.cpp
     src/core/DataCollector.cpp

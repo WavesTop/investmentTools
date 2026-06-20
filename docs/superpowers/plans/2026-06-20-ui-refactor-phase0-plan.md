@@ -33,9 +33,9 @@
 
 实现：
 
-- 移出 `ThemeColors`。
-- 移出 `lightTheme()`、`darkTheme()`、`detectDarkMode()`。
-- 移出 `buildWidgetStyleSheet()` 和 `buildHtmlCss()`。
+- 0.1a：移出 `ThemeColors`、`lightTheme()`、`darkTheme()`、`detectDarkMode()`。
+- 0.1b：移出 `buildWidgetStyleSheet()`。
+- 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
 验证：
