@@ -40,6 +40,8 @@
 
 当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper。
 
+可见 UI 改良进度：主导航文案已调整为“总览工作台 / 总览 / 板块机会 / 策略跟踪 / AI 助手 / 配置中心”，先让 1.0 界面语义贴近 2.0 设计稿，后续再继续拆 renderer 和补事件雷达入口。
+
 验证：
 
 ```powershell

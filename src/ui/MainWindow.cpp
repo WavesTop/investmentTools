@@ -3059,7 +3059,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
         ? "启用/关闭 AI 智能分析"
         : "未配置 AI API Key");
 
-    m_backToSetupButton = new QPushButton("⚙ 配置", m_mainPage);
+    m_backToSetupButton = new QPushButton("⚙ 配置中心", m_mainPage);
     m_backToSetupButton->setObjectName("secondaryBtn");
     connect(m_backToSetupButton, &QPushButton::clicked, this, [this]() {
         loadSavedAIConfigToForm();
@@ -3073,7 +3073,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_loadingBar->setVisible(false);
     m_loadingBar->setTextVisible(false);
 
-    auto *chatButton = new QPushButton("💬 AI助手", m_mainPage);
+    auto *chatButton = new QPushButton("💬 AI 助手", m_mainPage);
     chatButton->setObjectName("secondaryBtn");
     chatButton->setToolTip("打开AI智能问答助手");
     connect(chatButton, &QPushButton::clicked, this, &MainWindow::openChatTab);
@@ -3096,7 +3096,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_tabWidget->setDocumentMode(true);
     m_tabWidget->tabBar()->setStyle(new PaddedTabStyle(m_tabWidget->tabBar()->style()));
 
-    // ---- 综合总览：3个子Tab（数据总览 / 板块&指数信息 / 投资策略）----
+    // ---- 总览工作台：3个子Tab（总览 / 板块机会 / 策略跟踪）----
     auto *overviewContainer = new QWidget(m_mainPage);
     auto *overviewContainerLayout = new QVBoxLayout(overviewContainer);
     overviewContainerLayout->setContentsMargins(0, 0, 0, 0);
@@ -3108,7 +3108,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_overviewSubTabs->tabBar()->setExpanding(false);
     m_overviewSubTabs->tabBar()->setStyle(new PaddedTabStyle(m_overviewSubTabs->tabBar()->style()));
 
-    // -- 子Tab 1: 数据总览 --
+    // -- 子Tab 1: 总览 --
     m_dashboardBrowser = new ClickableBrowser(m_overviewSubTabs);
     m_dashboardBrowser->onTabJump = [this](int idx) {
         if (idx <= 0 || idx > static_cast<int>(m_lastResult.sectors.size())) return;
@@ -3118,9 +3118,9 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_dashboardBrowser->onIndexJump = [this](const QString &key) {
         openIndexTab(key);
     };
-    m_overviewSubTabs->addTab(m_dashboardBrowser, "数据总览");
+    m_overviewSubTabs->addTab(m_dashboardBrowser, "总览");
 
-    // -- 子Tab 2: 板块&指数信息（含过滤栏）--
+    // -- 子Tab 2: 板块机会（含过滤栏）--
     auto *sectorTab = new QWidget(m_overviewSubTabs);
     auto *sectorLayout = new QVBoxLayout(sectorTab);
     sectorLayout->setContentsMargins(0, 6, 0, 0);
@@ -3132,7 +3132,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     filterRow->setSpacing(8);
 
     m_overviewSearch = new QLineEdit(filterBar);
-    m_overviewSearch->setPlaceholderText("搜索板块或指数名称...");
+    m_overviewSearch->setPlaceholderText("搜索板块、指数或机会...");
     m_overviewSearch->setMinimumWidth(140);
     m_overviewSearch->setMaximumWidth(200);
     m_overviewSearch->setClearButtonEnabled(true);
@@ -3152,7 +3152,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_viewMode = new QComboBox(filterBar);
     m_viewMode->addItems({"简明模式", "专业模式"});
     m_viewMode->setMinimumWidth(90);
-    m_viewMode->setToolTip("简明模式适合快速查看关键信号；专业模式展示完整分析数据");
+    m_viewMode->setToolTip("简明模式适合快速查看关键信号；专业模式展示完整投研数据");
 
     auto *resetBtn = new QPushButton("重置", filterBar);
     resetBtn->setObjectName("secondaryBtn");
@@ -3179,9 +3179,9 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
 
     sectorLayout->addWidget(filterBar);
     sectorLayout->addWidget(m_overviewBrowser, 1);
-    m_overviewSubTabs->addTab(sectorTab, "板块&指数信息");
+    m_overviewSubTabs->addTab(sectorTab, "板块机会");
 
-    // -- 子Tab 3: 投资策略 --
+    // -- 子Tab 3: 策略跟踪 --
     m_strategyBrowser = new ClickableBrowser(m_overviewSubTabs);
     m_strategyBrowser->onTabJump = [this](int idx) {
         if (idx <= 0 || idx > static_cast<int>(m_lastResult.sectors.size())) return;
@@ -3191,10 +3191,10 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_strategyBrowser->onIndexJump = [this](const QString &key) {
         openIndexTab(key);
     };
-    m_overviewSubTabs->addTab(m_strategyBrowser, "投资策略");
+    m_overviewSubTabs->addTab(m_strategyBrowser, "策略跟踪");
 
     overviewContainerLayout->addWidget(m_overviewSubTabs, 1);
-    m_tabWidget->addTab(overviewContainer, "综合总览");
+    m_tabWidget->addTab(overviewContainer, "总览工作台");
 
     // 过滤控件全部触发重新渲染（仅影响板块&指数信息子Tab）
     auto rerender = [this]() {
