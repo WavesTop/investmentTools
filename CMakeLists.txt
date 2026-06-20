@@ -127,8 +127,10 @@ target_link_libraries(InvestInsight PRIVATE ${QT_LIBS})
 add_executable(InvestInsightUiSmoke
     tests/ui/AppThemeSmoke.cpp
     tests/ui/ChartRendererSmoke.cpp
+    tests/ui/DashboardRendererSmoke.cpp
     src/ui/AppTheme.cpp
     src/ui/renderers/ChartRenderer.cpp
+    src/ui/renderers/DashboardRenderer.cpp
     src/core/TechIndicators.cpp
 )
 
