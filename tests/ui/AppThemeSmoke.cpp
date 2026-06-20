@@ -37,6 +37,7 @@ void verifyTheme(const InvestInsight::Ui::ThemeColors &theme, const QString &nam
 
 int runChartRendererSmoke();
 int runDashboardRendererSmoke();
+int runSectorTableRendererSmoke();
 
 int main(int argc, char *argv[])
 {
@@ -58,6 +59,11 @@ int main(int argc, char *argv[])
 
     const int dashboardResult = runDashboardRendererSmoke();
     if (dashboardResult != 0) {
+        ++failures;
+    }
+
+    const int sectorTableResult = runSectorTableRendererSmoke();
+    if (sectorTableResult != 0) {
         ++failures;
     }
 

@@ -184,7 +184,7 @@ flowchart TD
 6. 做“UI 重构与事件工作台”：按设计稿拆分 `MainWindow`，新增事件雷达、传导路径和板块详情首屏结构。
 
 UI 重构先按 Phase 0 小切片推进，优先拆出主题样式、图表渲染和 HTML renderer，再逐步接入事件雷达与板块详情重排；每个切片验证通过后只提交到本地仓库。
-界面重构期间新增固定 smoke 验证流程：`tools/verify_ui_smoke.ps1` 会构建 Release 主程序和 UI smoke 测试程序，先确保主题、Widget 样式、HTML 基础 CSS、图表渲染、总览页 HTML 渲染和主窗口关键入口没有被破坏，再进入下一片改动。
+界面重构期间新增固定 smoke 验证流程：`tools/verify_ui_smoke.ps1` 会构建 Release 主程序和 UI smoke 测试程序，先确保主题、Widget 样式、HTML 基础 CSS、图表渲染、总览页 HTML 渲染、板块机会 HTML 渲染和主窗口关键入口没有被破坏，再进入下一片改动。
 
 ## 1.0 发布方式
 
