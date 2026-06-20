@@ -25,6 +25,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
 
+提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
+
 ## 重要文件地图
 
 | 文件 | 责任 |
@@ -45,6 +47,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `assets/` | 应用图标源、Windows `.ico`、macOS `.icns`、Qt qrc 图标资源。 |
 | `tools/generate_app_icons.py` | 图标资源生成脚本，需要 Pillow。 |
 | `docs/release/PACKAGING.md` | Windows/macOS 打包和使用说明。 |
+| `docs/design/InvestInsight-ui-redesign-mockup.md` | UI 优化设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
+| `docs/superpowers/plans/2026-06-20-ui-refactor-phase0-plan.md` | UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
 
 ## 当前主流程
 
@@ -110,6 +114,10 @@ AI 两个阶段：
 ## UI 状态
 
 `MainWindow` 当前以手动刷新为主。`m_progressPollTimer` 用于轮询后台分析进度；`m_autoRefreshTimer` 在头文件中存在，但当前没有形成完整的后台常驻刷新产品能力。后续如果实现定时刷新、系统托盘或提醒，需要同步更新产品说明。
+
+当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，后续事件雷达、板块详情重排和主导航优化应参考 `docs/design/InvestInsight-ui-redesign-mockup.md`。该设计稿建议把主界面组织为左侧导航、顶部状态条、关键事件雷达、板块机会与风险、风险与失效条件、事件传导路径和板块详情首屏布局，并额外提供策略跟踪、AI 助手、配置页和板块详情长图。实现时优先把大段 HTML 渲染拆到 renderer/panel 文件。
+
+板块详情页重构时不要删减当前已有量化信息。新的详情长图要求保留投资信号、短中长期收益、核心评分、技术指标、阶段收益/回测、资金流、相关板块、新闻证据和数据质量。
 
 ## 打包与图标
 

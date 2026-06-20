@@ -1,0 +1,222 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <style>
+      .bg { fill: #f5f7fb; }
+      .surface { fill: #ffffff; stroke: #d9e0ea; stroke-width: 1; }
+      .surface-soft { fill: #fbfcfe; stroke: #d9e0ea; stroke-width: 1; }
+      .header { fill: #ffffff; stroke: #d9e0ea; stroke-width: 1; }
+      .sidebar { fill: #111827; }
+      .sidebar-muted { fill: #8da2bd; font: 20px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .sidebar-active { fill: #e8f0ff; }
+      .sidebar-active-text { fill: #1f3b6d; font: 700 22px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .title { fill: #111827; font: 700 25px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .subtle { fill: #637083; font: 18px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .small { fill: #637083; font: 15px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .tiny { fill: #7a8798; font: 13px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .label { fill: #475569; font: 17px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .section { fill: #111827; font: 700 20px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .metric { fill: #111827; font: 700 32px "DIN Alternate", "Segoe UI", sans-serif; }
+      .positive { fill: #dc2626; font: 700 20px "DIN Alternate", "Microsoft YaHei", sans-serif; }
+      .negative { fill: #059669; font: 700 20px "DIN Alternate", "Microsoft YaHei", sans-serif; }
+      .neutral { fill: #2563eb; font: 700 20px "DIN Alternate", "Microsoft YaHei", sans-serif; }
+      .warn { fill: #b45309; font: 700 17px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .pill-text { fill: #1f2937; font: 700 15px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .table-head { fill: #64748b; font: 700 14px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .table-cell { fill: #1f2937; font: 17px "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .mono { fill: #334155; font: 17px "DIN Alternate", "Segoe UI", sans-serif; }
+      .line { stroke: #d9e0ea; stroke-width: 1; }
+      .accent { fill: #2563eb; }
+      .accent-light { fill: #e8f0ff; }
+      .red-light { fill: #fee2e2; }
+      .green-light { fill: #d1fae5; }
+      .amber-light { fill: #fef3c7; }
+      .cyan-light { fill: #dff7fb; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1920" height="1080"/>
+
+  <rect class="sidebar" x="0" y="0" width="236" height="1080"/>
+  <text x="34" y="52" fill="#ffffff" font-size="28" font-weight="700" font-family="Microsoft YaHei, Segoe UI, sans-serif">InvestInsight</text>
+  <text x="34" y="82" fill="#8da2bd" font-size="14" font-family="Microsoft YaHei, Segoe UI, sans-serif">新闻驱动的板块洞察</text>
+
+  <rect x="18" y="118" width="200" height="44" rx="8" class="sidebar-active"/>
+  <text x="44" y="147" class="sidebar-active-text">总览</text>
+  <text x="44" y="204" class="sidebar-muted">事件雷达</text>
+  <text x="44" y="260" class="sidebar-muted">板块机会</text>
+  <text x="44" y="316" class="sidebar-muted">策略跟踪</text>
+  <text x="44" y="372" class="sidebar-muted">AI 助手</text>
+  <text x="44" y="428" class="sidebar-muted">配置</text>
+
+  <rect x="24" y="906" width="188" height="118" rx="8" fill="#172033" stroke="#334155"/>
+  <text x="44" y="938" fill="#e5edf8" font-size="17" font-weight="700" font-family="Microsoft YaHei, Segoe UI, sans-serif">数据状态</text>
+  <circle cx="47" cy="970" r="5" fill="#22c55e"/>
+  <text x="62" y="976" fill="#cbd5e1" font-size="14" font-family="Microsoft YaHei, Segoe UI, sans-serif">行情 09:57 更新</text>
+  <circle cx="47" cy="1000" r="5" fill="#f59e0b"/>
+  <text x="62" y="1006" fill="#cbd5e1" font-size="14" font-family="Microsoft YaHei, Segoe UI, sans-serif">新闻增量 16 条</text>
+
+  <rect class="header" x="236" y="0" width="1684" height="76"/>
+  <text x="268" y="46" class="title">综合总览</text>
+  <text x="394" y="46" class="subtle">2026-06-20 09:57 · AI 已启用 · 覆盖 186 个板块</text>
+  <rect x="1310" y="18" width="130" height="40" rx="8" fill="#2563eb"/>
+  <text x="1340" y="44" fill="#ffffff" font-size="17" font-weight="700" font-family="Microsoft YaHei, Segoe UI, sans-serif">开始分析</text>
+  <rect x="1454" y="18" width="118" height="40" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1482" y="44" class="label">AI 助手</text>
+  <rect x="1584" y="18" width="118" height="40" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1618" y="44" class="label">配置</text>
+  <text x="1732" y="44" class="small">就绪，等待下一次刷新</text>
+
+  <rect class="surface" x="260" y="104" width="392" height="124" rx="8"/>
+  <text x="286" y="136" class="label">市场温度</text>
+  <text x="286" y="184" class="metric">偏强震荡</text>
+  <text x="510" y="184" class="positive">+0.62</text>
+  <text x="286" y="210" class="tiny">涨跌家数、指数、资金流综合判断</text>
+
+  <rect class="surface" x="672" y="104" width="312" height="124" rx="8"/>
+  <text x="698" y="136" class="label">新闻新鲜度</text>
+  <text x="698" y="184" class="metric">18m</text>
+  <text x="774" y="184" class="neutral">较新</text>
+  <text x="698" y="210" class="tiny">首次发现到触发提醒的延迟</text>
+
+  <rect class="surface" x="1004" y="104" width="312" height="124" rx="8"/>
+  <text x="1030" y="136" class="label">风险拥挤度</text>
+  <text x="1030" y="184" class="metric">中等</text>
+  <text x="1122" y="184" class="warn">过热 3 个</text>
+  <text x="1030" y="210" class="tiny">高热度、高涨幅、资金背离</text>
+
+  <rect class="surface" x="1336" y="104" width="520" height="124" rx="8"/>
+  <text x="1362" y="136" class="label">下一观察点</text>
+  <text x="1362" y="176" class="section">美联储议息会议 · CPI/PCE 数据</text>
+  <text x="1362" y="207" class="tiny">事件未落地，当前建议以观察和仓位约束为主</text>
+
+  <rect class="surface" x="260" y="252" width="560" height="382" rx="8"/>
+  <text x="286" y="288" class="section">关键事件雷达</text>
+  <text x="690" y="288" class="small">按重要性排序</text>
+
+  <rect x="286" y="314" width="508" height="84" rx="8" fill="#fff7ed" stroke="#fed7aa"/>
+  <rect x="304" y="334" width="68" height="26" rx="6" class="amber-light"/>
+  <text x="319" y="353" class="pill-text">预期</text>
+  <text x="388" y="346" class="table-cell">美联储降息预期升温</text>
+  <text x="388" y="374" class="tiny">影响：有色、黄金、半导体、创新药 · 置信度 76%</text>
+
+  <rect x="286" y="414" width="508" height="84" rx="8" fill="#f8fafc" stroke="#d9e0ea"/>
+  <rect x="304" y="434" width="68" height="26" rx="6" class="red-light"/>
+  <text x="319" y="453" class="pill-text">确认</text>
+  <text x="388" y="446" class="table-cell">先进封装设备订单超预期</text>
+  <text x="388" y="474" class="tiny">影响：半导体、设备、材料 · 置信度 82%</text>
+
+  <rect x="286" y="514" width="508" height="84" rx="8" fill="#f8fafc" stroke="#d9e0ea"/>
+  <rect x="304" y="534" width="68" height="26" rx="6" class="cyan-light"/>
+  <text x="319" y="553" class="pill-text">修正</text>
+  <text x="388" y="546" class="table-cell">锂价反弹但库存仍偏高</text>
+  <text x="388" y="574" class="tiny">影响：锂电池、新能源车 · 置信度 68%</text>
+
+  <rect class="surface" x="844" y="252" width="648" height="382" rx="8"/>
+  <text x="870" y="288" class="section">板块机会与风险</text>
+  <text x="1354" y="288" class="small">红色为 A 股正向涨幅</text>
+  <line class="line" x1="870" y1="316" x2="1466" y2="316"/>
+  <text x="870" y="346" class="table-head">板块</text>
+  <text x="1070" y="346" class="table-head">今日</text>
+  <text x="1160" y="346" class="table-head">事件</text>
+  <text x="1260" y="346" class="table-head">趋势</text>
+  <text x="1360" y="346" class="table-head">动作</text>
+
+  <line class="line" x1="870" y1="366" x2="1466" y2="366"/>
+  <text x="870" y="396" class="table-cell">半导体</text>
+  <text x="1070" y="396" class="positive">+2.19%</text>
+  <text x="1160" y="396" class="mono">0.82</text>
+  <text x="1260" y="396" class="mono">0.74</text>
+  <rect x="1358" y="374" width="74" height="32" rx="6" class="red-light"/>
+  <text x="1374" y="396" class="pill-text">跟踪</text>
+
+  <line class="line" x1="870" y1="420" x2="1466" y2="420"/>
+  <text x="870" y="450" class="table-cell">有色金属</text>
+  <text x="1070" y="450" class="negative">-0.77%</text>
+  <text x="1160" y="450" class="mono">0.69</text>
+  <text x="1260" y="450" class="mono">0.58</text>
+  <rect x="1358" y="428" width="74" height="32" rx="6" class="amber-light"/>
+  <text x="1374" y="450" class="pill-text">观察</text>
+
+  <line class="line" x1="870" y1="474" x2="1466" y2="474"/>
+  <text x="870" y="504" class="table-cell">锂电池</text>
+  <text x="1070" y="504" class="positive">+5.06%</text>
+  <text x="1160" y="504" class="mono">0.41</text>
+  <text x="1260" y="504" class="mono">0.36</text>
+  <rect x="1358" y="482" width="92" height="32" rx="6" class="cyan-light"/>
+  <text x="1374" y="504" class="pill-text">过热</text>
+
+  <line class="line" x1="870" y1="528" x2="1466" y2="528"/>
+  <text x="870" y="558" class="table-cell">证券</text>
+  <text x="1070" y="558" class="positive">+1.18%</text>
+  <text x="1160" y="558" class="mono">0.57</text>
+  <text x="1260" y="558" class="mono">0.44</text>
+  <rect x="1358" y="536" width="74" height="32" rx="6" class="amber-light"/>
+  <text x="1374" y="558" class="pill-text">观察</text>
+
+  <line class="line" x1="870" y1="582" x2="1466" y2="582"/>
+  <text x="870" y="612" class="table-cell">创新药</text>
+  <text x="1070" y="612" class="negative">-0.31%</text>
+  <text x="1160" y="612" class="mono">0.53</text>
+  <text x="1260" y="612" class="mono">0.49</text>
+  <rect x="1358" y="590" width="74" height="32" rx="6" class="amber-light"/>
+  <text x="1374" y="612" class="pill-text">观察</text>
+
+  <rect class="surface" x="1516" y="252" width="340" height="382" rx="8"/>
+  <text x="1542" y="288" class="section">风险与失效条件</text>
+  <rect x="1542" y="320" width="288" height="70" rx="8" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="1564" y="350" class="warn">未发生事件不直接推买入</text>
+  <text x="1564" y="374" class="tiny">降息仍是预期，需等 CPI/PCE 验证</text>
+  <rect x="1542" y="408" width="288" height="70" rx="8" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="1564" y="438" class="negative">锂电池短线过热</text>
+  <text x="1564" y="462" class="tiny">涨幅过大但事件催化不足</text>
+  <rect x="1542" y="496" width="288" height="92" rx="8" fill="#f8fafc" stroke="#d9e0ea"/>
+  <text x="1564" y="526" class="table-cell">数据质量</text>
+  <text x="1564" y="552" class="tiny">同花顺实时涨幅优先</text>
+  <text x="1564" y="574" class="tiny">新闻源 12 路并发，去重后 42 条</text>
+
+  <rect class="surface" x="260" y="658" width="760" height="350" rx="8"/>
+  <text x="286" y="694" class="section">事件传导路径</text>
+  <text x="286" y="724" class="small">示例：美联储降息预期如何影响板块</text>
+  <rect x="306" y="770" width="150" height="58" rx="8" class="accent-light"/>
+  <text x="332" y="806" class="pill-text">降息预期</text>
+  <line x1="456" y1="799" x2="548" y2="799" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="548,799 536,792 536,806" fill="#94a3b8"/>
+  <rect x="548" y="770" width="170" height="58" rx="8" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="576" y="806" class="pill-text">美债收益率下行</text>
+  <line x1="718" y1="799" x2="810" y2="799" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="810,799 798,792 798,806" fill="#94a3b8"/>
+  <rect x="810" y="770" width="170" height="58" rx="8" fill="#fff1f2" stroke="#fecdd3"/>
+  <text x="838" y="806" class="pill-text">成长估值修复</text>
+  <line x1="634" y1="828" x2="634" y2="890" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="634,890 627,878 641,878" fill="#94a3b8"/>
+  <rect x="548" y="890" width="170" height="58" rx="8" fill="#fef3c7" stroke="#fde68a"/>
+  <text x="578" y="926" class="pill-text">美元走弱</text>
+  <line x1="718" y1="919" x2="810" y2="919" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="810,919 798,912 798,926" fill="#94a3b8"/>
+  <rect x="810" y="890" width="170" height="58" rx="8" fill="#fee2e2" stroke="#fecaca"/>
+  <text x="850" y="926" class="pill-text">黄金 / 有色</text>
+  <text x="306" y="980" class="tiny">设计要求：每条结论必须能展开证据新闻、状态、下一观察点和失效条件。</text>
+
+  <rect class="surface" x="1044" y="658" width="812" height="350" rx="8"/>
+  <text x="1070" y="694" class="section">板块详情首屏布局</text>
+  <text x="1070" y="724" class="small">后续点击某个板块时，优先解释“为什么”和“接下来观察什么”</text>
+  <rect x="1070" y="752" width="760" height="60" rx="8" class="surface-soft"/>
+  <text x="1094" y="789" class="table-cell">半导体</text>
+  <text x="1232" y="789" class="positive">今日 +2.19%</text>
+  <text x="1374" y="789" class="mono">综合 0.74</text>
+  <text x="1514" y="789" class="mono">事件 0.82</text>
+  <text x="1654" y="789" class="warn">风险 中</text>
+  <rect x="1070" y="836" width="178" height="96" rx="8" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="1092" y="870" class="label">短线热度</text>
+  <text x="1092" y="900" class="metric">高</text>
+  <rect x="1264" y="836" width="178" height="96" rx="8" fill="#fee2e2" stroke="#fecaca"/>
+  <text x="1286" y="870" class="label">事件催化</text>
+  <text x="1286" y="900" class="metric">强</text>
+  <rect x="1458" y="836" width="178" height="96" rx="8" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="1480" y="870" class="label">中期趋势</text>
+  <text x="1480" y="900" class="metric">上行</text>
+  <rect x="1652" y="836" width="178" height="96" rx="8" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="1674" y="870" class="label">兑现风险</text>
+  <text x="1674" y="900" class="metric">中</text>
+  <text x="1070" y="970" class="tiny">组件拆分目标：DashboardRenderer、EventRadarRenderer、SectorDetailRenderer 独立渲染，MainWindow 只负责状态和导航。</text>
+</svg>
