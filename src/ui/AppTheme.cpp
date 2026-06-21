@@ -241,6 +241,96 @@ QString buildWidgetStyleSheet(const ThemeColors &t)
         border: none;
         background: @pane@;
     }
+    QFrame#mainShell {
+        background: @winBg@;
+        border: none;
+    }
+    QFrame#sideNav {
+        background: @sideBg@;
+        border: none;
+    }
+    QLabel#brandTitle {
+        color: #FFFFFF;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 0px;
+    }
+    QLabel#brandSubtitle {
+        color: rgba(226,232,240,0.72);
+        font-size: 12px;
+    }
+    QPushButton#navButton {
+        background: transparent;
+        color: rgba(226,232,240,0.72);
+        border: none;
+        border-radius: 8px;
+        text-align: left;
+        padding: 10px 26px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+    QPushButton#navButton:hover {
+        background: rgba(226,232,240,0.08);
+        color: #FFFFFF;
+    }
+    QPushButton#navButton:checked {
+        background: #E8EEF9;
+        color: #183B72;
+    }
+    QFrame#sideStatusCard {
+        background: rgba(30,41,59,0.95);
+        border: 1px solid rgba(148,163,184,0.28);
+        border-radius: 8px;
+    }
+    QFrame#workspacePane {
+        background: @winBg@;
+        border: none;
+    }
+    QFrame#topStatusBar {
+        background: @pane@;
+        border: none;
+        border-bottom: 1px solid @border@;
+    }
+    QLabel#workspaceTitle {
+        color: @text@;
+        font-size: 24px;
+        font-weight: 800;
+    }
+    QFrame#configCard {
+        background: @pane@;
+        border: 1px solid @border@;
+        border-radius: 8px;
+    }
+    QLabel#cardTitle {
+        color: @text@;
+        font-size: 20px;
+        font-weight: 800;
+    }
+    QLabel#cardMeta {
+        color: @status@;
+        font-size: 12px;
+        line-height: 18px;
+    }
+    QFrame#chatContextPanel,
+    QFrame#chatConversationPanel {
+        background: @pane@;
+        border: 1px solid @border@;
+        border-radius: 8px;
+    }
+    QPushButton#quickQuestionButton {
+        background: #E8EEF9;
+        color: #183B72;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    QPushButton#quickQuestionButton:hover {
+        background: rgba(79,70,229,0.14);
+        color: @btn@;
+    }
     QScrollArea {
         border: none;
         background: transparent;
@@ -259,6 +349,7 @@ QString buildWidgetStyleSheet(const ThemeColors &t)
     s.replace(QLatin1String("@chunk1@"), t.barChunk1);
     s.replace(QLatin1String("@chunk2@"), t.barChunk2);
     s.replace(QLatin1String("@status@"), t.statusColor);
+    s.replace(QLatin1String("@sideBg@"), QStringLiteral("#111827"));
     return s;
 }
 
@@ -392,6 +483,43 @@ table.formula tr:last-child td { border-bottom: none; }
 
 .card {
     border: 1px solid %13; border-radius: 10px; padding: 12px 16px;
+    background: %10;
+}
+.workspace-shell {
+    max-width: 1680px;
+    margin: 0 auto;
+}
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 10px 0 16px;
+}
+.metric-card {
+    border: 1px solid %13;
+    border-radius: 8px;
+    background: %10;
+    padding: 16px 18px;
+}
+.metric-card .label {
+    color: %8;
+    font-size: 12px;
+}
+.metric-card .value {
+    color: %3;
+    font-size: 26px;
+    font-weight: 800;
+    margin-top: 4px;
+}
+.split-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.62fr);
+    gap: 16px;
+}
+.callout {
+    border: 1px solid %13;
+    border-radius: 8px;
+    padding: 12px 14px;
     background: %10;
 }
 )")

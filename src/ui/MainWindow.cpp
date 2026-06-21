@@ -41,10 +41,12 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 }
 // ─────────────────────────────────────────────────────────────────────────────
 #include <QCheckBox>
+#include <QButtonGroup>
 #include <QComboBox>
 #include <QCompleter>
 #include <QDesktopServices>
 #include <QFormLayout>
+#include <QFrame>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -887,7 +889,42 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
         "QPushButton:pressed{background:#3730A3;}");
     connect(m_enterButton, &QPushButton::clicked, this, &MainWindow::saveAndEnterMainPage);
 
+    auto *opsGrid = new QWidget(content);
+    auto *opsLayout = new QHBoxLayout(opsGrid);
+    opsLayout->setContentsMargins(0, 0, 0, 0);
+    opsLayout->setSpacing(18);
+
+    auto makeConfigCard = [content](const QString &title, const QStringList &rows) {
+        auto *card = new QFrame(content);
+        card->setObjectName("configCard");
+        auto *layout = new QVBoxLayout(card);
+        layout->setContentsMargins(26, 22, 26, 22);
+        layout->setSpacing(12);
+        auto *titleLabel = new QLabel(title, card);
+        titleLabel->setObjectName("cardTitle");
+        layout->addWidget(titleLabel);
+        for (const QString &row : rows) {
+            auto *label = new QLabel(row, card);
+            label->setObjectName("cardMeta");
+            label->setWordWrap(true);
+            layout->addWidget(label);
+        }
+        layout->addStretch(1);
+        return card;
+    };
+    opsLayout->addWidget(makeConfigCard(QString::fromUtf8("后台刷新与提醒"), {
+        QString::fromUtf8("盘中增量扫描：当前由手动刷新触发，后续可扩展为 15 分钟定时扫描。"),
+        QString::fromUtf8("关注板块优先：半导体、有色金属、锂电池等持仓或关注板块优先展示。"),
+        QString::fromUtf8("提醒阈值：事件催化 > 0.65 或过热风险 > 0.70 时进入观察队列。")
+    }));
+    opsLayout->addWidget(makeConfigCard(QString::fromUtf8("数据源健康"), {
+        QString::fromUtf8("同花顺实时行情：用于今日涨幅最高优先级口径。"),
+        QString::fromUtf8("同花顺 K 线 / 东方财富板块 / 新浪资金流：用于图表、资金和兜底验证。"),
+        QString::fromUtf8("多源财经新闻：用于事件雷达、影响路径和 AI 复盘。")
+    }));
+
     cl->addWidget(configTabs, 1);
+    cl->addWidget(opsGrid);
     cl->addSpacing(12);
     cl->addWidget(m_enterButton);
 
@@ -897,13 +934,79 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
 
 void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
 {
-    auto *topBarW = new QWidget(m_mainPage);
-    topBarW->setObjectName("topBarW");
-    topBarW->setStyleSheet(QString("QWidget#topBarW{background:%1;border:1px solid %2;border-radius:10px;}")
-        .arg(s_theme->paneBg, s_theme->paneBorder));
+    auto *shell = new QFrame(m_mainPage);
+    shell->setObjectName("mainShell");
+    auto *shellLayout = new QHBoxLayout(shell);
+    shellLayout->setContentsMargins(0, 0, 0, 0);
+    shellLayout->setSpacing(0);
+
+    auto *sideNav = new QFrame(shell);
+    sideNav->setObjectName("sideNav");
+    sideNav->setFixedWidth(236);
+    auto *sideLayout = new QVBoxLayout(sideNav);
+    sideLayout->setContentsMargins(18, 36, 18, 24);
+    sideLayout->setSpacing(8);
+
+    auto *brandTitle = new QLabel("InvestInsight", sideNav);
+    brandTitle->setObjectName("brandTitle");
+    auto *brandSub = new QLabel(QString::fromUtf8("新闻驱动的板块洞察"), sideNav);
+    brandSub->setObjectName("brandSubtitle");
+    sideLayout->addWidget(brandTitle);
+    sideLayout->addWidget(brandSub);
+    sideLayout->addSpacing(18);
+
+    auto *navGroup = new QButtonGroup(sideNav);
+    navGroup->setExclusive(true);
+    auto makeNavButton = [sideNav, navGroup, sideLayout](const QString &text, int id) {
+        auto *button = new QPushButton(text, sideNav);
+        button->setObjectName("navButton");
+        button->setCheckable(true);
+        button->setMinimumHeight(46);
+        navGroup->addButton(button, id);
+        sideLayout->addWidget(button);
+        return button;
+    };
+    QPushButton *navOverview = makeNavButton(QString::fromUtf8("总览"), 0);
+    QPushButton *navEvents = makeNavButton(QString::fromUtf8("事件雷达"), 1);
+    QPushButton *navSectors = makeNavButton(QString::fromUtf8("板块机会"), 2);
+    QPushButton *navStrategy = makeNavButton(QString::fromUtf8("策略跟踪"), 3);
+    QPushButton *navChat = makeNavButton(QString::fromUtf8("AI 助手"), 4);
+    QPushButton *navConfig = makeNavButton(QString::fromUtf8("配置"), 5);
+    navOverview->setChecked(true);
+
+    sideLayout->addStretch(1);
+    auto *sideStatus = new QFrame(sideNav);
+    sideStatus->setObjectName("sideStatusCard");
+    auto *sideStatusLayout = new QVBoxLayout(sideStatus);
+    sideStatusLayout->setContentsMargins(18, 14, 18, 14);
+    sideStatusLayout->setSpacing(6);
+    auto *dataState = new QLabel(QString::fromUtf8("数据状态"), sideStatus);
+    dataState->setStyleSheet("color:#E2E8F0;font-size:15px;font-weight:800;");
+    auto *quoteState = new QLabel(QString::fromUtf8("● 行情等待刷新"), sideStatus);
+    quoteState->setStyleSheet("color:#86EFAC;font-size:12px;");
+    auto *newsState = new QLabel(QString::fromUtf8("● 新闻等待扫描"), sideStatus);
+    newsState->setStyleSheet("color:#FDE68A;font-size:12px;");
+    sideStatusLayout->addWidget(dataState);
+    sideStatusLayout->addWidget(quoteState);
+    sideStatusLayout->addWidget(newsState);
+    sideLayout->addWidget(sideStatus);
+
+    auto *workspace = new QFrame(shell);
+    workspace->setObjectName("workspacePane");
+    auto *workspaceLayout = new QVBoxLayout(workspace);
+    workspaceLayout->setContentsMargins(0, 0, 0, 0);
+    workspaceLayout->setSpacing(0);
+
+    auto *topBarW = new QFrame(workspace);
+    topBarW->setObjectName("topStatusBar");
     auto *topBar = new QHBoxLayout(topBarW);
-    topBar->setContentsMargins(12, 7, 12, 7);
-    topBar->setSpacing(10);
+    topBar->setContentsMargins(30, 18, 30, 16);
+    topBar->setSpacing(12);
+    auto *workspaceTitle = new QLabel(QString::fromUtf8("综合总览"), topBarW);
+    workspaceTitle->setObjectName("workspaceTitle");
+    auto *workspaceMeta = new QLabel(QString::fromUtf8("等待分析 · AI 与规则引擎就绪"), topBarW);
+    workspaceMeta->setObjectName("statusLabel");
+
     m_refreshButton = new QPushButton("▶  开始分析", m_mainPage);
     m_refreshButton->setObjectName("refreshBtn");
 
@@ -914,7 +1017,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
         ? "启用/关闭 AI 智能分析"
         : "未配置 AI API Key");
 
-    m_backToSetupButton = new QPushButton("⚙ 配置中心", m_mainPage);
+    m_backToSetupButton = new QPushButton(QString::fromUtf8("配置"), m_mainPage);
     m_backToSetupButton->setObjectName("secondaryBtn");
     connect(m_backToSetupButton, &QPushButton::clicked, this, [this]() {
         loadSavedAIConfigToForm();
@@ -928,22 +1031,21 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_loadingBar->setVisible(false);
     m_loadingBar->setTextVisible(false);
 
-    auto *chatButton = new QPushButton("💬 AI 助手", m_mainPage);
+    auto *chatButton = new QPushButton(QString::fromUtf8("AI 助手"), m_mainPage);
     chatButton->setObjectName("secondaryBtn");
     chatButton->setToolTip("打开AI智能问答助手");
     connect(chatButton, &QPushButton::clicked, this, &MainWindow::openChatTab);
 
-    topBar->addWidget(m_refreshButton);
-    topBar->addSpacing(4);
-    topBar->addWidget(m_aiToggle);
-    topBar->addSpacing(8);
-    topBar->addWidget(chatButton);
-    topBar->addSpacing(4);
-    topBar->addWidget(m_backToSetupButton);
+    topBar->addWidget(workspaceTitle);
+    topBar->addWidget(workspaceMeta);
     topBar->addStretch(1);
+    topBar->addWidget(m_refreshButton);
+    topBar->addWidget(chatButton);
+    topBar->addWidget(m_backToSetupButton);
+    topBar->addWidget(m_aiToggle);
     topBar->addWidget(m_statusLabel);
 
-    m_tabWidget = new ScrollableTabWidget(m_mainPage);
+    m_tabWidget = new ScrollableTabWidget(workspace);
     m_tabWidget->setUsesScrollButtons(true);
     m_tabWidget->setElideMode(Qt::ElideNone);
     m_tabWidget->setTabsClosable(false);
@@ -952,7 +1054,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_tabWidget->tabBar()->setStyle(new PaddedTabStyle(m_tabWidget->tabBar()->style()));
 
     // ---- 总览工作台：4个子Tab（总览 / 事件雷达 / 板块机会 / 策略跟踪）----
-    auto *overviewContainer = new QWidget(m_mainPage);
+    auto *overviewContainer = new QWidget(workspace);
     auto *overviewContainerLayout = new QVBoxLayout(overviewContainer);
     overviewContainerLayout->setContentsMargins(0, 0, 0, 0);
     overviewContainerLayout->setSpacing(0);
@@ -1062,6 +1164,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
 
     overviewContainerLayout->addWidget(m_overviewSubTabs, 1);
     m_tabWidget->addTab(overviewContainer, "总览工作台");
+    m_overviewSubTabs->tabBar()->hide();
 
     // 过滤控件全部触发重新渲染（仅影响板块&指数信息子Tab）
     auto rerender = [this]() {
@@ -1079,12 +1182,34 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
         m_sortBy->setCurrentIndex(0);
         rerender();
     });
+    connect(navGroup, qOverload<int>(&QButtonGroup::idClicked), this, [this](int id) {
+        if (id >= 0 && id <= 3 && m_overviewSubTabs) {
+            m_tabWidget->setCurrentIndex(0);
+            m_overviewSubTabs->setCurrentIndex(id);
+        } else if (id == 4) {
+            openChatTab();
+        } else if (id == 5) {
+            loadSavedAIConfigToForm();
+            m_pages->setCurrentWidget(m_setupPage);
+        }
+    });
+    const QList<QPushButton *> navButtons = {navOverview, navEvents, navSectors, navStrategy};
+    connect(m_overviewSubTabs, &QTabWidget::currentChanged, this, [navButtons](int index) {
+        if (index >= 0 && index < navButtons.size()) {
+            navButtons[index]->setChecked(true);
+        }
+    });
 
-    mainLayout->setContentsMargins(8, 6, 8, 4);
-    mainLayout->setSpacing(6);
-    mainLayout->addWidget(topBarW);
-    mainLayout->addWidget(m_loadingBar);
-    mainLayout->addWidget(m_tabWidget);
+    workspaceLayout->addWidget(topBarW);
+    workspaceLayout->addWidget(m_loadingBar);
+    workspaceLayout->addWidget(m_tabWidget, 1);
+
+    shellLayout->addWidget(sideNav);
+    shellLayout->addWidget(workspace, 1);
+
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+    mainLayout->addWidget(shell, 1);
 }
 
 QList<AIProvider> MainWindow::collectProvidersFromForm() const
@@ -1493,13 +1618,94 @@ void MainWindow::openChatTab()
     }
 
     auto *chatTab = new QWidget(m_tabWidget);
-    auto *chatLayout = new QVBoxLayout(chatTab);
-    chatLayout->setContentsMargins(0, 4, 0, 0);
-    chatLayout->setSpacing(6);
+    auto *chatLayout = new QHBoxLayout(chatTab);
+    chatLayout->setContentsMargins(22, 22, 22, 22);
+    chatLayout->setSpacing(22);
 
-    m_chatDisplay = new QTextBrowser(chatTab);
-    m_chatDisplay->setOpenExternalLinks(true);
     const ThemeColors &t = *s_theme;
+    auto *contextPanel = new QFrame(chatTab);
+    contextPanel->setObjectName("chatContextPanel");
+    contextPanel->setFixedWidth(330);
+    auto *contextLayout = new QVBoxLayout(contextPanel);
+    contextLayout->setContentsMargins(26, 24, 26, 24);
+    contextLayout->setSpacing(12);
+
+    auto *contextTitle = new QLabel(QString::fromUtf8("当前上下文"), contextPanel);
+    contextTitle->setObjectName("cardTitle");
+    contextLayout->addWidget(contextTitle);
+
+    const QString marketText = m_lastResult.marketRegime.regimeName.isEmpty()
+        ? QString::fromUtf8("等待分析结果")
+        : m_lastResult.marketRegime.regimeName;
+    const QString eventText = !m_lastResult.macroEvents.isEmpty()
+        ? m_lastResult.macroEvents.first().title
+        : QString::fromUtf8("暂无结构化重点事件");
+    const QString strongSector = !m_lastResult.sectors.isEmpty()
+        ? m_lastResult.sectors.first().industry
+        : QString::fromUtf8("等待板块排序");
+    QString riskSector = QString::fromUtf8("等待风险识别");
+    for (const SectorSnapshot &sector : m_lastResult.sectors) {
+        if (!sector.negativeFactors.isEmpty()) {
+            riskSector = sector.industry + QString::fromUtf8("：") + sector.negativeFactors.first();
+            break;
+        }
+    }
+
+    auto addContextRow = [contextPanel, contextLayout, &t](const QString &label, const QString &value) {
+        auto *box = new QFrame(contextPanel);
+        box->setObjectName("configCard");
+        auto *boxLayout = new QVBoxLayout(box);
+        boxLayout->setContentsMargins(18, 12, 18, 12);
+        boxLayout->setSpacing(2);
+        auto *labelWidget = new QLabel(label, box);
+        labelWidget->setObjectName("cardMeta");
+        auto *valueWidget = new QLabel(value, box);
+        valueWidget->setWordWrap(true);
+        valueWidget->setStyleSheet(QString("font-size:13px;font-weight:800;color:%1;").arg(t.headingColor));
+        boxLayout->addWidget(labelWidget);
+        boxLayout->addWidget(valueWidget);
+        contextLayout->addWidget(box);
+    };
+    addContextRow(QString::fromUtf8("市场状态"), marketText);
+    addContextRow(QString::fromUtf8("重点事件"), eventText);
+    addContextRow(QString::fromUtf8("强势板块"), strongSector);
+    addContextRow(QString::fromUtf8("风险板块"), riskSector);
+
+    auto *quickTitle = new QLabel(QString::fromUtf8("快捷问题"), contextPanel);
+    quickTitle->setStyleSheet(QString("font-size:15px;font-weight:800;color:%1;margin-top:12px;").arg(t.headingColor));
+    contextLayout->addWidget(quickTitle);
+    const QStringList quickQuestions = {
+        QString::fromUtf8("为什么推荐半导体？"),
+        QString::fromUtf8("有色金属看什么指标？"),
+        QString::fromUtf8("我的持仓要调吗？"),
+        QString::fromUtf8("哪些风险会让结论失效？")
+    };
+    for (const QString &question : quickQuestions) {
+        auto *button = new QPushButton(question, contextPanel);
+        button->setObjectName("quickQuestionButton");
+        button->setCursor(Qt::PointingHandCursor);
+        connect(button, &QPushButton::clicked, this, [this, question]() {
+            if (m_chatInput) {
+                m_chatInput->setText(question);
+                m_chatInput->setFocus();
+            }
+        });
+        contextLayout->addWidget(button);
+    }
+    contextLayout->addStretch(1);
+
+    auto *conversationPanel = new QFrame(chatTab);
+    conversationPanel->setObjectName("chatConversationPanel");
+    auto *conversationLayout = new QVBoxLayout(conversationPanel);
+    conversationLayout->setContentsMargins(24, 24, 24, 18);
+    conversationLayout->setSpacing(14);
+
+    auto *conversationTitle = new QLabel(QString::fromUtf8("对话"), conversationPanel);
+    conversationTitle->setObjectName("cardTitle");
+    conversationLayout->addWidget(conversationTitle);
+
+    m_chatDisplay = new QTextBrowser(conversationPanel);
+    m_chatDisplay->setOpenExternalLinks(true);
     m_chatDisplay->setStyleSheet(
         QString("QTextBrowser{background:%1;border:none;padding:12px;font-size:13px;color:%2;}")
         .arg(t.paneBg, t.bodyColor));
@@ -1517,17 +1723,17 @@ void MainWindow::openChatTab()
         "</div></div>";
     m_chatDisplay->setHtml(welcome);
 
-    auto *inputBar = new QWidget(chatTab);
+    auto *inputBar = new QWidget(conversationPanel);
     inputBar->setObjectName("chatInputBar");
     inputBar->setStyleSheet(QString(
-        "QWidget#chatInputBar{background:%1;border-top:2px solid %2;padding:4px;}")
+        "QWidget#chatInputBar{background:%1;border:1px solid %2;border-radius:8px;padding:4px;}")
         .arg(t.paneBg, t.paneBorder));
     auto *inputLayout = new QHBoxLayout(inputBar);
     inputLayout->setContentsMargins(12, 10, 12, 10);
     inputLayout->setSpacing(10);
 
     m_chatInput = new QLineEdit(inputBar);
-    m_chatInput->setPlaceholderText(QString::fromUtf8("输入您的问题..."));
+    m_chatInput->setPlaceholderText(QString::fromUtf8("输入问题，例如：请解释半导体的事件传导路径"));
     m_chatInput->setFixedHeight(38);
     m_chatInput->setStyleSheet(QString(
         "QLineEdit{border:1px solid %1;border-radius:10px;padding:6px 14px;"
@@ -1552,8 +1758,10 @@ void MainWindow::openChatTab()
     inputLayout->addWidget(m_chatInput, 1);
     inputLayout->addWidget(m_chatSendBtn);
 
-    chatLayout->addWidget(m_chatDisplay, 1);
-    chatLayout->addWidget(inputBar);
+    conversationLayout->addWidget(m_chatDisplay, 1);
+    conversationLayout->addWidget(inputBar);
+    chatLayout->addWidget(contextPanel);
+    chatLayout->addWidget(conversationPanel, 1);
 
     m_chatTabIndex = static_cast<ScrollableTabWidget *>(m_tabWidget)->addClosableTab(
         chatTab, QString::fromUtf8("AI助手"));
