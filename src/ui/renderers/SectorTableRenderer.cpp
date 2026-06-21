@@ -22,6 +22,8 @@ struct MixedRow {
     double dataQuality = 0.0;
     double consistency = 0.0;
     double fiveDay = 0.0;
+    double eventCatalyst = 0.0;
+    QString riskHint;
 };
 
 QString num(double value, int digits = 2)
@@ -68,6 +70,14 @@ QString scoreBadge(double value, const ThemeColors &theme)
 {
     return "<span style='display:inline-block;min-width:48px;text-align:center;font-weight:700;color:"
         + changeColor(value, theme) + ";'>" + num(value, 2) + "</span>";
+}
+
+QString firstNonEmpty(const QStringList &items, const QString &fallback)
+{
+    for (const QString &item : items) {
+        if (!item.trimmed().isEmpty()) return item.trimmed();
+    }
+    return fallback;
 }
 
 QString inferTrendByChange(double change)
@@ -135,6 +145,11 @@ QList<MixedRow> buildRows(const AnalysisResult &analysis,
         row.dataQuality = sector.dataQualityScore;
         row.consistency = sector.sourceConsistencyScore;
         row.fiveDay = sector.fiveDayMomentum;
+        row.eventCatalyst = sector.eventCatalystScore;
+        row.riskHint = firstNonEmpty(sector.negativeFactors,
+            sector.dataQualityScore < 70.0
+                ? QString::fromUtf8("数据质量偏低，需谨慎参考")
+                : QString::fromUtf8("暂无突出风险"));
         rows.push_back(row);
     }
 
@@ -162,6 +177,8 @@ QList<MixedRow> buildRows(const AnalysisResult &analysis,
         row.dataQuality = index.klineSeries.size() >= 20 ? 90.0 : 72.0;
         row.consistency = index.klineSeries.isEmpty() ? 80.0 : 95.0;
         row.fiveDay = fiveDay;
+        row.eventCatalyst = 0.0;
+        row.riskHint = QString::fromUtf8("跟踪指数方向，控制仓位波动");
         rows.push_back(row);
     };
 
@@ -278,8 +295,9 @@ QString renderRows(const QList<MixedRow> &rows,
     } else {
         h += "<tr><th>#</th><th>板块&指数</th><th style='text-align:right;'>今日</th>"
              "<th style='text-align:right;'>5日</th><th style='text-align:center;'>评分</th>"
-             "<th style='text-align:center;'>数据质</th><th style='text-align:center;'>一致性</th>"
-             "<th>趋势</th><th>建议</th><th>策略</th></tr>";
+             "<th style='text-align:center;'>事件催化</th><th style='text-align:center;'>数据质量</th>"
+             "<th style='text-align:center;'>一致性</th><th>趋势</th><th>建议</th>"
+             "<th>风险提示</th><th>策略</th></tr>";
     }
 
     int displayIndex = 0;
@@ -298,17 +316,23 @@ QString renderRows(const QList<MixedRow> &rows,
         }
         h += "<td style='text-align:center;'>" + scoreBadge(row.forecast, theme) + "</td>";
         if (!options.simpleMode) {
+            h += "<td style='text-align:center;color:" + changeColor(row.eventCatalyst, theme)
+                + ";font-weight:700;'>" + num(row.eventCatalyst, 2) + "</td>";
             h += "<td style='text-align:center;font-weight:700;'>" + num(row.dataQuality, 0) + "</td>";
             h += "<td style='text-align:center;font-weight:700;'>" + num(row.consistency, 0) + "</td>";
             h += "<td style='font-size:11px;'>" + escaped(row.trend) + "</td>";
         }
         h += "<td style='text-align:center;'><span class='tag " + tagClass(row.action) + "'>"
             + actionText(row.action) + "</span></td>";
+        if (!options.simpleMode) {
+            h += "<td style='font-size:11px;color:" + theme.mutedColor + ";'>"
+                + escaped(row.riskHint) + "</td>";
+        }
         h += "<td style='font-size:11px;'>" + escaped(rowSummary(row)) + "</td>";
         h += "</tr>";
     }
     if (rows.isEmpty()) {
-        h += "<tr><td colspan='10' style='text-align:center;color:" + theme.mutedColor
+        h += "<tr><td colspan='12' style='text-align:center;color:" + theme.mutedColor
             + ";padding:18px;'>暂无符合筛选条件的板块或指数</td></tr>";
     }
     h += "</table>";

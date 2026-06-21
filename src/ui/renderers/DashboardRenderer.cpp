@@ -176,26 +176,68 @@ QString renderPortfolio(const AnalysisResult &analysis,
 QString renderOpportunities(const AnalysisResult &analysis, const ThemeColors &theme)
 {
     QString h;
-    h += "<div class='section-title'>关键机会</div>";
+    h += "<div class='section-title'>板块机会与风险</div>";
     h += "<table class='overview'><tr>"
          "<th>板块</th><th style='text-align:right;'>今日</th>"
-         "<th style='text-align:right;'>预测</th><th style='text-align:center;'>动作</th>"
-         "<th>主要理由</th></tr>";
+         "<th style='text-align:right;'>事件</th><th style='text-align:right;'>趋势</th>"
+         "<th style='text-align:center;'>动作</th><th>主要理由 / 风险</th></tr>";
     for (const SectorSnapshot *sector : topSectors(analysis, 8)) {
         const QString change = sector->todayChangePctValid ? pct(sector->todayChangePct) : QString::fromUtf8("暂无");
         QString reason = !sector->trendSummary.isEmpty() ? sector->trendSummary : sector->personalAdvice;
         if (reason.isEmpty() && !sector->positiveFactors.isEmpty()) reason = sector->positiveFactors.first();
+        if (!sector->negativeFactors.isEmpty()) reason += QString::fromUtf8("；风险：") + sector->negativeFactors.first();
         h += "<tr><td><b>" + escaped(sector->industry) + "</b>"
             + "<div class='meta'>" + num(sector->dataQualityScore, 0) + QString::fromUtf8(" 数据质量</div></td>")
             + "<td style='text-align:right;color:" + changeColor(sector->todayChangePct, theme) + ";'>"
             + escaped(change) + "</td>"
+            + "<td style='text-align:right;color:" + changeColor(sector->eventCatalystScore, theme) + ";'>"
+            + num(sector->eventCatalystScore, 2) + "</td>"
             + "<td style='text-align:right;color:" + changeColor(sector->forecastScore, theme) + ";'>"
-            + num(sector->forecastScore, 3) + "</td>"
+            + num(sector->forecastScore, 2) + "</td>"
             + "<td style='text-align:center;'><span class='" + tagClass(sector->action) + "'>"
             + actionText(sector->action) + "</span></td>"
             + "<td>" + escaped(reason) + "</td></tr>";
     }
     h += "</table>";
+    return h;
+}
+
+QString renderKeyEventRadar(const AnalysisResult &analysis, const ThemeColors &theme)
+{
+    QString h;
+    h += "<div class='section-title'>关键事件雷达</div>";
+    h += "<div class='split-grid'>";
+    h += "<div>";
+    int rows = 0;
+    for (const MacroEvent &event : analysis.macroEvents) {
+        h += QStringLiteral("<div class='callout' style='margin-bottom:10px;'>")
+            + "<b>" + escaped(event.title) + "</b>"
+            + "<div class='meta'>" + escaped(toString(event.state)) + " · "
+            + escaped(toString(event.type)) + " · " + escaped(event.checkpoint) + "</div>"
+            + "</div>";
+        if (++rows >= 3) break;
+    }
+    if (rows == 0) {
+        for (const SectorSnapshot *sector : topSectors(analysis, 3)) {
+            const QString eventText = !sector->eventSummary.isEmpty()
+                ? sector->eventSummary
+                : (!sector->newsHeadlines.isEmpty() ? sector->newsHeadlines.first() : sector->trendSummary);
+            h += QStringLiteral("<div class='callout' style='margin-bottom:10px;'>")
+                + "<b>" + escaped(eventText.isEmpty() ? sector->industry : eventText) + "</b>"
+                + "<div class='meta'>" + escaped(sector->industry)
+                + QString::fromUtf8(" · 事件催化 ") + num(sector->eventCatalystScore, 2)
+                + "</div></div>";
+        }
+    }
+    h += "</div>";
+    h += "<div class='callout' style='border-color:" + theme.warningBorder + ";background:" + theme.warningBg + ";'>"
+        + "<b>" + QString::fromUtf8("下一观察点") + "</b>"
+        + "<div style='margin-top:6px;color:" + theme.warningColor + ";font-weight:700;'>"
+        + QString::fromUtf8("美联储议息会议 · CPI/PCE 数据") + "</div>"
+        + "<div class='meta' style='margin-top:6px;'>"
+        + QString::fromUtf8("未发生事件以观察和仓位约束为主，不直接推动买入。") + "</div>"
+        + "</div>";
+    h += "</div>";
     return h;
 }
 
@@ -229,7 +271,8 @@ QString DashboardRenderer::render(const AnalysisResult &analysis,
                                   const DashboardRenderOptions &options)
 {
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
-    h += "<h1 style='font-size:18px;'>总览工作台</h1>";
+    h += "<div class='workspace-shell'>";
+    h += "<h1 style='font-size:18px;'>综合总览</h1>";
     h += "<div class='meta'>" + num(analysis.sectors.size(), 0)
         + QString::fromUtf8(" 个板块 · ") + num(indexCount(analysis), 0)
         + QString::fromUtf8(" 个指数");
@@ -238,9 +281,11 @@ QString DashboardRenderer::render(const AnalysisResult &analysis,
 
     h += renderMarketDashboard(analysis, theme);
     h += renderPortfolio(analysis, options, theme);
+    h += renderKeyEventRadar(analysis, theme);
     h += renderOpportunities(analysis, theme);
     h += renderAiSummary(analysis, theme);
     h += "<div class='disclaimer'>" + QString::fromUtf8("以上内容仅用于投研辅助，不构成投资建议。") + "</div>";
+    h += "</div>";
     h += "</body></html>";
     return h;
 }

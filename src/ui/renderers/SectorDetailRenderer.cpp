@@ -102,6 +102,148 @@ QString renderConclusion(const SectorSnapshot &sector, const ThemeColors &theme)
     return h;
 }
 
+QString coreScoreCard(const QString &label,
+                      const QString &value,
+                      const QString &note,
+                      const QString &color)
+{
+    return "<div class='metric-card'>"
+        "<div class='label'>" + escaped(label) + "</div>"
+        "<div class='value' style='color:" + color + ";'>" + escaped(value) + "</div>"
+        "<div class='meta' style='margin:4px 0 0 0;'>" + escaped(note) + "</div>"
+        "</div>";
+}
+
+QString renderCoreScores(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    const double confidencePct = sector.confidence <= 1.0 ? sector.confidence * 100.0 : sector.confidence;
+    QString h = "<div class='section-title'>核心评分</div>";
+    h += "<div class='metric-grid'>";
+    h += coreScoreCard(QString::fromUtf8("综合评分"), num(sector.forecastScore),
+                       QString::fromUtf8("置信度 ") + num(confidencePct, 0) + "%", colorFor(sector.forecastScore, theme));
+    h += coreScoreCard(QString::fromUtf8("事件催化"), num(sector.eventCatalystScore),
+                       sector.eventSummary.isEmpty() ? QString::fromUtf8("暂无结构化事件") : sector.eventSummary,
+                       colorFor(sector.eventCatalystScore, theme));
+    h += coreScoreCard(QString::fromUtf8("技术强度"), num(sector.tech.techScore),
+                       sector.trendSummary.isEmpty() ? QString::fromUtf8("等待趋势信号") : sector.trendSummary,
+                       colorFor(sector.tech.techScore, theme));
+    h += coreScoreCard(QString::fromUtf8("数据质量"), num(sector.dataQualityScore, 0),
+                       QString::fromUtf8("一致性 ") + num(sector.sourceConsistencyScore, 0),
+                       colorFor(sector.dataQualityScore - 70.0, theme));
+    h += "</div>";
+    return h;
+}
+
+QString renderSignalExplanation(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    QString h = "<div class='section-title'>信号解释</div>";
+    h += "<div class='split-grid'>";
+    h += "<div class='callout'>";
+    h += renderFactorList(QString::fromUtf8("正向因素"), sector.positiveFactors, "#059669");
+    h += renderFactorList(QString::fromUtf8("风险因素"), sector.negativeFactors, "#DC2626");
+    h += "</div>";
+    h += "<div class='callout'>";
+    h += "<div style='font-size:12px;font-weight:800;color:" + theme.headingColor + ";margin-bottom:8px;'>"
+         + QString::fromUtf8("页面提示与失效条件") + "</div>";
+    QStringList hints;
+    if (!sector.strategy.operationAdvice.isEmpty()) hints << sector.strategy.operationAdvice;
+    if (!sector.eventSummary.isEmpty()) hints << QString::fromUtf8("事件观察：") + sector.eventSummary;
+    if (sector.dataQualityScore < 70.0) hints << QString::fromUtf8("数据质量偏低，需等待多源验证后再提高权重。");
+    if (sector.todayChangePctValid && sector.todayChangePct > 3.0) hints << QString::fromUtf8("单日涨幅偏大，避免只按情绪追高。");
+    if (hints.isEmpty()) hints << QString::fromUtf8("暂无额外失效条件，继续观察新闻与资金是否共振。");
+    h += "<ul class='factor-list'>";
+    for (const QString &hint : hints) h += "<li>" + escaped(hint) + "</li>";
+    h += "</ul></div></div>";
+    return h;
+}
+
+QString impactDirectionText(EventImpactDirection direction);
+QString impactRelationText(EventImpactRelation relation);
+
+QString renderImpactPath(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    QString h = "<div class='section-title'>影响路径</div>";
+    h += "<div class='callout'>";
+    if (sector.eventImpacts.isEmpty()) {
+        h += "<div style='color:" + theme.mutedColor + ";font-size:12px;'>"
+            + (sector.eventSummary.isEmpty()
+                ? QString::fromUtf8("暂无结构化影响路径，等待事件引擎补充。")
+                : escaped(sector.eventSummary))
+            + "</div>";
+    } else {
+        for (const SectorEventImpact &impact : sector.eventImpacts) {
+            h += "<div style='padding:10px 12px;margin-bottom:8px;border:1px solid " + theme.cardBorder
+                + ";border-radius:8px;background:" + theme.bodyBg + ";'>";
+            h += "<div style='font-weight:800;color:" + theme.headingColor + ";font-size:12px;'>"
+                + escaped(impact.eventTitle) + "</div>";
+            h += "<div style='margin-top:4px;color:" + theme.bodyColor + ";font-size:12px;'>"
+                + escaped(impact.path) + "</div>";
+            h += "<div class='meta' style='margin:4px 0 0 0;'>"
+                + escaped(impactRelationText(impact.relation)) + QString::fromUtf8("影响 · ")
+                + escaped(impactDirectionText(impact.direction)) + QString::fromUtf8(" · 置信度 ")
+                + num(impact.confidence * 100.0, 0) + "%</div>";
+            h += "</div>";
+        }
+    }
+    h += "<div style='margin-top:8px;font-size:11px;color:" + theme.warningColor + ";font-weight:700;'>"
+        + QString::fromUtf8("失效条件：若事件无法传导到订单、价格、资金或业绩验证，需下调评分。")
+        + "</div></div>";
+    return h;
+}
+
+QString renderStageReturnsAndBacktests(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    QString h = "<div class='section-title'>阶段收益与回测</div>";
+    h += "<div class='metric-grid'>";
+    h += coreScoreCard(QString::fromUtf8("近5日"), pct(sector.fiveDayMomentum),
+                       QString::fromUtf8("短线动量"), colorFor(sector.fiveDayMomentum, theme));
+    h += coreScoreCard(QString::fromUtf8("近20日"), pct(sector.twentyDayMomentum),
+                       QString::fromUtf8("中期趋势"), colorFor(sector.twentyDayMomentum, theme));
+    h += coreScoreCard(QString::fromUtf8("近3月"), pct(sector.monthMomentum),
+                       QString::fromUtf8("长期弹性"), colorFor(sector.monthMomentum, theme));
+    h += coreScoreCard(QString::fromUtf8("累计收益"), pct(sector.cumulativeReturn),
+                       sector.bestStrategyName.isEmpty() ? QString::fromUtf8("当前跟踪") : sector.bestStrategyName,
+                       colorFor(sector.cumulativeReturn, theme));
+    h += "</div>";
+    if (!sector.backtestResults.isEmpty()) {
+        h += "<table class='overview'><tr><th>策略</th><th>交易数</th><th>胜率</th><th>平均收益</th><th>最大回撤</th></tr>";
+        for (const StrategyBacktest &bt : sector.backtestResults) {
+            h += "<tr><td>" + escaped(bt.name) + "</td><td>" + QString::number(bt.totalTrades)
+                + "</td><td>" + num(bt.winRate, 0) + "%</td><td style='color:" + colorFor(bt.avgReturn, theme)
+                + ";font-weight:700;'>" + pct(bt.avgReturn) + "</td><td>" + pct(bt.maxDrawdown) + "</td></tr>";
+        }
+        h += "</table>";
+    }
+    return h;
+}
+
+QString renderFundFlowRelations(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    QString h = "<div class='section-title'>资金流与相关板块</div>";
+    h += "<div class='split-grid'>";
+    h += "<div class='callout'>";
+    h += "<div class='kv'><span class='label'>资金流因子</span><span class='value' style='color:"
+        + colorFor(sector.fundFlowFactor, theme) + ";'>" + num(sector.fundFlowFactor, 3) + "</span></div>";
+    h += "<div class='kv'><span class='label'>样本数量</span><span class='value'>"
+        + QString::number(sector.fundFlowSeries.size()) + QString::fromUtf8(" 条</span></div>");
+    h += "<div class='kv'><span class='label'>数据来源</span><span class='value'>"
+        + escaped(sector.fundFlowSource) + "</span></div>";
+    h += "</div><div class='callout'>";
+    h += "<div style='font-size:12px;font-weight:800;color:" + theme.headingColor + ";margin-bottom:8px;'>"
+        + QString::fromUtf8("联动线索") + "</div>";
+    QStringList relations;
+    for (const SectorEventImpact &impact : sector.eventImpacts) {
+        if (!impact.path.isEmpty()) relations << impact.path;
+    }
+    if (relations.isEmpty()) relations = sector.positiveFactors + sector.negativeFactors;
+    if (relations.isEmpty()) relations << QString::fromUtf8("暂无明确联动板块，等待事件路径或资金共振。");
+    h += "<ul class='factor-list'>";
+    const int count = qMin(4, relations.size());
+    for (int i = 0; i < count; ++i) h += "<li>" + escaped(relations[i]) + "</li>";
+    h += "</ul></div></div>";
+    return h;
+}
+
 QString renderViews(const SectorSnapshot &sector, const ThemeColors &theme)
 {
     const TradingStrategy &strategy = sector.strategy;
@@ -275,13 +417,18 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         + num(sector.sectorStockCount > 0 ? sector.sectorStockCount : sector.stockCount, 0)
         + QString::fromUtf8(" 只 · 数据日期 ") + escaped(sector.lastDataDate) + "</div>";
     h += renderConclusion(sector, theme);
+    h += renderCoreScores(sector, theme);
+    h += renderSignalExplanation(sector, theme);
     h += renderViews(sector, theme);
     h += renderEventImpacts(sector, theme);
+    h += renderImpactPath(sector, theme);
     if (!options.simpleMode) {
         h += "<div class='section-title'>趋势图表</div>";
         h += "<img style='max-width:100%;border:1px solid " + theme.cardBorder
             + ";border-radius:8px;' src='data:image/png;base64," + pixmapToBase64(chart) + "'/>";
         h += renderTechnical(sector, theme);
+        h += renderStageReturnsAndBacktests(sector, theme);
+        h += renderFundFlowRelations(sector, theme);
         h += renderFundFlow(sector);
         h += renderBacktests(sector);
         h += renderDataQuality(sector, theme);

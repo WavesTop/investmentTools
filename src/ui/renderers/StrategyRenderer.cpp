@@ -185,6 +185,62 @@ QMap<QString, QJsonObject> parseHoldings(const QString &json)
     return holdings;
 }
 
+QString trackingCard(const QString &label,
+                     const QString &value,
+                     const QString &note,
+                     const QString &color,
+                     const ThemeColors &theme)
+{
+    return "<div class='metric-card'>"
+        "<div class='label'>" + escaped(label) + "</div>"
+        "<div class='value' style='color:" + color + ";'>" + escaped(value) + "</div>"
+        "<div class='meta' style='margin:4px 0 0 0;'>" + escaped(note) + "</div>"
+        "</div>";
+}
+
+QString renderTrackingState(const QList<StrategyRow> &sectorRows,
+                            const QList<StrategyRow> &indexRows,
+                            const QString &portfolioJson,
+                            const ThemeColors &theme)
+{
+    if (sectorRows.isEmpty()) return {};
+
+    int attackCount = 0;
+    int defendCount = 0;
+    int eventCount = 0;
+    double avgScore = 0.0;
+    for (const StrategyRow &row : sectorRows) {
+        if (row.score > 0.1) ++attackCount;
+        if (row.score < -0.1) ++defendCount;
+        avgScore += row.score;
+        if (row.sector) eventCount += row.sector->upcomingEvents.size() + row.sector->futureEventsAI.size();
+    }
+    avgScore /= sectorRows.size();
+
+    const StrategyRow &best = sectorRows.first();
+    const StrategyRow &risk = sectorRows.last();
+    const int holdingCount = parseHoldings(portfolioJson).size();
+    const QString marketTone = avgScore > 0.08 ? QString::fromUtf8("偏进攻")
+        : (avgScore < -0.08 ? QString::fromUtf8("偏防守") : QString::fromUtf8("均衡观察"));
+    const QString indexNote = indexRows.isEmpty()
+        ? QString::fromUtf8("暂无指数参照")
+        : QString::fromUtf8("指数参考：") + indexRows.first().name + " " + num(indexRows.first().score);
+
+    QString h = "<div class='section-title'>跟踪状态</div>";
+    h += "<div class='metric-grid'>";
+    h += trackingCard(QString::fromUtf8("市场姿态"), marketTone,
+                      QString::fromUtf8("平均评分 ") + num(avgScore), colorFor(avgScore, theme), theme);
+    h += trackingCard(QString::fromUtf8("进攻板块"), QString::number(attackCount),
+                      best.name + QString::fromUtf8(" 领先"), "#EF4444", theme);
+    h += trackingCard(QString::fromUtf8("防守板块"), QString::number(defendCount),
+                      risk.name + QString::fromUtf8(" 风险最高"), "#3B82F6", theme);
+    h += trackingCard(QString::fromUtf8("观察队列"), QString::number(eventCount),
+                      QString::fromUtf8("持仓 ") + QString::number(holdingCount) + QString::fromUtf8(" 项；") + indexNote,
+                      theme.headingColor, theme);
+    h += "</div>";
+    return h;
+}
+
 QString renderPortfolio(const AnalysisResult &analysis,
                         const QString &portfolioJson,
                         const ThemeColors &theme)
@@ -273,6 +329,7 @@ QString StrategyRenderer::render(const AnalysisResult &analysis,
 
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
     h += "<h1 style='font-size:18px;'>策略跟踪</h1>";
+    h += renderTrackingState(sectorRows, indexRows, options.portfolioBatchesJson, theme);
     h += renderMarketAdvice(sectorRows, indexRows, theme);
     h += renderPortfolio(analysis, options.portfolioBatchesJson, theme);
     h += renderFutureEvents(analysis, theme);
