@@ -135,12 +135,14 @@ add_executable(InvestInsightUiSmoke
     tests/ui/SectorTableRendererSmoke.cpp
     tests/ui/StrategyRendererSmoke.cpp
     tests/ui/SectorDetailRendererSmoke.cpp
+    tests/ui/IndexDetailRendererSmoke.cpp
     src/ui/AppTheme.cpp
     src/ui/renderers/ChartRenderer.cpp
     src/ui/renderers/DashboardRenderer.cpp
     src/ui/renderers/SectorTableRenderer.cpp
     src/ui/renderers/StrategyRenderer.cpp
     src/ui/renderers/SectorDetailRenderer.cpp
+    src/ui/renderers/IndexDetailRenderer.cpp
     src/core/TechIndicators.cpp
 )
 
