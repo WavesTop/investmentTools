@@ -38,7 +38,7 @@
 - 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
-当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper；0.3a 已新增独立 `DashboardRenderer` 和总览页 HTML smoke 测试；0.3b 已让 `MainWindow::buildDataDashboardHtml` 委托该 renderer；0.3c1 已新增独立 `SectorTableRenderer` 和板块机会 HTML smoke 测试。
+当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper；0.3a 已新增独立 `DashboardRenderer` 和总览页 HTML smoke 测试；0.3b 已让 `MainWindow::buildDataDashboardHtml` 委托该 renderer；0.3c1 已新增独立 `SectorTableRenderer` 和板块机会 HTML smoke 测试；0.3c2 已让 `MainWindow::buildSectorTableHtml` 委托该 renderer。
 
 可见 UI 改良进度：主导航文案已调整为“总览工作台 / 总览 / 板块机会 / 策略跟踪 / AI 助手 / 配置中心”，先让 1.0 界面语义贴近 2.0 设计稿，后续再继续拆 renderer 和补事件雷达入口。
 
@@ -97,7 +97,7 @@ refactor(ui): 拆分板块图表渲染
 - 0.3a 已完成：`DashboardRenderer` 先覆盖市场仪表盘、关键机会、持仓摘要和 AI 摘要，并接入 `InvestInsightUiSmoke`。
 - 0.3b 已完成：`MainWindow::buildDataDashboardHtml` 委托 `DashboardRenderer`，删除主窗口内旧总览 HTML 拼接块。
 - 0.3c1 已完成：`SectorTableRenderer` 覆盖板块/指数混合列表、筛选、排序、数据审计和跳转链接。
-- 0.3c2 待完成：`MainWindow::buildSectorTableHtml` 委托 `SectorTableRenderer`。
+- 0.3c2 已完成：`MainWindow::buildSectorTableHtml` 委托 `SectorTableRenderer`，删除主窗口内旧板块机会 HTML 拼接块。
 
 验证：
 
