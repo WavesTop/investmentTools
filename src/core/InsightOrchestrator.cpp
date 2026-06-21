@@ -25,6 +25,9 @@
 #include "core/FlowStructureAnalyzer.h"
 #include "core/MarketRegimeDetector.h"
 #include "core/ExplainabilityEngine.h"
+#include "core/EventExtractionEngine.h"
+#include "core/ImpactGraphEngine.h"
+#include "core/SectorImpactAnalyzer.h"
 #include "providers/RealFinanceNewsProvider.h"
 #include "providers/RealLinkageProvider.h"
 
@@ -163,6 +166,29 @@ QString buildNarrative(const QString &industry, double todayPct, double mom5d, d
 
     return text;
 }
+
+QString eventDirectionLabel(EventImpactDirection direction)
+{
+    switch (direction) {
+    case EventImpactDirection::Positive:
+        return QString::fromUtf8("偏正面");
+    case EventImpactDirection::Negative:
+        return QString::fromUtf8("偏负面");
+    case EventImpactDirection::Mixed:
+        return QString::fromUtf8("多空交织");
+    case EventImpactDirection::Neutral:
+    default:
+        return QString::fromUtf8("中性");
+    }
+}
+
+QString buildEventSummary(const QList<SectorEventImpact> &impacts)
+{
+    if (impacts.isEmpty()) return QString();
+    const SectorEventImpact &impact = impacts.first();
+    return QString::fromUtf8("%1：%2，%3")
+        .arg(impact.eventTitle, eventDirectionLabel(impact.direction), impact.path);
+}
 } // namespace
 
 AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
@@ -214,6 +240,23 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
     newsFuture.waitForFinished();
     rawData = newsFuture.result();
     reportProgress(progress, 20, "新闻数据就绪，正在分析...");
+
+    QList<RawHeadline> eventHeadlines;
+    QSet<QString> eventHeadlineKeys;
+    for (const RawInsight &ins : rawData) {
+        const QString key = ins.sourceName + "|" + ins.headline + "|" + ins.detail;
+        if (eventHeadlineKeys.contains(key)) continue;
+        eventHeadlineKeys.insert(key);
+        eventHeadlines.push_back({ins.sourceName, ins.headline, ins.detail, ins.timestamp});
+    }
+    if (newsProvider) {
+        for (const RawHeadline &headline : newsProvider->rawHeadlines()) {
+            const QString key = headline.source + "|" + headline.title + "|" + headline.summary;
+            if (eventHeadlineKeys.contains(key)) continue;
+            eventHeadlineKeys.insert(key);
+            eventHeadlines.push_back(headline);
+        }
+    }
 
     // ========== 阶段 3: 信号提取 + AI Stage 1（与 K线并行）==========
     struct NewsAggregate {
@@ -342,6 +385,23 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         }
     } else {
         reportProgress(progress, 48, useAI ? "无原始新闻可供AI分析" : "AI 已关闭，使用关键词分析");
+    }
+
+    // ========== 阶段 3.2: 结构化事件抽取与影响路径 ==========
+    EventExtractionEngine eventExtractor;
+    ImpactGraphEngine impactGraph;
+    SectorImpactAnalyzer sectorImpactAnalyzer;
+    result.macroEvents = eventExtractor.extractFromHeadlines(eventHeadlines);
+
+    QList<SectorEventImpact> allEventImpacts;
+    for (const MacroEvent &event : result.macroEvents) {
+        allEventImpacts += impactGraph.analyze(event, sectorNames);
+    }
+    const QMap<QString, double> eventCatalystScores =
+        sectorImpactAnalyzer.eventCatalystScores(allEventImpacts);
+    QHash<QString, QList<SectorEventImpact>> eventImpactsBySector;
+    for (const SectorEventImpact &impact : allEventImpacts) {
+        eventImpactsBySector[impact.sector].push_back(impact);
     }
 
     // ========== 阶段 3.5: 市场状态识别 + 动态权重 ==========
@@ -496,6 +556,15 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         snap.newsEntries    = na.entries;
         std::sort(snap.newsEntries.begin(), snap.newsEntries.end(),
             [](const NewsEntry &a, const NewsEntry &b) { return a.date > b.date; });
+        snap.eventImpacts = eventImpactsBySector.value(si.name);
+        snap.eventCatalystScore = qBound(-1.0, eventCatalystScores.value(si.name), 1.0);
+        snap.eventSummary = buildEventSummary(snap.eventImpacts);
+        if (!snap.eventSummary.isEmpty()) {
+            if (snap.eventCatalystScore > 0.05)
+                snap.positiveFactors.push_back(QString::fromUtf8("事件催化：") + snap.eventSummary);
+            else if (snap.eventCatalystScore < -0.05)
+                snap.negativeFactors.push_back(QString::fromUtf8("事件风险：") + snap.eventSummary);
+        }
 
         if (!na.keyEvents.isEmpty())
             snap.newsHeadlines.push_front("【AI关键事件】" + na.keyEvents.join("、"));
@@ -1116,6 +1185,8 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         fb.rawForecast = fb.momentumFactor + fb.todayFactor + fb.sentimentFactor
             + fb.newsIntensityFactor + fb.fundFlowFactor + fb.hotnessFactor
             + fb.meanReversionPenalty + fb.techFactor + fb.valuationFactor + fb.crowdingFactor;
+        fb.eventCatalystFactor = qBound(-0.06, snap.eventCatalystScore * 0.06, 0.06);
+        fb.rawForecast += fb.eventCatalystFactor;
         const double forecastFinal = qBound(-1.0,
             fb.rawForecast * snap.dataQualityWeight * snap.sourceConsistencyWeight, 1.0);
         snap.forecastScore = forecastFinal;

@@ -88,6 +88,8 @@ flowchart TD
     C --> E["并发任务 B：collectAll 多源新闻"]
     C --> F["并发任务 C：MarketContextFetcher::fetch 市场环境"]
     E --> G["SignalExtractor 规则情绪"]
+    E --> EV["EventExtractionEngine 结构化事件抽取"]
+    EV --> EG["ImpactGraphEngine / SectorImpactAnalyzer 事件路径和催化分"]
     E --> H["AIAnalyzer::digestNews 可选 AI 新闻归因"]
     D --> I["fetchValuationData 估值分位/拥挤度"]
     F --> J["MarketRegimeDetector 动态权重"]
@@ -95,6 +97,7 @@ flowchart TD
     H --> K
     I --> K
     J --> K
+    EG --> K
     K --> L["StrategyEngine / RotationDetector / ExplainabilityEngine"]
     L --> M["AnalysisResult"]
     M --> N["MainWindow::onRefreshFinished 渲染 UI"]
@@ -121,11 +124,12 @@ flowchart TD
 - `buildInfluenceMap` 是关键词到板块的主要静态映射。
 - `inferIndustries` 只在当前板块池中匹配，避免输出不存在的板块。
 - 新闻质量 = 时间新鲜度 × 来源可信度。
-- Phase 1-2 已新增 `EventExtractionEngine`、`EventRuleBook`、`ImpactGraphEngine` 和 `SectorImpactAnalyzer`，可把新闻标题/摘要抽取为结构化宏观事件，并生成事件到板块的直接/间接影响路径；当前已有 core smoke 验证，Phase 3 前尚未接入 `InsightOrchestrator` 主流水线。
+- Phase 1-3 已新增 `EventExtractionEngine`、`EventRuleBook`、`ImpactGraphEngine` 和 `SectorImpactAnalyzer`，可把新闻标题/摘要抽取为结构化宏观事件，生成事件到板块的直接/间接影响路径，并把 `eventImpacts`、`eventCatalystScore` 和 `eventSummary` 注入 `SectorSnapshot`。
 
 预测：
 
-- `forecastScore` 由动量、今日涨跌、新闻情绪、新闻密度、资金流、热度、均值回归、技术面、估值和拥挤度组合而成。
+- `forecastScore` 由动量、今日涨跌、新闻情绪、新闻密度、资金流、热度、均值回归、技术面、估值、拥挤度和轻量事件催化分组合而成。
+- `eventCatalystScore` 来自结构化宏观/政策事件的影响路径，只以小幅 `eventCatalystFactor` 纳入 `forecastScore`，避免未确认事件直接强推买入。
 - 数据质量权重和多源一致性权重会压缩低可信度结果。
 - `MarketRegimeDetector` 会按市场状态调整部分因子权重。
 - `AdviceAction` 当前阈值为：大于等于 `0.22` 增配，小于等于 `-0.22` 减配，其余持有。

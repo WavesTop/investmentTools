@@ -1,6 +1,7 @@
 #include "core/EventExtractionEngine.h"
 #include "core/ImpactGraphEngine.h"
 #include "core/SectorImpactAnalyzer.h"
+#include "domain/AnalysisResult.h"
 #include "domain/MacroEvent.h"
 #include "providers/RealFinanceNewsProvider.h"
 
@@ -121,6 +122,23 @@ void verifyImpactPaths()
            "direct gold impact keeps meaningful strength");
 }
 
+void verifyAnalysisResultFields()
+{
+    AnalysisResult result;
+    result.macroEvents.push_back(MacroEvent{});
+
+    SectorSnapshot sector;
+    sector.industry = QString::fromUtf8("半导体");
+    sector.eventImpacts.push_back(SectorEventImpact{});
+    sector.eventCatalystScore = 0.18;
+    sector.eventSummary = QString::fromUtf8("美联储降息预期通过成长估值链条形成间接催化");
+
+    expect(result.macroEvents.size() == 1, "analysis result stores macro events");
+    expect(sector.eventImpacts.size() == 1, "sector snapshot stores event impacts");
+    expect(sector.eventCatalystScore > 0.0, "sector snapshot stores event catalyst score");
+    expect(sector.eventSummary.contains(QString::fromUtf8("间接催化")), "sector snapshot stores event summary");
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -129,6 +147,7 @@ int main(int argc, char *argv[])
 
     verifyExtraction();
     verifyImpactPaths();
+    verifyAnalysisResultFields();
 
     if (failures > 0) {
         QTextStream(stderr) << failures << " event impact smoke check(s) failed.\n";

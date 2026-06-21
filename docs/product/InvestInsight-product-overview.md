@@ -46,6 +46,8 @@ flowchart TD
     E --> F2["DataCollector::collectAll 调用 RealFinanceNewsProvider"]
     E --> F3["MarketContextFetcher::fetch 获取指数和市场宽度"]
     F2 --> G1["SignalExtractor 规则情绪识别"]
+    F2 --> G0["EventExtractionEngine 结构化事件抽取"]
+    G0 --> G00["ImpactGraphEngine 影响路径与事件催化分"]
     F2 --> G2["AIAnalyzer::digestNews 可选新闻归因"]
     F1 --> H["估值分位、拥挤度、技术指标、趋势阶段"]
     F3 --> I["MarketRegimeDetector 识别市场状态并调整权重"]
@@ -54,6 +56,7 @@ flowchart TD
     H --> K["综合评分 forecastScore"]
     I --> K
     J --> K
+    G00 --> K
     K --> L["StrategyEngine 生成短中长期观点和止盈止损"]
     L --> M["RotationDetector / ExplainabilityEngine 做轮动和解释"]
     M --> N["MainWindow 渲染总览、策略页、板块详情"]
@@ -95,7 +98,7 @@ flowchart TD
 3. 质量评分：新闻时间越新权重越高，官方源、财联社、东方财富等源有不同可信度系数。
 4. 情绪识别：`SignalExtractor` 用正负关键词给出方向和强度；启用 AI 时，`AIAnalyzer::digestNews` 会进一步输出板块、方向、影响强度和关键事件。
 
-事件传导引擎 Phase 1-2 已新增 `MacroEvent`、`EventRuleBook`、`EventExtractionEngine`、`ImpactGraphEngine` 和 `SectorImpactAnalyzer`，能够把“美联储降息预期升温”“美联储将召开议息会议”“宣布降息”“CPI 高于预期导致预期修正”等文本结构化为事件类型、状态、地区、观察节点和证据，并把美联储降息预期映射到黄金、有色金属、半导体、创新药和证券等板块。它目前先由 `InvestInsightEventSmoke` 验证，后续 Phase 3 再接入 `InsightOrchestrator` 和评分。
+事件传导引擎 Phase 1-3 已新增 `MacroEvent`、`EventRuleBook`、`EventExtractionEngine`、`ImpactGraphEngine` 和 `SectorImpactAnalyzer`，能够把“美联储降息预期升温”“美联储将召开议息会议”“宣布降息”“CPI 高于预期导致预期修正”等文本结构化为事件类型、状态、地区、观察节点和证据，并把美联储降息预期映射到黄金、有色金属、半导体、创新药和证券等板块。事件影响已经接入 `SectorSnapshot`，但只以小幅 `eventCatalystFactor` 影响 `forecastScore`，避免未发生事件直接强推买入。
 
 ```mermaid
 flowchart LR
@@ -123,6 +126,7 @@ flowchart LR
 - 估值分位和拥挤度。
 - 数据质量权重和多源一致性权重。
 - 市场状态动态权重，例如牛市、熊市、风险偏好上升、轮动行情等。
+- 结构化事件催化分，但单次影响被限制在较小范围，更多用于提醒和解释。
 
 动作阈值当前比较克制：
 

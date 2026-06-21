@@ -17,6 +17,7 @@
 #include "core/FlowStructureAnalyzer.h"
 #include "core/ExplainabilityEngine.h"
 #include "core/MarketRegimeDetector.h"
+#include "domain/MacroEvent.h"
 
 struct EventMarker
 {
@@ -135,6 +136,7 @@ struct FormulaBreakdown
     double techFactor = 0.0;
     double valuationFactor = 0.0;
     double crowdingFactor = 0.0;
+    double eventCatalystFactor = 0.0;
     double rawForecast = 0.0;
 };
 
@@ -211,6 +213,10 @@ struct SectorSnapshot
     QStringList upcomingEvents;
     // AI 前瞻事件预测
     QStringList futureEventsAI;
+    // 结构化宏观/政策事件影响
+    QList<SectorEventImpact> eventImpacts;
+    double eventCatalystScore = 0.0;
+    QString eventSummary;
     // 休市标记
     bool marketClosed = false;
     // 累计追踪
@@ -244,6 +250,7 @@ struct AnalysisResult
     QString aiMethodologyNote;
     QStringList aiErrors;
     bool aiAvailable = false;
+    QList<MacroEvent> macroEvents;
     QList<SectorSnapshot> sectors;
 
     MarketContext marketCtx;
