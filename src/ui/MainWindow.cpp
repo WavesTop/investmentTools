@@ -1,14 +1,12 @@
 #include "ui/MainWindow.h"
 #include "ui/AppTheme.h"
-#include "ui/renderers/ChartRenderer.h"
 #include "ui/renderers/DashboardRenderer.h"
 #include "ui/renderers/SectorTableRenderer.h"
 #include "ui/renderers/StrategyRenderer.h"
 #include "ui/renderers/SectorDetailRenderer.h"
-#include "core/TechIndicators.h"
+#include "ui/renderers/IndexDetailRenderer.h"
 
 #include <algorithm>
-#include <cmath>
 
 // ─── TypeComboDelegate 实现 ──────────────────────────────────────────────────
 #include <QComboBox>
@@ -56,10 +54,8 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPainter>
-#include <QPainterPath>
 #include <QPalette>
 #include <QPen>
-#include <QPixmap>
 #include <QDateTime>
 #include <QDateEdit>
 #include <QProgressBar>
@@ -130,42 +126,12 @@ static ThemeColors s_themeStorage;
 static const ThemeColors *s_theme = &s_themeStorage;
 
 namespace {
-QString actionText(AdviceAction a)
-{
-    switch (a) {
-    case AdviceAction::Increase: return "增配";
-    case AdviceAction::Decrease: return "减配";
-    default: return "持有";
-    }
-}
-
-QString tagClass(AdviceAction a)
-{
-    switch (a) {
-    case AdviceAction::Increase: return "tag-up";
-    case AdviceAction::Decrease: return "tag-down";
-    default: return "tag-hold";
-    }
-}
-
 QString pct(double v)
 {
     return (v >= 0 ? "+" : "") + QString::number(v, 'f', 2) + "%";
 }
 
-QString clr(double v)
-{
-    if (v > 0.001) return "#EF4444";
-    if (v < -0.001) return "#3B82F6";
-    return s_theme ? s_theme->neutralColor : "#455A64";
-}
-
 QString num(double v, int d = 2) { return QString::number(v, 'f', d); }
-
-QString tc(const QString &fallback)
-{
-    return s_theme ? s_theme->subtleColor : fallback;
-}
 } // namespace
 
 // --------------- Core logic ---------------
@@ -431,166 +397,10 @@ QString MainWindow::buildSectorHtml(const SectorSnapshot &s, bool aiAvailable, b
 
 QString MainWindow::buildIndexHtml(const IndexSnapshot &idx, bool aiAvailable, bool simpleMode) const
 {
-    auto inferTrend = [](double chg) -> QString {
-        if (chg >= 2.0) return QString::fromUtf8("强势看多");
-        if (chg >= 0.5) return QString::fromUtf8("偏多");
-        if (chg <= -2.0) return QString::fromUtf8("强势看空");
-        if (chg <= -0.5) return QString::fromUtf8("偏空");
-        if (std::abs(chg) <= 0.2) return QString::fromUtf8("横盘震荡");
-        return QString::fromUtf8("方向不明");
-    };
-    auto inferAction = [](double chg) -> AdviceAction {
-        if (chg >= 1.2) return AdviceAction::Increase;
-        if (chg <= -1.2) return AdviceAction::Decrease;
-        return AdviceAction::Hold;
-    };
-
-    SectorSnapshot s;
-    s.industry = idx.name;
-    s.action = idx.changePctValid ? inferAction(idx.changePct) : AdviceAction::Hold;
-    s.todayChangePct = idx.changePct;
-    s.todayChangePctValid = idx.changePctValid;
-    s.fiveDayMomentum = 0.0;
-    s.twentyDayMomentum = 0.0;
-    s.forecastScore = idx.changePctValid ? qBound(-1.0, idx.changePct / 3.0, 1.0) : 0.0;
-    s.confidence = idx.changePctValid ? 90.0 : 30.0;
-    s.dataQualityScore = (idx.volume > 0 || idx.amount > 0) ? 95.0 : 85.0;
-    s.dataQualityWeight = 1.0;
-    s.dataQualityNote = QString::fromUtf8("指数快照与行情聚合数据");
-    s.sourceConsistencyScore = 95.0;
-    s.sourceConsistencyWeight = 1.0;
-    s.crossSourceValidated = true;
-    s.trendSummary = inferTrend(idx.changePct);
-    s.analysisNarrative = QString::fromUtf8("指数与板块同级纳入分析：建议先看指数方向，再做板块执行。");
-    s.strategy.actionLabel = QString::fromUtf8("跟踪指数方向，管理相关仓位");
-    s.strategy.shortTermView = s.trendSummary;
-    s.strategy.mediumTermView = QString::fromUtf8("以趋势延续为主，关注波动收敛后方向确认");
-    s.strategy.longTermView = QString::fromUtf8("作为市场风向锚，联合板块进行仓位配置");
-    s.strategy.operationAdvice = QString::fromUtf8("当指数与板块方向冲突时，优先按指数风控执行。");
-    s.strategy.stopLossPct = 3.0;
-    s.strategy.takeProfitPct = 5.0;
-    s.listSource = QString::fromUtf8("MarketContext");
-    s.klineSource = QString::fromUtf8("指数历史K线");
-    s.fundFlowSource = QString::fromUtf8("指数成交量额（历史）");
-    s.valuationSource = QString::fromUtf8("指数不适用");
-    s.lastDataDate = QDate::currentDate().toString("yyyy-MM-dd");
-    s.sectorTier = 0;
-    s.sectorTierLabel = QString::fromUtf8("指数");
-    s.newsHeadlines = QStringList()
-        << (QString::fromUtf8("指数代码：") + (idx.code.isEmpty() ? QString("-") : idx.code))
-        << (QString::fromUtf8("最新点位：") + num(idx.lastClose, 2))
-        << (QString::fromUtf8("成交量(亿)：") + num(idx.volume, 0))
-        << (QString::fromUtf8("成交额(亿)：") + num(idx.amount, 0));
-    s.peRatio = 0.0;
-    s.pbRatio = 0.0;
-    s.pePercentile = 50.0;
-    s.crowdingIndex = 50.0;
-    s.totalMarketCap = 0.0;
-    s.stockCount = 0;
-    s.sectorStockCount = 0;
-    s.backtestResults.clear();
-    s.bestStrategyName.clear();
-    s.bestStrategyWinRate = 0.0;
-    s.cycle.isCyclical = false;
-    s.cycle.phaseName = QString::fromUtf8("指数趋势");
-
-    // 使用真实指数历史序列
-    s.dailyBars = idx.dailyBars;
-    s.trendSeries = idx.klineSeries;
-    s.weekSeries = idx.weekSeries;
-    s.monthSeries = idx.monthSeries;
-    if (!s.dailyBars.isEmpty()) {
-        s.lastDataDate = s.dailyBars.last().date;
-        QVector<double> closes;
-        closes.reserve(s.dailyBars.size());
-        for (const KBar &b : s.dailyBars) closes.push_back(b.close);
-        if (closes.size() >= 6 && closes[closes.size() - 6] > 0) {
-            s.fiveDayMomentum = (closes.last() - closes[closes.size() - 6]) / closes[closes.size() - 6] * 100.0;
-        }
-        if (closes.size() >= 21 && closes[closes.size() - 21] > 0) {
-            s.twentyDayMomentum = (closes.last() - closes[closes.size() - 21]) / closes[closes.size() - 21] * 100.0;
-        }
-        const int flowSpan = qMin(s.dailyBars.size(), 60);
-        const int start = s.dailyBars.size() - flowSpan;
-        for (int i = start; i < s.dailyBars.size(); ++i) {
-            s.fundFlowSeries.push_back(s.dailyBars[i].volume / 1e8);
-        }
-        // 真实技术指标
-        if (s.dailyBars.size() >= 30) {
-            const auto macd = TechIndicators::calcMACD(s.dailyBars);
-            const auto rsi = TechIndicators::calcRSI(s.dailyBars);
-            const auto kdj = TechIndicators::calcKDJ(s.dailyBars);
-            const auto ma = TechIndicators::calcMA(s.dailyBars);
-            const auto boll = TechIndicators::calcBOLL(s.dailyBars);
-            if (!macd.dif.isEmpty() && !macd.dea.isEmpty() && !macd.hist.isEmpty()) {
-                s.tech.macdDIF = macd.dif.last();
-                s.tech.macdDEA = macd.dea.last();
-                s.tech.macdHist = macd.hist.last();
-                if (macd.dif.size() >= 2 && macd.dea.size() >= 2) {
-                    s.tech.macdGoldenCross = macd.dif[macd.dif.size() - 2] < macd.dea[macd.dea.size() - 2]
-                        && s.tech.macdDIF > s.tech.macdDEA;
-                    s.tech.macdDeadCross = macd.dif[macd.dif.size() - 2] > macd.dea[macd.dea.size() - 2]
-                        && s.tech.macdDIF < s.tech.macdDEA;
-                }
-            }
-            if (!rsi.rsi6.isEmpty()) s.tech.rsi6 = rsi.rsi6.last();
-            if (!rsi.rsi12.isEmpty()) s.tech.rsi12 = rsi.rsi12.last();
-            if (!rsi.rsi24.isEmpty()) s.tech.rsi24 = rsi.rsi24.last();
-            s.tech.rsiOverbought = s.tech.rsi6 >= 80;
-            s.tech.rsiOversold = s.tech.rsi6 <= 20;
-            if (!kdj.k.isEmpty()) s.tech.kdjK = kdj.k.last();
-            if (!kdj.d.isEmpty()) s.tech.kdjD = kdj.d.last();
-            if (!kdj.j.isEmpty()) s.tech.kdjJ = kdj.j.last();
-            if (kdj.k.size() >= 2 && kdj.d.size() >= 2) {
-                s.tech.kdjGoldenCross = kdj.k[kdj.k.size() - 2] < kdj.d[kdj.d.size() - 2]
-                    && s.tech.kdjK > s.tech.kdjD;
-            }
-            s.tech.kdjOverbought = s.tech.kdjJ > 100;
-            s.tech.kdjOversold = s.tech.kdjJ < 0;
-            if (!ma.ma5.isEmpty()) s.tech.ma5 = ma.ma5.last();
-            if (!ma.ma10.isEmpty()) s.tech.ma10 = ma.ma10.last();
-            if (!ma.ma20.isEmpty()) s.tech.ma20 = ma.ma20.last();
-            if (!ma.ma60.isEmpty()) s.tech.ma60 = ma.ma60.last();
-            s.tech.maLongArrange = s.tech.ma5 > s.tech.ma10 && s.tech.ma10 > s.tech.ma20;
-            s.tech.maShortArrange = s.tech.ma5 < s.tech.ma10 && s.tech.ma10 < s.tech.ma20;
-            if (!boll.upper.isEmpty()) s.tech.bollUpper = boll.upper.last();
-            if (!boll.mid.isEmpty()) s.tech.bollMid = boll.mid.last();
-            if (!boll.lower.isEmpty()) s.tech.bollLower = boll.lower.last();
-            if (s.tech.bollMid > 0) s.tech.bollWidth = (s.tech.bollUpper - s.tech.bollLower) / s.tech.bollMid * 100.0;
-            const double last = closes.last();
-            s.tech.priceAboveUpper = s.tech.bollUpper > 0 && last > s.tech.bollUpper;
-            s.tech.priceBelowLower = s.tech.bollLower > 0 && last < s.tech.bollLower;
-            // 综合技术分
-            double techScore = 50.0;
-            if (s.tech.macdGoldenCross) techScore += 12.0;
-            if (s.tech.macdDeadCross) techScore -= 12.0;
-            if (s.tech.maLongArrange) techScore += 10.0;
-            if (s.tech.maShortArrange) techScore -= 10.0;
-            if (s.tech.rsiOverbought) techScore -= 6.0;
-            if (s.tech.rsiOversold) techScore += 6.0;
-            if (s.tech.kdjGoldenCross) techScore += 6.0;
-            s.tech.techScore = qBound(0.0, techScore, 100.0);
-            s.forecastScore = qBound(-1.0, s.forecastScore * 0.55 + (s.tech.techScore - 50.0) / 50.0 * 0.45, 1.0);
-            s.action = s.forecastScore > 0.12 ? AdviceAction::Increase
-                : (s.forecastScore < -0.12 ? AdviceAction::Decrease : AdviceAction::Hold);
-        }
-    } else {
-        s.missingDataItems.push_back(QString::fromUtf8("指数历史K线缺失"));
-    }
-    s.strategy.actionLabel = QString::fromUtf8("指数方向：") + actionText(s.action);
-    s.strategy.shortTermView = s.trendSummary + QString::fromUtf8("（1-3日）");
-    s.strategy.mediumTermView = QString::fromUtf8("结合5日动量 ") + pct(s.fiveDayMomentum);
-    s.strategy.longTermView = QString::fromUtf8("结合20日动量 ") + pct(s.twentyDayMomentum);
-    s.strategy.operationAdvice = QString::fromUtf8("将该指数作为同方向板块的上层风控锚，优先管理总仓风险。");
-    s.strategy.supportLevel1 = idx.lastClose * 0.985;
-    s.strategy.resistLevel1 = idx.lastClose * 1.015;
-
-    return buildSectorHtml(s, aiAvailable, simpleMode);
-}
-
-QPixmap MainWindow::buildTrendChart(const SectorSnapshot &snap, int width, int height) const
-{
-    return UiTheme::ChartRenderer::buildTrendChart(snap, *s_theme, width, height);
+    Q_UNUSED(aiAvailable);
+    UiTheme::IndexDetailRenderOptions options;
+    options.simpleMode = simpleMode;
+    return UiTheme::IndexDetailRenderer::render(idx, *s_theme, options);
 }
 void MainWindow::buildUi()
 {

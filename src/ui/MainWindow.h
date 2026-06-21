@@ -171,7 +171,6 @@ private:
     QString buildStrategyHtml(const AnalysisResult &analysis) const;
     QString buildSectorHtml(const SectorSnapshot &sector, bool aiAvailable, bool simpleMode = false) const;
     QString buildIndexHtml(const IndexSnapshot &idx, bool aiAvailable, bool simpleMode = false) const;
-    QPixmap buildTrendChart(const SectorSnapshot &snap, int width, int height) const;
 
     InsightOrchestrator m_orchestrator;
     QStackedWidget *m_pages = nullptr;
