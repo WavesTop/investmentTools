@@ -10,6 +10,9 @@
 #include <QStyleFactory>
 #endif
 
+#include "core/EventExtractionEngine.h"
+#include "core/ImpactGraphEngine.h"
+#include "core/SectorImpactAnalyzer.h"
 #include "core/SectorFetcher.h"
 #include "ui/MainWindow.h"
 
@@ -21,6 +24,66 @@ bool hasArgument(int argc, char *argv[], const QString &flag)
         if (QString::fromLocal8Bit(argv[i]) == flag) return true;
     }
     return false;
+}
+
+QString argumentAfter(int argc, char *argv[], const QString &flag)
+{
+    for (int i = 1; i + 1 < argc; ++i) {
+        if (QString::fromLocal8Bit(argv[i]) == flag) {
+            return QString::fromLocal8Bit(argv[i + 1]);
+        }
+    }
+    return QString();
+}
+
+int debugEventImpact(int argc, char *argv[])
+{
+    QCoreApplication app(argc, argv);
+    QTextStream out(stdout);
+    QTextStream err(stderr);
+
+    const QString text = argumentAfter(argc, argv, QStringLiteral("--debug-event-impact")).trimmed();
+    if (text.isEmpty()) {
+        err << "Usage: InvestInsight.exe --debug-event-impact \"event text\"\n";
+        return 1;
+    }
+
+    EventExtractionEngine extractor;
+    ImpactGraphEngine graph;
+    SectorImpactAnalyzer analyzer;
+
+    const QList<MacroEvent> events = extractor.extractFromText(
+        text, QStringLiteral("debug"), QDateTime::currentDateTimeUtc());
+    if (events.isEmpty()) {
+        out << "NO_EVENT\n";
+        return 0;
+    }
+
+    for (const MacroEvent &event : events) {
+        const QList<SectorEventImpact> impacts = graph.analyze(event);
+        const QMap<QString, double> scores = analyzer.eventCatalystScores(impacts);
+
+        out << "event"
+            << "\ttype=" << toString(event.type)
+            << "\tstate=" << toString(event.state)
+            << "\tregion=" << toString(event.region)
+            << "\tcheckpoint=" << event.checkpoint
+            << "\ttitle=" << event.title
+            << '\n';
+
+        for (const SectorEventImpact &impact : impacts) {
+            out << "sector=" << impact.sector
+                << "\tdirection=" << toString(impact.direction)
+                << "\trelation=" << toString(impact.relation)
+                << "\tstrength=" << QString::number(impact.strength, 'f', 2)
+                << "\tconfidence=" << QString::number(impact.confidence, 'f', 2)
+                << "\tscore=" << QString::number(scores.value(impact.sector), 'f', 3)
+                << "\tpath=" << impact.path
+                << '\n';
+        }
+    }
+
+    return 0;
 }
 
 int dumpSectorChanges(int argc, char *argv[])
@@ -135,6 +198,9 @@ int main(int argc, char *argv[])
 
     if (hasArgument(argc, argv, "--dump-sector-changes")) {
         return dumpSectorChanges(argc, argv);
+    }
+    if (hasArgument(argc, argv, "--debug-event-impact")) {
+        return debugEventImpact(argc, argv);
     }
 
     QApplication app(argc, argv);

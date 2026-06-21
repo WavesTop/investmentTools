@@ -78,6 +78,22 @@ QList<EventRule> EventRuleBook::matchingRules(const QString &text) const
             matches.push_back(rule);
         }
     }
+    bool hasFedRateCut = false;
+    for (const EventRule &rule : matches) {
+        if (rule.key == QStringLiteral("fed_rate_cut")) {
+            hasFedRateCut = true;
+            break;
+        }
+    }
+    if (hasFedRateCut) {
+        QList<EventRule> filtered;
+        for (const EventRule &rule : matches) {
+            if (rule.key != QStringLiteral("fed_meeting")) {
+                filtered.push_back(rule);
+            }
+        }
+        return filtered;
+    }
     return matches;
 }
 

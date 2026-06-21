@@ -88,6 +88,14 @@ flowchart TD
 
 该命令会重点输出有色金属、半导体、锂电池的 `changePct`、数据来源、K 线来源和最新日期。
 
+事件传导诊断命令为：
+
+```powershell
+.\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
+```
+
+该命令会输出事件类型、状态、地区、观察节点，以及黄金、有色金属、半导体、创新药、证券等板块的方向、关系和传导路径。
+
 ## 新闻处理逻辑
 
 新闻源集中在 `src/providers/RealFinanceNewsProvider.cpp`。当前并发拉取 12 路来源，包括东方财富、新浪、同花顺、华尔街见闻、网易、Google News 主流外媒 RSS、官方/政策源、财联社、证券时报、中国证券网等。

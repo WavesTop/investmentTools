@@ -22,12 +22,14 @@ cmake --build build --config Release -- /m
 .\build\Release\InvestInsight.exe --dump-sector-changes
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 .\build\Release\InvestInsightEventSmoke.exe
+.\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 ```
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
 第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS、图表渲染，以及主窗口关键 Tab/按钮是否存在。
-第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点和证据保留。
+第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点、影响路径、事件仓库和证据保留。
+第五个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint` 和受影响板块的 `direction/relation/path`。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -35,7 +37,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 
 | 文件 | 责任 |
 | --- | --- |
-| `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze`、`--dump-sector-changes` 和 `--ui-smoke` 诊断命令。 |
+| `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze`、`--dump-sector-changes`、`--debug-event-impact` 和 `--ui-smoke` 诊断命令。 |
 | `src/ui/AppTheme.cpp` | UI 主题颜色、Widget 样式、HTML 基础 CSS 和系统暗色模式检测。 |
 | `src/ui/renderers/ChartRenderer.cpp` | 板块详情趋势图、K 线、成交量、MACD、资金流和周/月参考图的独立渲染器。 |
 | `src/ui/renderers/DashboardRenderer.cpp` | 总览工作台 HTML 渲染器，覆盖市场仪表盘、关键机会、持仓摘要和 AI 摘要。 |
