@@ -66,6 +66,8 @@ set(APP_SOURCES
     src/core/SignalExtractor.cpp
     src/core/EventRuleBook.cpp
     src/core/EventExtractionEngine.cpp
+    src/core/ImpactGraphEngine.cpp
+    src/core/SectorImpactAnalyzer.cpp
     src/core/ImpactAnalyzer.cpp
     src/core/AdviceEngine.cpp
     src/core/SectorFetcher.cpp
@@ -167,6 +169,8 @@ add_executable(InvestInsightEventSmoke
     tests/core/EventImpactSmoke.cpp
     src/core/EventExtractionEngine.cpp
     src/core/EventRuleBook.cpp
+    src/core/ImpactGraphEngine.cpp
+    src/core/SectorImpactAnalyzer.cpp
 )
 
 target_include_directories(InvestInsightEventSmoke

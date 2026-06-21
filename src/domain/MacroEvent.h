@@ -29,6 +29,21 @@ enum class MacroEventRegion
     Global
 };
 
+enum class EventImpactDirection
+{
+    Negative,
+    Neutral,
+    Positive,
+    Mixed
+};
+
+enum class EventImpactRelation
+{
+    Direct,
+    Indirect,
+    Conditional
+};
+
 struct MacroEventEvidence
 {
     QString source;
@@ -50,6 +65,21 @@ struct MacroEvent
     QList<MacroEventEvidence> evidence;
 };
 
+struct SectorEventImpact
+{
+    QString eventId;
+    QString eventTitle;
+    QString sector;
+    QString path;
+    QString explanation;
+    QString condition;
+    EventImpactDirection direction = EventImpactDirection::Neutral;
+    EventImpactRelation relation = EventImpactRelation::Indirect;
+    MacroEventState state = MacroEventState::Expected;
+    double strength = 0.0;
+    double confidence = 0.0;
+};
+
 inline QString toString(MacroEventType type)
 {
     switch (type) {
@@ -64,6 +94,34 @@ inline QString toString(MacroEventType type)
     case MacroEventType::Unknown:
     default:
         return QStringLiteral("Unknown");
+    }
+}
+
+inline QString toString(EventImpactDirection direction)
+{
+    switch (direction) {
+    case EventImpactDirection::Negative:
+        return QStringLiteral("negative");
+    case EventImpactDirection::Positive:
+        return QStringLiteral("positive");
+    case EventImpactDirection::Mixed:
+        return QStringLiteral("mixed");
+    case EventImpactDirection::Neutral:
+    default:
+        return QStringLiteral("neutral");
+    }
+}
+
+inline QString toString(EventImpactRelation relation)
+{
+    switch (relation) {
+    case EventImpactRelation::Direct:
+        return QStringLiteral("direct");
+    case EventImpactRelation::Conditional:
+        return QStringLiteral("conditional");
+    case EventImpactRelation::Indirect:
+    default:
+        return QStringLiteral("indirect");
     }
 }
 
