@@ -57,6 +57,7 @@ set(APP_SOURCES
     src/ui/renderers/ChartRenderer.cpp
     src/ui/renderers/DashboardRenderer.cpp
     src/ui/renderers/SectorTableRenderer.cpp
+    src/ui/renderers/StrategyRenderer.cpp
     src/core/InsightOrchestrator.cpp
     src/core/DataCollector.cpp
     src/core/SignalExtractor.cpp
