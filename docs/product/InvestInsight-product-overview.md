@@ -16,7 +16,7 @@ InvestInsight 是一个面向 A 股行业/概念板块的“新闻信息收集 +
 
 当前代码实现的是 Qt/C++17 桌面应用，主入口为 `src/main.cpp`，主要界面在 `src/ui/MainWindow.cpp`。用户打开后先进入配置页，可填写 AI Provider 和 Key，也可以关闭 AI，仅使用规则引擎。进入主页面后点击刷新，系统开始拉取数据、展示进度，并在完成后渲染数据仪表盘、板块列表、策略页和单板块详情页。
 
-当前主界面文案已先向 2.0 设计稿靠拢：顶部入口使用“总览工作台”，子页面使用“总览、板块机会、策略跟踪”，并保留“AI 助手”和“配置中心”入口。总览页已经委托独立 `DashboardRenderer`，板块机会页已经委托独立 `SectorTableRenderer`，策略跟踪页已经委托独立 `StrategyRenderer`，后续会继续把这些页面从 `MainWindow.cpp` 拆成 renderer/panel。
+当前主界面文案已先向 2.0 设计稿靠拢：顶部入口使用“总览工作台”，子页面使用“总览、板块机会、策略跟踪”，并保留“AI 助手”和“配置中心”入口。总览页已经委托独立 `DashboardRenderer`，板块机会页已经委托独立 `SectorTableRenderer`，策略跟踪页已经委托独立 `StrategyRenderer`，板块详情页已开始沉淀为独立 `SectorDetailRenderer`，后续会继续把这些页面从 `MainWindow.cpp` 拆成 renderer/panel。
 
 1.0 版本已经补齐软件发布形态：项目包含 Windows/macOS 打包脚本，并配置了统一的应用图标。图标以新闻卡片、板块柱状行情、上行洞察线和信号弧为核心元素，表达“新闻驱动的行业洞察与预测”。
 
@@ -184,7 +184,7 @@ flowchart TD
 6. 做“UI 重构与事件工作台”：按设计稿拆分 `MainWindow`，新增事件雷达、传导路径和板块详情首屏结构。
 
 UI 重构先按 Phase 0 小切片推进，优先拆出主题样式、图表渲染和 HTML renderer，再逐步接入事件雷达与板块详情重排；每个切片验证通过后只提交到本地仓库。
-界面重构期间新增固定 smoke 验证流程：`tools/verify_ui_smoke.ps1` 会构建 Release 主程序和 UI smoke 测试程序，先确保主题、Widget 样式、HTML 基础 CSS、图表渲染、总览页 HTML 渲染、板块机会 HTML 渲染、策略页 HTML 渲染和主窗口关键入口没有被破坏，再进入下一片改动。
+界面重构期间新增固定 smoke 验证流程：`tools/verify_ui_smoke.ps1` 会构建 Release 主程序和 UI smoke 测试程序，先确保主题、Widget 样式、HTML 基础 CSS、图表渲染、总览页 HTML 渲染、板块机会 HTML 渲染、策略页 HTML 渲染、板块详情 HTML 渲染和主窗口关键入口没有被破坏，再进入下一片改动。
 
 ## 1.0 发布方式
 

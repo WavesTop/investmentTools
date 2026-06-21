@@ -39,6 +39,7 @@ int runChartRendererSmoke();
 int runDashboardRendererSmoke();
 int runSectorTableRendererSmoke();
 int runStrategyRendererSmoke();
+int runSectorDetailRendererSmoke();
 
 int main(int argc, char *argv[])
 {
@@ -70,6 +71,11 @@ int main(int argc, char *argv[])
 
     const int strategyResult = runStrategyRendererSmoke();
     if (strategyResult != 0) {
+        ++failures;
+    }
+
+    const int sectorDetailResult = runSectorDetailRendererSmoke();
+    if (sectorDetailResult != 0) {
         ++failures;
     }
 
