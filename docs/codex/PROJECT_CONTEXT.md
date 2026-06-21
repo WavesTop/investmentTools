@@ -68,6 +68,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `docs/release/PACKAGING.md` | Windows/macOS 打包和使用说明。 |
 | `docs/design/InvestInsight-ui-redesign-mockup.md` | UI 优化设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
 | `docs/superpowers/plans/2026-06-20-ui-refactor-phase0-plan.md` | UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
+| `docs/superpowers/plans/2026-06-21-event-impact-engine-phase1-5-plan.md` | 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
 
 ## 当前主流程
 
