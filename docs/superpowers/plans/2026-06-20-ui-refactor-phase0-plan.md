@@ -38,7 +38,7 @@
 - 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
-当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper；0.3a 已新增独立 `DashboardRenderer` 和总览页 HTML smoke 测试；0.3b 已让 `MainWindow::buildDataDashboardHtml` 委托该 renderer；0.3c1 已新增独立 `SectorTableRenderer` 和板块机会 HTML smoke 测试；0.3c2 已让 `MainWindow::buildSectorTableHtml` 委托该 renderer；0.3d1 已新增独立 `StrategyRenderer` 和策略页 HTML smoke 测试；0.3d2 已让 `MainWindow::buildStrategyHtml` 委托该 renderer；0.4a1 已新增独立 `SectorDetailRenderer` 和板块详情 HTML smoke 测试。
+当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper；0.3a 已新增独立 `DashboardRenderer` 和总览页 HTML smoke 测试；0.3b 已让 `MainWindow::buildDataDashboardHtml` 委托该 renderer；0.3c1 已新增独立 `SectorTableRenderer` 和板块机会 HTML smoke 测试；0.3c2 已让 `MainWindow::buildSectorTableHtml` 委托该 renderer；0.3d1 已新增独立 `StrategyRenderer` 和策略页 HTML smoke 测试；0.3d2 已让 `MainWindow::buildStrategyHtml` 委托该 renderer；0.4a1 已新增独立 `SectorDetailRenderer` 和板块详情 HTML smoke 测试；0.4a2 已让 `MainWindow::buildSectorHtml` 委托该 renderer。
 
 可见 UI 改良进度：主导航文案已调整为“总览工作台 / 总览 / 板块机会 / 策略跟踪 / AI 助手 / 配置中心”，先让 1.0 界面语义贴近 2.0 设计稿，后续再继续拆 renderer 和补事件雷达入口。
 
@@ -121,7 +121,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 - 板块详情页必须保留收益、评分、技术指标、资金流、回测、新闻证据和数据质量。
 - 新增事件驱动区块时，不删除原有量化信息。
 - 0.4a1 已完成：`SectorDetailRenderer` 覆盖投资结论、图表、短中长期观点、技术指标、资金流、回测、新闻证据和数据质量。
-- 0.4a2 待完成：`MainWindow::buildSectorHtml` 委托 `SectorDetailRenderer`。
+- 0.4a2 已完成：`MainWindow::buildSectorHtml` 委托 `SectorDetailRenderer`，删除主窗口内旧板块详情 HTML 拼接块。
 
 验证：
 
