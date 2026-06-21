@@ -22,6 +22,11 @@ void verifyTheme(const InvestInsight::Ui::ThemeColors &theme, const QString &nam
     expect(!widgetCss.isEmpty(), name + " widget stylesheet is not empty");
     expect(widgetCss.contains("QMainWindow"), name + " widget stylesheet contains main window rules");
     expect(widgetCss.contains("QTextBrowser"), name + " widget stylesheet contains text browser rules");
+    expect(widgetCss.contains("QFrame#sideNav"), name + " widget stylesheet contains side navigation rules");
+    expect(widgetCss.contains("QFrame#topStatusBar"), name + " widget stylesheet contains top status bar rules");
+    expect(widgetCss.contains("QFrame#configCard"), name + " widget stylesheet contains config card rules");
+    expect(widgetCss.contains("QFrame#chatContextPanel"), name + " widget stylesheet contains chat context panel rules");
+    expect(widgetCss.contains("QPushButton#quickQuestionButton"), name + " widget stylesheet contains quick question button rules");
     expect(widgetCss.contains(theme.winBg), name + " widget stylesheet contains window background");
     expect(widgetCss.contains(theme.btnBg), name + " widget stylesheet contains button background");
 
@@ -29,6 +34,8 @@ void verifyTheme(const InvestInsight::Ui::ThemeColors &theme, const QString &nam
     expect(htmlCss.contains("body"), name + " HTML stylesheet contains body rules");
     expect(htmlCss.contains("table.overview"), name + " HTML stylesheet contains overview table rules");
     expect(htmlCss.contains("table.fund"), name + " HTML stylesheet contains fund table rules");
+    expect(htmlCss.contains("workspace-shell"), name + " HTML stylesheet contains workspace shell rules");
+    expect(htmlCss.contains("metric-grid"), name + " HTML stylesheet contains metric grid rules");
     expect(htmlCss.contains(theme.bodyBg), name + " HTML stylesheet contains body background");
     expect(htmlCss.contains(theme.linkColor), name + " HTML stylesheet contains link color");
 }

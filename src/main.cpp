@@ -1,6 +1,8 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QIcon>
+#include <QLabel>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QTabWidget>
 #include <QTextStream>
@@ -143,9 +145,32 @@ int runUiSmoke()
     QStringList missing;
 
     const QList<QTabWidget *> tabWidgets = window.findChildren<QTabWidget *>();
+    const QList<QPushButton *> buttons = window.findChildren<QPushButton *>();
+    const QList<QLabel *> labels = window.findChildren<QLabel *>();
     auto hasTab = [&tabWidgets](const QString &text) {
         for (QTabWidget *tabs : tabWidgets) {
             if (containsTabText(tabs, text)) return true;
+        }
+        return false;
+    };
+    auto hasLabel = [&labels](const QString &text) {
+        for (QLabel *label : labels) {
+            if (label->text().contains(text)) return true;
+        }
+        return false;
+    };
+    auto hasButton = [&buttons](const QString &text) {
+        for (QPushButton *button : buttons) {
+            if (button->text().contains(text)) return true;
+        }
+        return false;
+    };
+    auto clickButton = [&buttons](const QString &text) {
+        for (QPushButton *button : buttons) {
+            if (button->text().contains(text)) {
+                button->click();
+                return true;
+            }
         }
         return false;
     };
@@ -161,21 +186,34 @@ int runUiSmoke()
         if (!hasTab(tab)) missing << QString::fromUtf8("tab:") + tab;
     }
 
-    const QList<QPushButton *> buttons = window.findChildren<QPushButton *>();
-    auto hasButton = [&buttons](const QString &text) {
-        for (QPushButton *button : buttons) {
-            if (button->text().contains(text)) return true;
-        }
-        return false;
-    };
-
     const QStringList requiredButtons = {
         QString::fromUtf8("开始分析"),
         QString::fromUtf8("AI 助手"),
-        QString::fromUtf8("配置中心")
+        QString::fromUtf8("配置"),
+        QString::fromUtf8("总览"),
+        QString::fromUtf8("事件雷达"),
+        QString::fromUtf8("板块机会"),
+        QString::fromUtf8("策略跟踪")
     };
     for (const QString &button : requiredButtons) {
         if (!hasButton(button)) missing << QString::fromUtf8("button:") + button;
+    }
+    if (!hasLabel(QStringLiteral("InvestInsight"))) missing << "label:InvestInsight";
+    if (!hasLabel(QString::fromUtf8("后台刷新与提醒"))) missing << QString::fromUtf8("label:后台刷新与提醒");
+    if (!hasLabel(QString::fromUtf8("数据源健康"))) missing << QString::fromUtf8("label:数据源健康");
+
+    if (clickButton(QString::fromUtf8("AI 助手"))) {
+        const QList<QLabel *> chatLabels = window.findChildren<QLabel *>();
+        auto hasChatLabel = [&chatLabels](const QString &text) {
+            for (QLabel *label : chatLabels) {
+                if (label->text().contains(text)) return true;
+            }
+            return false;
+        };
+        if (!hasChatLabel(QString::fromUtf8("当前上下文"))) missing << QString::fromUtf8("label:当前上下文");
+        if (!hasChatLabel(QString::fromUtf8("快捷问题"))) missing << QString::fromUtf8("label:快捷问题");
+    } else {
+        missing << QString::fromUtf8("click:AI 助手");
     }
 
     if (!missing.isEmpty()) {

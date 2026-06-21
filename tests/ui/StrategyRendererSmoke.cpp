@@ -84,6 +84,7 @@ int runStrategyRendererSmoke()
     expect(html.contains("<html>"), "strategy html contains document root");
     expect(html.contains("table.fund"), "strategy html keeps shared fund table class");
     expect(html.contains(QString::fromUtf8("市场操作建议")), "strategy html contains market action section");
+    expect(html.contains(QString::fromUtf8("跟踪状态")), "strategy html contains tracking state cards");
     expect(html.contains(QString::fromUtf8("推荐关注板块")), "strategy html contains top opportunity section");
     expect(html.contains(QString::fromUtf8("建议回避板块")), "strategy html contains avoid section");
     expect(html.contains(QString::fromUtf8("指数方向参考")), "strategy html contains index reference");

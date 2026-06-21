@@ -70,8 +70,11 @@ int runDashboardRendererSmoke()
 
     expect(html.contains("<html>"), "dashboard html contains document root");
     expect(html.contains("table.overview"), "dashboard html keeps shared overview table class");
+    expect(html.contains("workspace-shell"), "dashboard html uses workspace shell");
     expect(html.contains(QString::fromUtf8("市场仪表盘")), "dashboard html contains market dashboard");
-    expect(html.contains(QString::fromUtf8("关键机会")), "dashboard html contains opportunity section");
+    expect(html.contains(QString::fromUtf8("关键事件雷达")), "dashboard html contains event radar section");
+    expect(html.contains(QString::fromUtf8("板块机会与风险")), "dashboard html contains opportunity and risk section");
+    expect(html.contains(QString::fromUtf8("下一观察点")), "dashboard html contains next checkpoint");
     expect(html.contains(QString::fromUtf8("半导体")), "dashboard html renders sector names");
     expect(html.contains(QString::fromUtf8("AI 综合判断")), "dashboard html renders AI summary");
     expect(html.contains(theme.bodyBg), "dashboard html applies theme css");

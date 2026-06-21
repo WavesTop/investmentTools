@@ -67,6 +67,8 @@ int runSectorTableRendererSmoke()
     expect(html.contains("<html>"), "sector table html contains document root");
     expect(html.contains("table.overview"), "sector table html keeps shared overview table class");
     expect(html.contains(QString::fromUtf8("板块机会")), "sector table html contains page title");
+    expect(html.contains(QString::fromUtf8("事件催化")), "sector table html contains event catalyst column");
+    expect(html.contains(QString::fromUtf8("风险提示")), "sector table html contains risk hint column");
     expect(html.contains("jump-1"), "sector table html keeps sector jump links");
     expect(html.contains("jumpi-SH"), "sector table html keeps index jump links");
     expect(html.contains(QString::fromUtf8("半导体")), "sector table html renders sector names");

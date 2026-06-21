@@ -73,6 +73,7 @@ int runEventRadarRendererSmoke()
     const QString html = InvestInsight::Ui::EventRadarRenderer::render(makeAnalysis(), theme, options);
 
     expect(html.contains("<html>"), "event radar html contains document root");
+    expect(html.contains("workspace-shell"), "event radar html uses workspace shell");
     expect(html.contains(QString::fromUtf8("事件雷达")), "event radar html contains title");
     expect(html.contains(QString::fromUtf8("关键事件队列")), "event radar html contains event queue");
     expect(html.contains(QString::fromUtf8("事件传导路径")), "event radar html contains transmission path");

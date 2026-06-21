@@ -34,6 +34,10 @@ SectorSnapshot makeSector()
     snap.stockCount = 128;
     snap.fundFlowFactor = 0.18;
     snap.fundFlowSource = QString::fromUtf8("新浪资金流");
+    snap.fiveDayMomentum = 10.2;
+    snap.twentyDayMomentum = -12.6;
+    snap.monthMomentum = 71.8;
+    snap.cumulativeReturn = 54.87;
     snap.positiveFactors << QString::fromUtf8("政策催化") << QString::fromUtf8("订单改善");
     snap.negativeFactors << QString::fromUtf8("短线涨幅偏高");
     snap.newsHeadlines << QString::fromUtf8("半导体设备订单持续改善");
@@ -104,6 +108,12 @@ int runSectorDetailRendererSmoke()
 
     expect(html.contains("<html>"), "sector detail html contains document root");
     expect(html.contains(QString::fromUtf8("投资结论")), "sector detail contains investment conclusion");
+    expect(html.contains("metric-grid"), "sector detail uses first-screen metric grid");
+    expect(html.contains(QString::fromUtf8("核心评分")), "sector detail contains core score block");
+    expect(html.contains(QString::fromUtf8("信号解释")), "sector detail contains signal explanation block");
+    expect(html.contains(QString::fromUtf8("影响路径")), "sector detail contains impact path block");
+    expect(html.contains(QString::fromUtf8("阶段收益与回测")), "sector detail contains staged return block");
+    expect(html.contains(QString::fromUtf8("资金流与相关板块")), "sector detail contains fund flow relation block");
     expect(html.contains("data:image/png;base64"), "sector detail embeds chart image");
     expect(html.contains(QString::fromUtf8("技术指标")), "sector detail contains technical indicators");
     expect(html.contains(QString::fromUtf8("资金流")), "sector detail contains fund flow");
