@@ -64,6 +64,8 @@ set(APP_SOURCES
     src/core/InsightOrchestrator.cpp
     src/core/DataCollector.cpp
     src/core/SignalExtractor.cpp
+    src/core/EventRuleBook.cpp
+    src/core/EventExtractionEngine.cpp
     src/core/ImpactAnalyzer.cpp
     src/core/AdviceEngine.cpp
     src/core/SectorFetcher.cpp
@@ -160,3 +162,20 @@ if(MSVC)
 endif()
 
 target_link_libraries(InvestInsightUiSmoke PRIVATE ${QT_LIBS})
+
+add_executable(InvestInsightEventSmoke
+    tests/core/EventImpactSmoke.cpp
+    src/core/EventExtractionEngine.cpp
+    src/core/EventRuleBook.cpp
+)
+
+target_include_directories(InvestInsightEventSmoke
+    PRIVATE
+        src
+)
+
+if(MSVC)
+    target_compile_options(InvestInsightEventSmoke PRIVATE /utf-8)
+endif()
+
+target_link_libraries(InvestInsightEventSmoke PRIVATE ${QT_LIBS})

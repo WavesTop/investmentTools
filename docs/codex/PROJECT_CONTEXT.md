@@ -1,6 +1,6 @@
 # InvestInsight Codex 项目上下文
 
-最后更新：2026-06-16
+最后更新：2026-06-21
 
 ## 用途
 
@@ -21,11 +21,13 @@
 cmake --build build --config Release -- /m
 .\build\Release\InvestInsight.exe --dump-sector-changes
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
+.\build\Release\InvestInsightEventSmoke.exe
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 ```
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
 第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS、图表渲染，以及主窗口关键 Tab/按钮是否存在。
+第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点和证据保留。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -47,6 +49,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `src/core/SectorFetcher.cpp` | 板块列表、行情、K 线、今日涨幅、资金流、估值分位、拥挤度。 |
 | `src/providers/RealFinanceNewsProvider.cpp` | 多源新闻抓取、关键词归因、新闻质量评分、去重。 |
 | `src/core/SignalExtractor.cpp` | 规则新闻情绪识别。 |
+| `src/domain/MacroEvent.h` | 宏观/政策事件领域结构，定义事件类型、状态、地区和证据。 |
+| `src/core/EventRuleBook.cpp` | 事件抽取规则库，识别货币政策、通胀就业、商品供需和产业政策等事件。 |
+| `src/core/EventExtractionEngine.cpp` | 从新闻标题/摘要抽取结构化 `MacroEvent`，保留来源和发布时间证据。 |
 | `src/core/AIAnalyzer.cpp` | 可选 AI 分析；新闻归因 Stage 1 和重点板块深度研判 Stage 2。 |
 | `src/core/MarketContext.cpp` | 指数、A 股涨跌家数、板块资金流合计、市场风险分。 |
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
@@ -65,6 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `tests/ui/SectorDetailRendererSmoke.cpp` | 板块详情 HTML smoke 测试，校验图表嵌入和决策页关键量化信息。 |
 | `tests/ui/IndexDetailRendererSmoke.cpp` | 指数详情 HTML smoke 测试，校验图表嵌入、技术指标、市场风控和数据质量。 |
 | `tests/ui/EventRadarRendererSmoke.cpp` | 事件雷达 HTML smoke 测试，校验事件队列、传导路径、风险区块和未来催化展示。 |
+| `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件抽取、状态识别和证据保留；后续继续覆盖路径映射和诊断命令。 |
 | `docs/release/PACKAGING.md` | Windows/macOS 打包和使用说明。 |
 | `docs/design/InvestInsight-ui-redesign-mockup.md` | UI 优化设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
 | `docs/superpowers/plans/2026-06-20-ui-refactor-phase0-plan.md` | UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
@@ -113,6 +119,7 @@ flowchart TD
 - `buildInfluenceMap` 是关键词到板块的主要静态映射。
 - `inferIndustries` 只在当前板块池中匹配，避免输出不存在的板块。
 - 新闻质量 = 时间新鲜度 × 来源可信度。
+- Phase 1 已新增 `EventExtractionEngine` 和 `EventRuleBook`，可把新闻标题/摘要抽取为结构化宏观事件；当前已有 core smoke 验证，Phase 3 前尚未接入 `InsightOrchestrator` 主流水线。
 
 预测：
 
