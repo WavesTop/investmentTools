@@ -38,9 +38,9 @@
 - 0.1c：移出 `buildHtmlCss()`。
 - `MainWindow` 只保留当前主题状态和调用，不再承载大段主题/CSS 字符串。
 
-当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper；0.3a 已新增独立 `DashboardRenderer` 和总览页 HTML smoke 测试；0.3b 已让 `MainWindow::buildDataDashboardHtml` 委托该 renderer；0.3c1 已新增独立 `SectorTableRenderer` 和板块机会 HTML smoke 测试；0.3c2 已让 `MainWindow::buildSectorTableHtml` 委托该 renderer；0.3d1 已新增独立 `StrategyRenderer` 和策略页 HTML smoke 测试；0.3d2 已让 `MainWindow::buildStrategyHtml` 委托该 renderer；0.4a1 已新增独立 `SectorDetailRenderer` 和板块详情 HTML smoke 测试；0.4a2 已让 `MainWindow::buildSectorHtml` 委托该 renderer；0.4b1 已新增独立 `IndexDetailRenderer` 和指数详情 HTML smoke 测试；0.4b2 已让 `MainWindow::buildIndexHtml` 委托该 renderer。
+当前进度：0.1a、0.1b 和 0.1c 已完成；0.2a 已新增独立 `ChartRenderer` 和图表 smoke 测试；0.2b 已让 `MainWindow::buildTrendChart` 委托该 renderer；0.2c 已删除 `MainWindow.cpp` 内旧静态绘图 helper；0.3a 已新增独立 `DashboardRenderer` 和总览页 HTML smoke 测试；0.3b 已让 `MainWindow::buildDataDashboardHtml` 委托该 renderer；0.3c1 已新增独立 `SectorTableRenderer` 和板块机会 HTML smoke 测试；0.3c2 已让 `MainWindow::buildSectorTableHtml` 委托该 renderer；0.3d1 已新增独立 `StrategyRenderer` 和策略页 HTML smoke 测试；0.3d2 已让 `MainWindow::buildStrategyHtml` 委托该 renderer；0.4a1 已新增独立 `SectorDetailRenderer` 和板块详情 HTML smoke 测试；0.4a2 已让 `MainWindow::buildSectorHtml` 委托该 renderer；0.4b1 已新增独立 `IndexDetailRenderer` 和指数详情 HTML smoke 测试；0.4b2 已让 `MainWindow::buildIndexHtml` 委托该 renderer；0.5 已新增独立 `EventRadarRenderer`、事件雷达 Tab 和 smoke 覆盖。
 
-可见 UI 改良进度：主导航文案已调整为“总览工作台 / 总览 / 板块机会 / 策略跟踪 / AI 助手 / 配置中心”，先让 1.0 界面语义贴近 2.0 设计稿，后续再继续拆 renderer 和补事件雷达入口。
+可见 UI 改良进度：主导航文案已调整为“总览工作台 / 总览 / 事件雷达 / 板块机会 / 策略跟踪 / AI 助手 / 配置中心”，先让 1.0 界面语义贴近 2.0 设计稿，事件雷达已经作为独立 Tab 接入。
 
 验证：
 
@@ -137,6 +137,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 
 - 在现有主页面基础上增加事件雷达入口或 Tab 骨架。
 - 对齐 `docs/design` 中的总览、事件雷达、板块机会、策略跟踪、AI 助手、配置页和板块详情长图。
+- 0.5 已完成：新增 `EventRadarRenderer`，主窗口增加“事件雷达”子 Tab，展示关键事件队列、事件传导路径、市场风险和失效条件。
 
 验证：
 

@@ -90,6 +90,7 @@ int runUiSmoke()
     const QStringList requiredTabs = {
         QString::fromUtf8("总览工作台"),
         QString::fromUtf8("总览"),
+        QString::fromUtf8("事件雷达"),
         QString::fromUtf8("板块机会"),
         QString::fromUtf8("策略跟踪")
     };

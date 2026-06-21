@@ -41,6 +41,7 @@ int runSectorTableRendererSmoke();
 int runStrategyRendererSmoke();
 int runSectorDetailRendererSmoke();
 int runIndexDetailRendererSmoke();
+int runEventRadarRendererSmoke();
 
 int main(int argc, char *argv[])
 {
@@ -82,6 +83,11 @@ int main(int argc, char *argv[])
 
     const int indexDetailResult = runIndexDetailRendererSmoke();
     if (indexDetailResult != 0) {
+        ++failures;
+    }
+
+    const int eventRadarResult = runEventRadarRendererSmoke();
+    if (eventRadarResult != 0) {
         ++failures;
     }
 

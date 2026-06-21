@@ -5,6 +5,7 @@
 #include "ui/renderers/StrategyRenderer.h"
 #include "ui/renderers/SectorDetailRenderer.h"
 #include "ui/renderers/IndexDetailRenderer.h"
+#include "ui/renderers/EventRadarRenderer.h"
 
 #include <algorithm>
 
@@ -261,6 +262,8 @@ void MainWindow::renderOverview(const AnalysisResult &analysis)
 {
     if (m_dashboardBrowser)
         m_dashboardBrowser->setHtml(buildDataDashboardHtml(analysis));
+    if (m_eventRadarBrowser)
+        m_eventRadarBrowser->setHtml(buildEventRadarHtml(analysis));
     if (m_overviewBrowser)
         m_overviewBrowser->setHtml(buildSectorTableHtml(analysis));
     if (m_strategyBrowser)
@@ -361,6 +364,13 @@ QString MainWindow::buildDataDashboardHtml(const AnalysisResult &analysis) const
     options.simpleMode = m_viewMode && m_viewMode->currentIndex() == 0;
     options.portfolio = m_orchestrator.portfolio();
     return UiTheme::DashboardRenderer::render(analysis, *s_theme, options);
+}
+
+QString MainWindow::buildEventRadarHtml(const AnalysisResult &analysis) const
+{
+    UiTheme::EventRadarRenderOptions options;
+    options.simpleMode = m_viewMode && m_viewMode->currentIndex() == 0;
+    return UiTheme::EventRadarRenderer::render(analysis, *s_theme, options);
 }
 
 // ========== 子Tab2: 板块&指数信息（搜索/过滤 + 混合表 + 审计摘要）==========
@@ -941,7 +951,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_tabWidget->setDocumentMode(true);
     m_tabWidget->tabBar()->setStyle(new PaddedTabStyle(m_tabWidget->tabBar()->style()));
 
-    // ---- 总览工作台：3个子Tab（总览 / 板块机会 / 策略跟踪）----
+    // ---- 总览工作台：4个子Tab（总览 / 事件雷达 / 板块机会 / 策略跟踪）----
     auto *overviewContainer = new QWidget(m_mainPage);
     auto *overviewContainerLayout = new QVBoxLayout(overviewContainer);
     overviewContainerLayout->setContentsMargins(0, 0, 0, 0);
@@ -965,7 +975,19 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     };
     m_overviewSubTabs->addTab(m_dashboardBrowser, "总览");
 
-    // -- 子Tab 2: 板块机会（含过滤栏）--
+    // -- 子Tab 2: 事件雷达 --
+    m_eventRadarBrowser = new ClickableBrowser(m_overviewSubTabs);
+    m_eventRadarBrowser->onTabJump = [this](int idx) {
+        if (idx <= 0 || idx > static_cast<int>(m_lastResult.sectors.size())) return;
+        const QString &name = m_lastResult.sectors[idx - 1].industry;
+        openSectorTab(name);
+    };
+    m_eventRadarBrowser->onIndexJump = [this](const QString &key) {
+        openIndexTab(key);
+    };
+    m_overviewSubTabs->addTab(m_eventRadarBrowser, "事件雷达");
+
+    // -- 子Tab 3: 板块机会（含过滤栏）--
     auto *sectorTab = new QWidget(m_overviewSubTabs);
     auto *sectorLayout = new QVBoxLayout(sectorTab);
     sectorLayout->setContentsMargins(0, 6, 0, 0);
@@ -1026,7 +1048,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     sectorLayout->addWidget(m_overviewBrowser, 1);
     m_overviewSubTabs->addTab(sectorTab, "板块机会");
 
-    // -- 子Tab 3: 策略跟踪 --
+    // -- 子Tab 4: 策略跟踪 --
     m_strategyBrowser = new ClickableBrowser(m_overviewSubTabs);
     m_strategyBrowser->onTabJump = [this](int idx) {
         if (idx <= 0 || idx > static_cast<int>(m_lastResult.sectors.size())) return;

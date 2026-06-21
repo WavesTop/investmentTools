@@ -167,6 +167,7 @@ private:
     void openChatTab();
     void sendChatMessage();
     QString buildDataDashboardHtml(const AnalysisResult &analysis) const;
+    QString buildEventRadarHtml(const AnalysisResult &analysis) const;
     QString buildSectorTableHtml(const AnalysisResult &analysis) const;
     QString buildStrategyHtml(const AnalysisResult &analysis) const;
     QString buildSectorHtml(const SectorSnapshot &sector, bool aiAvailable, bool simpleMode = false) const;
@@ -194,6 +195,7 @@ private:
     QTabWidget *m_overviewSubTabs = nullptr;
     ClickableBrowser *m_overviewBrowser = nullptr;
     ClickableBrowser *m_dashboardBrowser = nullptr;
+    ClickableBrowser *m_eventRadarBrowser = nullptr;
     ClickableBrowser *m_strategyBrowser = nullptr;
     QLineEdit  *m_overviewSearch  = nullptr;
     QComboBox  *m_trendFilter     = nullptr;

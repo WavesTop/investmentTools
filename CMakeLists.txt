@@ -60,6 +60,7 @@ set(APP_SOURCES
     src/ui/renderers/StrategyRenderer.cpp
     src/ui/renderers/SectorDetailRenderer.cpp
     src/ui/renderers/IndexDetailRenderer.cpp
+    src/ui/renderers/EventRadarRenderer.cpp
     src/core/InsightOrchestrator.cpp
     src/core/DataCollector.cpp
     src/core/SignalExtractor.cpp
@@ -137,6 +138,7 @@ add_executable(InvestInsightUiSmoke
     tests/ui/StrategyRendererSmoke.cpp
     tests/ui/SectorDetailRendererSmoke.cpp
     tests/ui/IndexDetailRendererSmoke.cpp
+    tests/ui/EventRadarRendererSmoke.cpp
     src/ui/AppTheme.cpp
     src/ui/renderers/ChartRenderer.cpp
     src/ui/renderers/DashboardRenderer.cpp
@@ -144,6 +146,7 @@ add_executable(InvestInsightUiSmoke
     src/ui/renderers/StrategyRenderer.cpp
     src/ui/renderers/SectorDetailRenderer.cpp
     src/ui/renderers/IndexDetailRenderer.cpp
+    src/ui/renderers/EventRadarRenderer.cpp
     src/core/TechIndicators.cpp
 )
 
