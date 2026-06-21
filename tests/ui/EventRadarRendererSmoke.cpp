@@ -32,6 +32,19 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double forec
     snap.positiveFactors << QString::fromUtf8("订单边际改善");
     snap.negativeFactors << QString::fromUtf8("短线涨幅偏高");
     snap.newsHeadlines << QString::fromUtf8("产业链催化继续发酵");
+
+    SectorEventImpact impact;
+    impact.eventTitle = QString::fromUtf8("美联储降息预期升温");
+    impact.sector = name;
+    impact.path = QString::fromUtf8("美债收益率下行 -> 成长股估值压力缓解");
+    impact.explanation = QString::fromUtf8("半导体受益于成长风格估值修复");
+    impact.direction = EventImpactDirection::Positive;
+    impact.relation = EventImpactRelation::Indirect;
+    impact.strength = 0.68;
+    impact.confidence = 0.76;
+    snap.eventImpacts << impact;
+    snap.eventCatalystScore = 0.24;
+    snap.eventSummary = QString::fromUtf8("美联储降息预期通过成长估值链条形成间接催化");
     return snap;
 }
 
@@ -64,6 +77,8 @@ int runEventRadarRendererSmoke()
     expect(html.contains(QString::fromUtf8("关键事件队列")), "event radar html contains event queue");
     expect(html.contains(QString::fromUtf8("事件传导路径")), "event radar html contains transmission path");
     expect(html.contains(QString::fromUtf8("风险与失效条件")), "event radar html contains risk section");
+    expect(html.contains(QString::fromUtf8("事件催化分")), "event radar html renders catalyst score");
+    expect(html.contains(QString::fromUtf8("美债收益率下行")), "event radar html renders structured impact path");
     expect(html.contains(QString::fromUtf8("半导体")), "event radar html renders sector names");
     expect(html.contains(QString::fromUtf8("降息预期")), "event radar html renders future catalyst");
     expect(html.contains(theme.bodyBg), "event radar html applies theme css");

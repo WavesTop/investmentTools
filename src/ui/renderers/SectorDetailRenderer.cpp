@@ -119,6 +119,63 @@ QString renderViews(const SectorSnapshot &sector, const ThemeColors &theme)
     return h;
 }
 
+QString impactDirectionText(EventImpactDirection direction)
+{
+    switch (direction) {
+    case EventImpactDirection::Positive:
+        return QString::fromUtf8("正面");
+    case EventImpactDirection::Negative:
+        return QString::fromUtf8("负面");
+    case EventImpactDirection::Mixed:
+        return QString::fromUtf8("多空交织");
+    case EventImpactDirection::Neutral:
+    default:
+        return QString::fromUtf8("中性");
+    }
+}
+
+QString impactRelationText(EventImpactRelation relation)
+{
+    switch (relation) {
+    case EventImpactRelation::Direct:
+        return QString::fromUtf8("直接");
+    case EventImpactRelation::Conditional:
+        return QString::fromUtf8("条件");
+    case EventImpactRelation::Indirect:
+    default:
+        return QString::fromUtf8("间接");
+    }
+}
+
+QString renderEventImpacts(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    if (sector.eventImpacts.isEmpty() && sector.eventSummary.isEmpty()) return QString();
+
+    QString h = "<div class='section-title'>事件驱动</div>";
+    h += "<div class='narrative'>";
+    h += QString::fromUtf8("事件催化分：<b style='color:") + colorFor(sector.eventCatalystScore, theme)
+        + ";'>" + num(sector.eventCatalystScore) + "</b>";
+    if (!sector.eventSummary.isEmpty()) {
+        h += QString::fromUtf8(" · ") + escaped(sector.eventSummary);
+    }
+    h += "</div>";
+
+    h += "<table class='overview'><tr><th>事件</th><th>方向</th><th>关系</th><th>路径与解释</th></tr>";
+    if (sector.eventImpacts.isEmpty()) {
+        h += "<tr><td colspan='4'>暂无结构化影响路径，等待事件引擎补充。</td></tr>";
+    } else {
+        for (const SectorEventImpact &impact : sector.eventImpacts) {
+            h += "<tr><td>" + escaped(impact.eventTitle) + "</td>"
+                + "<td>" + escaped(impactDirectionText(impact.direction)) + "</td>"
+                + "<td>" + escaped(impactRelationText(impact.relation)) + "</td>"
+                + "<td>" + escaped(impact.path) + "<br/><span class='meta'>"
+                + escaped(impact.explanation) + "</span></td></tr>";
+        }
+    }
+    h += "</table>";
+    return h;
+}
+
 QString renderTechnical(const SectorSnapshot &sector, const ThemeColors &theme)
 {
     const TechSignals &tech = sector.tech;
@@ -219,6 +276,7 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         + QString::fromUtf8(" 只 · 数据日期 ") + escaped(sector.lastDataDate) + "</div>";
     h += renderConclusion(sector, theme);
     h += renderViews(sector, theme);
+    h += renderEventImpacts(sector, theme);
     if (!options.simpleMode) {
         h += "<div class='section-title'>趋势图表</div>";
         h += "<img style='max-width:100%;border:1px solid " + theme.cardBorder

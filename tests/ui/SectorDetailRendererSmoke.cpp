@@ -37,6 +37,18 @@ SectorSnapshot makeSector()
     snap.positiveFactors << QString::fromUtf8("政策催化") << QString::fromUtf8("订单改善");
     snap.negativeFactors << QString::fromUtf8("短线涨幅偏高");
     snap.newsHeadlines << QString::fromUtf8("半导体设备订单持续改善");
+    snap.eventCatalystScore = 0.24;
+    snap.eventSummary = QString::fromUtf8("美联储降息预期通过成长估值链条形成间接催化");
+    SectorEventImpact impact;
+    impact.eventTitle = QString::fromUtf8("美联储降息预期升温");
+    impact.sector = snap.industry;
+    impact.path = QString::fromUtf8("美债收益率下行 -> 成长股估值压力缓解");
+    impact.explanation = QString::fromUtf8("半导体受益于成长风格估值修复");
+    impact.direction = EventImpactDirection::Positive;
+    impact.relation = EventImpactRelation::Indirect;
+    impact.strength = 0.68;
+    impact.confidence = 0.76;
+    snap.eventImpacts << impact;
     snap.strategy.actionLabel = QString::fromUtf8("回调分批加仓");
     snap.strategy.shortTermView = QString::fromUtf8("短期维持强势");
     snap.strategy.mediumTermView = QString::fromUtf8("中期关注业绩兑现");
@@ -95,6 +107,8 @@ int runSectorDetailRendererSmoke()
     expect(html.contains("data:image/png;base64"), "sector detail embeds chart image");
     expect(html.contains(QString::fromUtf8("技术指标")), "sector detail contains technical indicators");
     expect(html.contains(QString::fromUtf8("资金流")), "sector detail contains fund flow");
+    expect(html.contains(QString::fromUtf8("事件驱动")), "sector detail contains event impact section");
+    expect(html.contains(QString::fromUtf8("美债收益率下行")), "sector detail renders structured event path");
     expect(html.contains(QString::fromUtf8("策略回测")), "sector detail contains backtest");
     expect(html.contains(QString::fromUtf8("新闻证据")), "sector detail contains news evidence");
     expect(html.contains(QString::fromUtf8("数据质量")), "sector detail contains data quality");

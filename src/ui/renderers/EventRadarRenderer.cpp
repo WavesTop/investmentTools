@@ -43,6 +43,8 @@ double eventScore(const SectorSnapshot &sector)
 {
     return sector.newsHitCount
         + (sector.upcomingEvents.size() + sector.futureEventsAI.size()) * 2.0
+        + sector.eventImpacts.size() * 3.0
+        + std::abs(sector.eventCatalystScore) * 12.0
         + std::abs(sector.forecastScore) * 8.0
         + std::abs(sector.todayChangePct) * 0.5;
 }
@@ -57,6 +59,12 @@ QString firstNonEmpty(const QStringList &items, const QString &fallback)
 
 QString primaryEvent(const SectorSnapshot &sector)
 {
+    if (!sector.eventSummary.isEmpty()) {
+        return sector.eventSummary;
+    }
+    if (!sector.eventImpacts.isEmpty() && !sector.eventImpacts.first().eventTitle.isEmpty()) {
+        return sector.eventImpacts.first().eventTitle;
+    }
     if (!sector.upcomingEvents.isEmpty()) {
         return firstNonEmpty(sector.upcomingEvents, QString());
     }
@@ -82,6 +90,7 @@ QList<const SectorSnapshot *> rankedEventSectors(const AnalysisResult &analysis,
         if (sector.newsHitCount <= 0
             && sector.upcomingEvents.isEmpty()
             && sector.futureEventsAI.isEmpty()
+            && sector.eventImpacts.isEmpty()
             && sector.newsHeadlines.isEmpty()
             && sector.positiveFactors.isEmpty()
             && sector.negativeFactors.isEmpty()) {
@@ -114,9 +123,11 @@ QString renderSummary(const AnalysisResult &analysis,
 {
     int futureCount = 0;
     int newsCount = 0;
+    int structuredEvents = analysis.macroEvents.size();
     for (const SectorSnapshot *sector : items) {
         futureCount += sector->upcomingEvents.size() + sector->futureEventsAI.size();
         newsCount += sector->newsHitCount;
+        structuredEvents += sector->eventImpacts.size();
     }
     const QString riskLevel = analysis.marketCtx.riskLevel.isEmpty()
         ? QString::fromUtf8("暂无评级") : analysis.marketCtx.riskLevel;
@@ -125,8 +136,8 @@ QString renderSummary(const AnalysisResult &analysis,
     h += "<table style='width:100%;border-collapse:separate;border-spacing:6px 0;margin-bottom:12px;'><tr>";
     h += renderMetric(QString::fromUtf8("事件板块"), num(items.size(), 0),
                       QString::fromUtf8("按新闻/未来事件排序"), theme.headingColor, theme);
-    h += renderMetric(QString::fromUtf8("未来事件"), num(futureCount, 0),
-                      QString::fromUtf8("规则 + AI 前瞻"), theme.headingColor, theme);
+    h += renderMetric(QString::fromUtf8("结构事件"), num(structuredEvents, 0),
+                      QString::fromUtf8("MacroEvent + 影响路径"), theme.headingColor, theme);
     h += renderMetric(QString::fromUtf8("新闻热度"), num(newsCount, 0),
                       QString::fromUtf8("关联新闻条数"), theme.headingColor, theme);
     h += renderMetric(QString::fromUtf8("市场风险"), num(analysis.marketCtx.marketRiskScore, 0),
@@ -143,10 +154,12 @@ QString renderQueue(const QList<const SectorSnapshot *> &items, const ThemeColor
         h += "<div class='narrative'>暂无可排序事件。请先运行分析，或等待新的新闻、政策和未来事件进入系统。</div>";
         return h;
     }
-    h += "<table class='overview'><tr><th>板块</th><th>事件/催化</th><th>信号</th><th>今日</th><th>评分</th></tr>";
+    h += "<table class='overview'><tr><th>板块</th><th>事件/催化</th><th>事件催化分</th><th>信号</th><th>今日</th><th>评分</th></tr>";
     for (const SectorSnapshot *sector : items) {
         h += "<tr><td><b>" + escaped(sector->industry) + "</b></td>"
             + "<td>" + escaped(primaryEvent(*sector)) + "</td>"
+            + "<td style='color:" + changeColor(sector->eventCatalystScore, theme) + ";font-weight:700;'>"
+            + escaped(num(sector->eventCatalystScore, 2)) + "</td>"
             + "<td>" + escaped(actionText(sector->action)) + "</td>"
             + "<td style='color:" + changeColor(sector->todayChangePct, theme) + ";'>"
             + escaped(sector->todayChangePctValid ? pct(sector->todayChangePct) : QString::fromUtf8("暂无")) + "</td>"
@@ -163,6 +176,17 @@ QString renderPath(const QList<const SectorSnapshot *> &items)
     h += "<table class='overview'><tr><th>上游触发</th><th>影响板块</th><th>观察口径</th></tr>";
     int rows = 0;
     for (const SectorSnapshot *sector : items) {
+        if (!sector->eventImpacts.isEmpty()) {
+            for (const SectorEventImpact &impact : sector->eventImpacts) {
+                h += "<tr><td>" + escaped(impact.eventTitle) + "</td>"
+                    + "<td><b>" + escaped(sector->industry) + "</b></td>"
+                    + "<td>" + escaped(impact.path + QString::fromUtf8("；") + impact.explanation) + "</td></tr>";
+                if (++rows >= 5) break;
+            }
+            if (rows >= 5) break;
+            continue;
+        }
+
         const QString trigger = primaryEvent(*sector);
         const QString effect = firstNonEmpty(sector->positiveFactors + sector->negativeFactors,
                                              sector->trendSummary.isEmpty()
