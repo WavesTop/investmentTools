@@ -1,4 +1,5 @@
 #include "core/EventExtractionEngine.h"
+#include "core/EventRepository.h"
 #include "core/ImpactGraphEngine.h"
 #include "core/SectorImpactAnalyzer.h"
 #include "domain/AnalysisResult.h"
@@ -8,6 +9,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QMap>
+#include <QTemporaryDir>
 #include <QTextStream>
 
 namespace {
@@ -139,6 +141,42 @@ void verifyAnalysisResultFields()
     expect(sector.eventSummary.contains(QString::fromUtf8("间接催化")), "sector snapshot stores event summary");
 }
 
+void verifyEventRepository()
+{
+    QTemporaryDir dir;
+    expect(dir.isValid(), "temporary repository directory is valid");
+    if (!dir.isValid()) return;
+
+    MacroEvent event;
+    event.id = QStringLiteral("fed_rate_cut-test");
+    event.normalizedKey = QStringLiteral("fed_rate_cut");
+    event.title = QString::fromUtf8("美联储降息预期升温");
+    event.type = MacroEventType::MonetaryPolicy;
+    event.state = MacroEventState::Expected;
+
+    const QString path = dir.filePath(QStringLiteral("events.json"));
+    EventRepository repository(path);
+    const QDateTime firstSeen(QDate(2026, 6, 21), QTime(9, 30), Qt::UTC);
+    const QDateTime secondSeen(QDate(2026, 6, 21), QTime(10, 0), Qt::UTC);
+
+    QList<MacroEvent> tracked = repository.trackEvents({event, event}, firstSeen);
+    expect(tracked.size() == 1, "same event is returned once in one batch");
+
+    event.state = MacroEventState::Confirmed;
+    repository.trackEvents({event}, secondSeen);
+
+    const QList<TrackedEventRecord> records = repository.records();
+    expect(records.size() == 1, "repository keeps one record for repeated event");
+    expect(records.first().seenCount == 3, "repository increments seen count");
+    expect(records.first().firstSeenAt == firstSeen, "repository preserves first seen time");
+    expect(records.first().lastSeenAt == secondSeen, "repository updates last seen time");
+    expect(records.first().stateHistory.contains(QStringLiteral("Expected")), "repository stores initial state");
+    expect(records.first().stateHistory.contains(QStringLiteral("Confirmed")), "repository stores state change");
+
+    EventRepository reloaded(path);
+    expect(reloaded.records().size() == 1, "repository reloads persisted records");
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -148,6 +186,7 @@ int main(int argc, char *argv[])
     verifyExtraction();
     verifyImpactPaths();
     verifyAnalysisResultFields();
+    verifyEventRepository();
 
     if (failures > 0) {
         QTextStream(stderr) << failures << " event impact smoke check(s) failed.\n";

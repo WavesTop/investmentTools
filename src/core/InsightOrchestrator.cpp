@@ -26,6 +26,7 @@
 #include "core/MarketRegimeDetector.h"
 #include "core/ExplainabilityEngine.h"
 #include "core/EventExtractionEngine.h"
+#include "core/EventRepository.h"
 #include "core/ImpactGraphEngine.h"
 #include "core/SectorImpactAnalyzer.h"
 #include "providers/RealFinanceNewsProvider.h"
@@ -391,7 +392,8 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
     EventExtractionEngine eventExtractor;
     ImpactGraphEngine impactGraph;
     SectorImpactAnalyzer sectorImpactAnalyzer;
-    result.macroEvents = eventExtractor.extractFromHeadlines(eventHeadlines);
+    EventRepository eventRepository;
+    result.macroEvents = eventRepository.trackEvents(eventExtractor.extractFromHeadlines(eventHeadlines));
 
     QList<SectorEventImpact> allEventImpacts;
     for (const MacroEvent &event : result.macroEvents) {

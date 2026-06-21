@@ -54,6 +54,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `src/core/EventExtractionEngine.cpp` | 从新闻标题/摘要抽取结构化 `MacroEvent`，保留来源和发布时间证据。 |
 | `src/core/ImpactGraphEngine.cpp` | 事件影响路径规则库，把宏观事件映射到直接/间接影响板块和解释路径。 |
 | `src/core/SectorImpactAnalyzer.cpp` | 聚合事件路径结果，生成板块级 `eventCatalystScore` 原始分。 |
+| `src/core/EventRepository.cpp` | 本地 JSON 事件追踪仓库，记录事件首次发现、最近出现、出现次数和状态变化。 |
 | `src/core/AIAnalyzer.cpp` | 可选 AI 分析；新闻归因 Stage 1 和重点板块深度研判 Stage 2。 |
 | `src/core/MarketContext.cpp` | 指数、A 股涨跌家数、板块资金流合计、市场风险分。 |
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
@@ -89,7 +90,8 @@ flowchart TD
     C --> F["并发任务 C：MarketContextFetcher::fetch 市场环境"]
     E --> G["SignalExtractor 规则情绪"]
     E --> EV["EventExtractionEngine 结构化事件抽取"]
-    EV --> EG["ImpactGraphEngine / SectorImpactAnalyzer 事件路径和催化分"]
+    EV --> ER["EventRepository 去重和状态追踪"]
+    ER --> EG["ImpactGraphEngine / SectorImpactAnalyzer 事件路径和催化分"]
     E --> H["AIAnalyzer::digestNews 可选 AI 新闻归因"]
     D --> I["fetchValuationData 估值分位/拥挤度"]
     F --> J["MarketRegimeDetector 动态权重"]
@@ -124,7 +126,7 @@ flowchart TD
 - `buildInfluenceMap` 是关键词到板块的主要静态映射。
 - `inferIndustries` 只在当前板块池中匹配，避免输出不存在的板块。
 - 新闻质量 = 时间新鲜度 × 来源可信度。
-- Phase 1-3 已新增 `EventExtractionEngine`、`EventRuleBook`、`ImpactGraphEngine` 和 `SectorImpactAnalyzer`，可把新闻标题/摘要抽取为结构化宏观事件，生成事件到板块的直接/间接影响路径，并把 `eventImpacts`、`eventCatalystScore` 和 `eventSummary` 注入 `SectorSnapshot`。
+- Phase 1-5.1 已新增 `EventExtractionEngine`、`EventRuleBook`、`ImpactGraphEngine`、`SectorImpactAnalyzer` 和 `EventRepository`，可把新闻标题/摘要抽取为结构化宏观事件，记录事件首次发现与状态变化，生成事件到板块的直接/间接影响路径，并把 `eventImpacts`、`eventCatalystScore` 和 `eventSummary` 注入 `SectorSnapshot`。
 
 预测：
 
