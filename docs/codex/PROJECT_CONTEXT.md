@@ -138,6 +138,7 @@ flowchart TD
 - Phase 1-5.1 已新增 `EventExtractionEngine`、`EventRuleBook`、`ImpactGraphEngine`、`SectorImpactAnalyzer` 和 `EventRepository`，可把新闻标题/摘要抽取为结构化宏观事件，记录事件首次发现与状态变化，生成事件到板块的直接/间接影响路径，并把 `eventImpacts`、`eventCatalystScore` 和 `eventSummary` 注入 `SectorSnapshot`。
 - v2.1 切片 1 已补齐事件模型表达能力：新增财政政策、地缘贸易、金融市场制度类型，新增传闻、已发生、失效状态，新增事件时间字段、结构化观察点、证据 URL/可信度、事件新鲜度/重要性和影响周期。新状态和新类型的抽取规则仍在 v2.1 后续切片中推进。
 - v2.1 切片 2 已接入基础状态和观察点解析：传闻、已发生、失效可由关键词识别，FOMC、CPI、PCE、非农、LPR、MLF 等模板观察点会写入 `MacroEvent::nextCheckpoints`，事件仓库可跨重启还原新增状态。
+- v2.1 切片 3 已扩展高频事件抽取：美联储鹰派/加息、国内财政刺激/专项债、半导体出口限制、原油供给扰动和市场制度规则可被结构化为对应 `MacroEventType`。
 
 预测：
 

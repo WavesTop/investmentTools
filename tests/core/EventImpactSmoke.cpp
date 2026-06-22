@@ -254,6 +254,56 @@ void verifyV21StateAndCheckpointParsing()
     }
 }
 
+void verifyV21HighFrequencyRules()
+{
+    EventExtractionEngine engine;
+    const QDateTime publishedAt(QDate(2026, 6, 21), QTime(12, 0), Qt::UTC);
+
+    auto firstEvent = [&](const QString &text) {
+        const QList<MacroEvent> events = engine.extractFromText(text, QStringLiteral("rule-test"), publishedAt);
+        return events.isEmpty() ? MacroEvent{} : events.first();
+    };
+
+    const MacroEvent cpi = firstEvent(QString::fromUtf8("美国 CPI 低于预期，降息交易升温"));
+    expect(cpi.type == MacroEventType::InflationEmployment, "US CPI surprise maps to inflation employment");
+    expect(cpi.region == MacroEventRegion::US, "US CPI surprise keeps US region");
+    expect(cpi.normalizedKey == QStringLiteral("us_inflation_jobs"), "US CPI surprise uses inflation rule key");
+
+    const MacroEvent hawkish = firstEvent(QString::fromUtf8("美联储释放鹰派信号，暗示仍可能加息"));
+    expect(hawkish.type == MacroEventType::MonetaryPolicy, "hawkish Fed headline maps to monetary policy");
+    expect(hawkish.normalizedKey == QStringLiteral("fed_hawkish_hike"), "hawkish Fed headline uses hike rule");
+
+    const MacroEvent fiscal = firstEvent(QString::fromUtf8("专项债发行加速，财政稳增长预期升温"));
+    expect(fiscal.type == MacroEventType::FiscalPolicy, "special bond headline maps to fiscal policy");
+    expect(fiscal.region == MacroEventRegion::China, "fiscal policy headline keeps China region");
+    expect(fiscal.normalizedKey == QStringLiteral("china_fiscal_stimulus"), "fiscal headline uses fiscal rule key");
+
+    const QList<MacroEvent> exportLimitEvents = engine.extractFromText(
+        QString::fromUtf8("美国扩大半导体出口限制，先进芯片供应链再受扰动"),
+        QStringLiteral("rule-test"),
+        publishedAt);
+    const MacroEvent exportLimit = exportLimitEvents.isEmpty() ? MacroEvent{} : exportLimitEvents.first();
+    expect(exportLimit.type == MacroEventType::GeopoliticsTrade, "export restriction maps to geopolitics trade");
+    expect(exportLimit.normalizedKey == QStringLiteral("semiconductor_export_control"),
+           "export restriction uses export control key");
+    bool hasDuplicateIndustrialPolicy = false;
+    for (const MacroEvent &event : exportLimitEvents) {
+        hasDuplicateIndustrialPolicy = hasDuplicateIndustrialPolicy
+            || event.normalizedKey == QStringLiteral("semiconductor_policy");
+    }
+    expect(!hasDuplicateIndustrialPolicy, "export restriction suppresses duplicate industrial policy event");
+
+    const MacroEvent oil = firstEvent(QString::fromUtf8("OPEC 减产叠加地缘冲突，原油供给扰动推动油价上涨"));
+    expect(oil.type == MacroEventType::CommoditySupplyDemand, "oil supply shock maps to commodity supply demand");
+    expect(oil.normalizedKey == QStringLiteral("oil_supply_shock"), "oil supply shock uses oil rule key");
+
+    const MacroEvent institution = firstEvent(QString::fromUtf8("证监会优化 IPO 和减持规则，印花税下调预期升温"));
+    expect(institution.type == MacroEventType::MarketInstitution, "market rule headline maps to market institution");
+    expect(institution.region == MacroEventRegion::China, "market institution headline keeps China region");
+    expect(institution.normalizedKey == QStringLiteral("china_market_institution"),
+           "market rule headline uses institution key");
+}
+
 void verifyEventRepository()
 {
     QTemporaryDir dir;
@@ -307,6 +357,7 @@ int main(int argc, char *argv[])
     verifyAnalysisResultFields();
     verifyV21ModelFields();
     verifyV21StateAndCheckpointParsing();
+    verifyV21HighFrequencyRules();
     verifyEventRepository();
 
     if (failures > 0) {

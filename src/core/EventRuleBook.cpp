@@ -53,6 +53,13 @@ EventRuleBook::EventRuleBook()
          {QString::fromUtf8("会议"), QString::fromUtf8("议息"), QString::fromUtf8("主席讲话")},
          QStringLiteral("FOMC"),
          0.76},
+        {QStringLiteral("fed_hawkish_hike"),
+         MacroEventType::MonetaryPolicy,
+         MacroEventRegion::US,
+         {QStringLiteral("Fed"), QStringLiteral("FOMC"), QString::fromUtf8("美联储")},
+         {QString::fromUtf8("加息"), QString::fromUtf8("鹰派"), QString::fromUtf8("高利率"), QStringLiteral("hawkish")},
+         QStringLiteral("FOMC / CPI / PCE / nonfarm payrolls"),
+         0.82},
         {QStringLiteral("us_inflation_jobs"),
          MacroEventType::InflationEmployment,
          MacroEventRegion::US,
@@ -67,6 +74,41 @@ EventRuleBook::EventRuleBook()
          {},
          QStringLiteral("LPR / MLF / PBOC operation"),
          0.8},
+        {QStringLiteral("china_fiscal_stimulus"),
+         MacroEventType::FiscalPolicy,
+         MacroEventRegion::China,
+         {QString::fromUtf8("专项债"), QString::fromUtf8("财政"), QString::fromUtf8("特别国债"),
+          QString::fromUtf8("以旧换新")},
+         {QString::fromUtf8("加速"), QString::fromUtf8("稳增长"), QString::fromUtf8("刺激"),
+          QString::fromUtf8("发行"), QString::fromUtf8("补贴")},
+         QString::fromUtf8("专项债发行 / 政策细则落地"),
+         0.78},
+        {QStringLiteral("semiconductor_export_control"),
+         MacroEventType::GeopoliticsTrade,
+         MacroEventRegion::Global,
+         {QString::fromUtf8("半导体"), QString::fromUtf8("芯片"), QString::fromUtf8("出口限制"),
+          QString::fromUtf8("出口管制")},
+         {QString::fromUtf8("限制"), QString::fromUtf8("管制"), QString::fromUtf8("制裁"),
+          QString::fromUtf8("供应链")},
+         QString::fromUtf8("出口限制细则 / 供应链反馈"),
+         0.8},
+        {QStringLiteral("oil_supply_shock"),
+         MacroEventType::CommoditySupplyDemand,
+         MacroEventRegion::Global,
+         {QString::fromUtf8("原油"), QStringLiteral("OPEC"), QString::fromUtf8("油价")},
+         {QString::fromUtf8("减产"), QString::fromUtf8("供给"), QString::fromUtf8("供应"),
+          QString::fromUtf8("地缘"), QString::fromUtf8("上涨")},
+         QString::fromUtf8("OPEC / 库存数据 / 地缘冲突"),
+         0.76},
+        {QStringLiteral("china_market_institution"),
+         MacroEventType::MarketInstitution,
+         MacroEventRegion::China,
+         {QString::fromUtf8("IPO"), QString::fromUtf8("印花税"), QString::fromUtf8("融资融券"),
+          QString::fromUtf8("减持"), QString::fromUtf8("证监会")},
+         {QString::fromUtf8("优化"), QString::fromUtf8("下调"), QString::fromUtf8("规则"),
+          QString::fromUtf8("改革"), QString::fromUtf8("活跃资本市场")},
+         QString::fromUtf8("证监会细则 / 交易所执行规则"),
+         0.78},
         {QStringLiteral("commodity_price"),
          MacroEventType::CommoditySupplyDemand,
          MacroEventRegion::Global,
@@ -93,18 +135,25 @@ QList<EventRule> EventRuleBook::matchingRules(const QString &text) const
         }
     }
     bool hasFedRateCut = false;
+    bool hasSemiconductorExportControl = false;
     for (const EventRule &rule : matches) {
         if (rule.key == QStringLiteral("fed_rate_cut")) {
             hasFedRateCut = true;
-            break;
+        }
+        if (rule.key == QStringLiteral("semiconductor_export_control")) {
+            hasSemiconductorExportControl = true;
         }
     }
-    if (hasFedRateCut) {
+    if (hasFedRateCut || hasSemiconductorExportControl) {
         QList<EventRule> filtered;
         for (const EventRule &rule : matches) {
-            if (rule.key != QStringLiteral("fed_meeting")) {
-                filtered.push_back(rule);
+            if (hasFedRateCut && rule.key == QStringLiteral("fed_meeting")) {
+                continue;
             }
+            if (hasSemiconductorExportControl && rule.key == QStringLiteral("semiconductor_policy")) {
+                continue;
+            }
+            filtered.push_back(rule);
         }
         return filtered;
     }
