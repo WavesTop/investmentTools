@@ -86,6 +86,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `docs/versions/v2.0/specs/event-impact-engine-design.md` | 2.0 事件传导引擎规格说明。 |
 | `docs/versions/v2.0/plans/ui-refactor-phase0-plan.md` | 2.0 UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
 | `docs/versions/v2.0/plans/event-impact-engine-phase1-5-plan.md` | 2.0 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
+| `docs/versions/v2.1/plans/event-impact-engine-completion-plan.md` | 2.1 事件传导引擎补完计划，记录事件模型、状态时间、路径规则、评分、追踪和 UI 的剩余实现切片。 |
 
 ## 当前主流程
 
