@@ -105,16 +105,13 @@ def draw_shell(draw, width, height, active, title, subtitle):
     draw.ellipse((42, height - 86, 52, height - 76), fill="#f59e0b")
     text(draw, 62, height - 91, "新闻增量 16 条", 14, "#cbd5e1")
 
+    # Top bar mirrors the selected left navigation item. It intentionally has no
+    # AI/config shortcut buttons and no tab strip, so the sidebar is the only
+    # primary navigation model in the design.
     draw.rectangle((236, 0, width, 76), fill=COLORS["surface"], outline=COLORS["line"])
     text(draw, 268, 30, title, 25, COLORS["text"], True)
     text(draw, 394, 33, subtitle, 18, COLORS["muted"])
-    rr(draw, (1310, 18, 1440, 58), COLORS["blue"], None, 8)
-    text(draw, 1340, 28, "开始分析", 17, "#ffffff", True)
-    rr(draw, (1454, 18, 1572, 58), COLORS["surface"], "#cbd5e1", 8)
-    text(draw, 1482, 29, "AI 助手", 17, "#475569")
-    rr(draw, (1584, 18, 1702, 58), COLORS["surface"], "#cbd5e1", 8)
-    text(draw, 1618, 29, "配置", 17, "#475569")
-    text(draw, 1732, 31, "就绪，等待下一次刷新", 15, COLORS["muted"])
+    text(draw, width - 332, 31, "就绪 · 行情 09:57 · 新闻增量 16 条", 15, COLORS["muted"])
 
 
 def save(img, name):

@@ -82,17 +82,11 @@ txt(62, 959, "行情 09:57 更新", 14, "#cbd5e1")
 d.ellipse((42, 994, 52, 1004), fill="#f59e0b")
 txt(62, 989, "新闻增量 16 条", 14, "#cbd5e1")
 
-# Header
+# Header: page title only. Primary actions live inside the active workspace page.
 rect((236, 0, W, 76), C["surface"], C["line"])
 txt(268, 30, "综合总览", 25, C["text"], True)
 txt(394, 33, "2026-06-20 09:57 · AI 已启用 · 覆盖 186 个板块", 18, C["muted"])
-rr((1310, 18, 1440, 58), C["blue"], None, 8)
-txt(1340, 28, "开始分析", 17, "#ffffff", True)
-rr((1454, 18, 1572, 58), C["surface"], "#cbd5e1", 8)
-txt(1482, 29, "AI 助手", 17, "#475569")
-rr((1584, 18, 1702, 58), C["surface"], "#cbd5e1", 8)
-txt(1618, 29, "配置", 17, "#475569")
-txt(1732, 31, "就绪，等待下一次刷新", 15, C["muted"])
+txt(1584, 31, "就绪 · 行情 09:57 · 新闻增量 16 条", 15, C["muted"])
 
 # Metric cards
 for x, w in [(260, 392), (672, 312), (1004, 312), (1336, 520)]:
@@ -109,9 +103,11 @@ txt(1030, 128, "风险拥挤度", 17, C["muted"])
 txt(1030, 160, "中等", 32, C["text"], True)
 txt(1122, 167, "过热 3 个", 17, C["amber"], True)
 txt(1030, 202, "高热度、高涨幅、资金背离", 13, C["tiny"])
-txt(1362, 128, "下一观察点", 17, C["muted"])
-txt(1362, 160, "美联储议息会议 · CPI/PCE 数据", 20, C["text"], True)
-txt(1362, 202, "事件未落地，当前建议以观察和仓位约束为主", 13, C["tiny"])
+txt(1362, 128, "分析控制", 17, C["muted"])
+rr((1362, 158, 1504, 202), C["blue"], None, 8)
+txt(1394, 170, "开始分析", 18, "#ffffff", True)
+txt(1532, 160, "AI 已启用", 17, C["text"], True)
+txt(1532, 194, "点击后刷新行情、新闻和事件雷达", 13, C["tiny"])
 
 # Event radar
 card(260, 252, 560, 382)
