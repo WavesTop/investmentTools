@@ -141,6 +141,58 @@ void verifyAnalysisResultFields()
     expect(sector.eventSummary.contains(QString::fromUtf8("间接催化")), "sector snapshot stores event summary");
 }
 
+void verifyV21ModelFields()
+{
+    expect(toString(MacroEventType::FiscalPolicy) == QStringLiteral("FiscalPolicy"),
+           "fiscal policy event type has a stable string");
+    expect(toString(MacroEventType::GeopoliticsTrade) == QStringLiteral("GeopoliticsTrade"),
+           "geopolitics and trade event type has a stable string");
+    expect(toString(MacroEventType::MarketInstitution) == QStringLiteral("MarketInstitution"),
+           "market institution event type has a stable string");
+    expect(toString(MacroEventState::Rumor) == QStringLiteral("Rumor"), "rumor state has a stable string");
+    expect(toString(MacroEventState::Occurred) == QStringLiteral("Occurred"),
+           "occurred state has a stable string");
+    expect(toString(MacroEventState::Invalidated) == QStringLiteral("Invalidated"),
+           "invalidated state has a stable string");
+    expect(toString(ImpactHorizon::MediumTerm) == QStringLiteral("MediumTerm"),
+           "impact horizon has a stable string");
+
+    MacroEvent event;
+    const QDateTime detectedAt(QDate(2026, 6, 21), QTime(9, 30), Qt::UTC);
+    const QDateTime expectedAt(QDate(2026, 7, 1), QTime(20, 0), Qt::UTC);
+    const QDateTime confirmedAt(QDate(2026, 7, 2), QTime(2, 0), Qt::UTC);
+    event.detectedAt = detectedAt;
+    event.expectedAt = expectedAt;
+    event.confirmedAt = confirmedAt;
+    event.novelty = 0.82;
+    event.importance = 0.74;
+
+    MacroEventCheckpoint checkpoint;
+    checkpoint.name = QStringLiteral("FOMC");
+    checkpoint.time = expectedAt;
+    checkpoint.reason = QStringLiteral("policy decision window");
+    event.nextCheckpoints.push_back(checkpoint);
+
+    MacroEventEvidence evidence;
+    evidence.url = QStringLiteral("https://example.com/news");
+    evidence.reliability = 0.91;
+    event.evidence.push_back(evidence);
+
+    expect(event.detectedAt == detectedAt, "event stores detected time");
+    expect(event.expectedAt == expectedAt, "event stores expected time");
+    expect(event.confirmedAt == confirmedAt, "event stores confirmed time");
+    expect(event.nextCheckpoints.size() == 1, "event stores structured checkpoints");
+    expect(event.nextCheckpoints.first().name == QStringLiteral("FOMC"), "checkpoint stores name");
+    expect(event.evidence.first().url.contains(QStringLiteral("example.com")), "evidence stores URL");
+    expect(event.evidence.first().reliability > 0.9, "evidence stores reliability");
+    expect(event.novelty > 0.8, "event stores novelty");
+    expect(event.importance > 0.7, "event stores importance");
+
+    SectorEventImpact impact;
+    impact.horizon = ImpactHorizon::MediumTerm;
+    expect(impact.horizon == ImpactHorizon::MediumTerm, "sector impact stores horizon");
+}
+
 void verifyEventRepository()
 {
     QTemporaryDir dir;
@@ -186,6 +238,7 @@ int main(int argc, char *argv[])
     verifyExtraction();
     verifyImpactPaths();
     verifyAnalysisResultFields();
+    verifyV21ModelFields();
     verifyEventRepository();
 
     if (failures > 0) {

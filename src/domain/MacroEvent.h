@@ -9,16 +9,22 @@ enum class MacroEventType
     Unknown,
     MonetaryPolicy,
     InflationEmployment,
+    FiscalPolicy,
+    IndustrialPolicy,
     CommoditySupplyDemand,
-    IndustrialPolicy
+    GeopoliticsTrade,
+    MarketInstitution
 };
 
 enum class MacroEventState
 {
+    Rumor,
     Expected,
     Scheduled,
     Confirmed,
-    Revised
+    Occurred,
+    Revised,
+    Invalidated
 };
 
 enum class MacroEventRegion
@@ -44,12 +50,29 @@ enum class EventImpactRelation
     Conditional
 };
 
+enum class ImpactHorizon
+{
+    Intraday,
+    ShortTerm,
+    MediumTerm,
+    LongTerm
+};
+
+struct MacroEventCheckpoint
+{
+    QString name;
+    QDateTime time;
+    QString reason;
+};
+
 struct MacroEventEvidence
 {
     QString source;
+    QString url;
     QString title;
     QString summary;
     QDateTime publishedAt;
+    double reliability = 0.0;
 };
 
 struct MacroEvent
@@ -61,6 +84,14 @@ struct MacroEvent
     MacroEventType type = MacroEventType::Unknown;
     MacroEventState state = MacroEventState::Expected;
     MacroEventRegion region = MacroEventRegion::Unknown;
+    QDateTime detectedAt;
+    QDateTime publishedAt;
+    QDateTime expectedAt;
+    QDateTime confirmedAt;
+    QString effectiveWindow;
+    QList<MacroEventCheckpoint> nextCheckpoints;
+    double novelty = 0.0;
+    double importance = 0.0;
     double confidence = 0.0;
     QList<MacroEventEvidence> evidence;
 };
@@ -76,6 +107,7 @@ struct SectorEventImpact
     EventImpactDirection direction = EventImpactDirection::Neutral;
     EventImpactRelation relation = EventImpactRelation::Indirect;
     MacroEventState state = MacroEventState::Expected;
+    ImpactHorizon horizon = ImpactHorizon::ShortTerm;
     double strength = 0.0;
     double confidence = 0.0;
 };
@@ -87,10 +119,16 @@ inline QString toString(MacroEventType type)
         return QStringLiteral("MonetaryPolicy");
     case MacroEventType::InflationEmployment:
         return QStringLiteral("InflationEmployment");
-    case MacroEventType::CommoditySupplyDemand:
-        return QStringLiteral("CommoditySupplyDemand");
+    case MacroEventType::FiscalPolicy:
+        return QStringLiteral("FiscalPolicy");
     case MacroEventType::IndustrialPolicy:
         return QStringLiteral("IndustrialPolicy");
+    case MacroEventType::CommoditySupplyDemand:
+        return QStringLiteral("CommoditySupplyDemand");
+    case MacroEventType::GeopoliticsTrade:
+        return QStringLiteral("GeopoliticsTrade");
+    case MacroEventType::MarketInstitution:
+        return QStringLiteral("MarketInstitution");
     case MacroEventType::Unknown:
     default:
         return QStringLiteral("Unknown");
@@ -128,16 +166,37 @@ inline QString toString(EventImpactRelation relation)
 inline QString toString(MacroEventState state)
 {
     switch (state) {
+    case MacroEventState::Rumor:
+        return QStringLiteral("Rumor");
     case MacroEventState::Expected:
         return QStringLiteral("Expected");
     case MacroEventState::Scheduled:
         return QStringLiteral("Scheduled");
     case MacroEventState::Confirmed:
         return QStringLiteral("Confirmed");
+    case MacroEventState::Occurred:
+        return QStringLiteral("Occurred");
     case MacroEventState::Revised:
         return QStringLiteral("Revised");
+    case MacroEventState::Invalidated:
+        return QStringLiteral("Invalidated");
     default:
         return QStringLiteral("Expected");
+    }
+}
+
+inline QString toString(ImpactHorizon horizon)
+{
+    switch (horizon) {
+    case ImpactHorizon::Intraday:
+        return QStringLiteral("Intraday");
+    case ImpactHorizon::MediumTerm:
+        return QStringLiteral("MediumTerm");
+    case ImpactHorizon::LongTerm:
+        return QStringLiteral("LongTerm");
+    case ImpactHorizon::ShortTerm:
+    default:
+        return QStringLiteral("ShortTerm");
     }
 }
 

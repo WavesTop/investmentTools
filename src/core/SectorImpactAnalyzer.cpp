@@ -20,10 +20,16 @@ double SectorImpactAnalyzer::stateWeight(MacroEventState state) const
     switch (state) {
     case MacroEventState::Confirmed:
         return 0.86;
+    case MacroEventState::Occurred:
+        return 0.72;
     case MacroEventState::Scheduled:
         return 0.56;
     case MacroEventState::Revised:
         return 0.64;
+    case MacroEventState::Rumor:
+        return 0.28;
+    case MacroEventState::Invalidated:
+        return 0.0;
     case MacroEventState::Expected:
     default:
         return 0.46;

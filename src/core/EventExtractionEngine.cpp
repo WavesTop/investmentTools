@@ -36,7 +36,16 @@ QList<MacroEvent> EventExtractionEngine::extractFromHeadlines(const QList<RawHea
             event.region = rule.region;
             event.checkpoint = rule.checkpoint;
             event.confidence = rule.confidence;
-            event.evidence.push_back({headline.source, headline.title, headline.summary, headline.timestamp});
+            event.detectedAt = QDateTime::currentDateTimeUtc();
+            event.publishedAt = headline.timestamp;
+
+            MacroEventEvidence evidence;
+            evidence.source = headline.source;
+            evidence.title = headline.title;
+            evidence.summary = headline.summary;
+            evidence.publishedAt = headline.timestamp;
+            evidence.reliability = rule.confidence;
+            event.evidence.push_back(evidence);
             events.push_back(event);
         }
     }

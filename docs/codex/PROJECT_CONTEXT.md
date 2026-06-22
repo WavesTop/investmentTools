@@ -54,9 +54,9 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/core/SectorFetcher.cpp` | 板块列表、行情、K 线、今日涨幅、资金流、估值分位、拥挤度。 |
 | `src/providers/RealFinanceNewsProvider.cpp` | 多源新闻抓取、关键词归因、新闻质量评分、去重。 |
 | `src/core/SignalExtractor.cpp` | 规则新闻情绪识别。 |
-| `src/domain/MacroEvent.h` | 宏观/政策事件领域结构，定义事件类型、状态、地区和证据。 |
+| `src/domain/MacroEvent.h` | 宏观/政策事件领域结构，定义事件类型、状态、地区、时间字段、观察点、证据和影响周期。 |
 | `src/core/EventRuleBook.cpp` | 事件抽取规则库，识别货币政策、通胀就业、商品供需和产业政策等事件。 |
-| `src/core/EventExtractionEngine.cpp` | 从新闻标题/摘要抽取结构化 `MacroEvent`，保留来源和发布时间证据。 |
+| `src/core/EventExtractionEngine.cpp` | 从新闻标题/摘要抽取结构化 `MacroEvent`，保留来源、发布时间、检测时间和证据可信度。 |
 | `src/core/ImpactGraphEngine.cpp` | 事件影响路径规则库，把宏观事件映射到直接/间接影响板块和解释路径。 |
 | `src/core/SectorImpactAnalyzer.cpp` | 聚合事件路径结果，生成板块级 `eventCatalystScore` 原始分。 |
 | `src/core/EventRepository.cpp` | 本地 JSON 事件追踪仓库，记录事件首次发现、最近出现、出现次数和状态变化。 |
@@ -79,7 +79,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `tests/ui/SectorDetailRendererSmoke.cpp` | 板块详情 HTML smoke 测试，校验首屏核心评分、信号解释、影响路径、阶段收益、资金流关系、图表嵌入和决策页关键量化信息。 |
 | `tests/ui/IndexDetailRendererSmoke.cpp` | 指数详情 HTML smoke 测试，校验图表嵌入、技术指标、市场风控和数据质量。 |
 | `tests/ui/EventRadarRendererSmoke.cpp` | 事件雷达 HTML smoke 测试，校验事件队列、传导路径、风险区块和未来催化展示。 |
-| `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件抽取、状态识别和证据保留；后续继续覆盖路径映射和诊断命令。 |
+| `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件模型字段、事件抽取、状态识别、证据保留、路径映射和仓库追踪。 |
 | `docs/README.md` | 文档总入口，说明按职责和版本查看文档的路径。 |
 | `docs/versions/v1.0/release/PACKAGING.md` | 1.0 Windows/macOS 打包和使用说明。 |
 | `docs/versions/v2.0/design/ui-workbench-redesign.md` | 2.0 UI 工作台设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
@@ -136,6 +136,7 @@ flowchart TD
 - `inferIndustries` 只在当前板块池中匹配，避免输出不存在的板块。
 - 新闻质量 = 时间新鲜度 × 来源可信度。
 - Phase 1-5.1 已新增 `EventExtractionEngine`、`EventRuleBook`、`ImpactGraphEngine`、`SectorImpactAnalyzer` 和 `EventRepository`，可把新闻标题/摘要抽取为结构化宏观事件，记录事件首次发现与状态变化，生成事件到板块的直接/间接影响路径，并把 `eventImpacts`、`eventCatalystScore` 和 `eventSummary` 注入 `SectorSnapshot`。
+- v2.1 切片 1 已补齐事件模型表达能力：新增财政政策、地缘贸易、金融市场制度类型，新增传闻、已发生、失效状态，新增事件时间字段、结构化观察点、证据 URL/可信度、事件新鲜度/重要性和影响周期。新状态和新类型的抽取规则仍在 v2.1 后续切片中推进。
 
 预测：
 
