@@ -1,6 +1,6 @@
 # InvestInsight 1.0 打包说明
 
-最后更新：2026-06-16
+最后更新：2026-06-22
 
 ## Windows 打包
 
@@ -64,8 +64,28 @@ chmod +x ./package_macos.sh
 - 使用独立构建目录 `build-macos`。
 - 若根目录已有同名产物，脚本会先删除；如果删除失败，则自动使用递增名称。
 - 优先使用 `macdeployqt` 部署 Qt Frameworks；如果当前环境没有 `macdeployqt`，会复制 `.app` 并提示目标机器可能缺少 Qt Frameworks。
+- 如果没有显式指定 toolchain，会尝试从常规 `build/CMakeCache.txt` 继承 `CMAKE_TOOLCHAIN_FILE`。
 
-可选环境变量：
+常用参数：
+
+```bash
+# 指定构建目录
+./package_macos.sh --build-dir build-macos
+
+# 只复制现有构建，不重新 build
+./package_macos.sh --skip-build
+
+# 复用常规开发构建目录
+./package_macos.sh --build-dir build --skip-build
+
+# 不生成 zip
+./package_macos.sh --no-zip
+
+# 指定 toolchain
+./package_macos.sh --toolchain-file /path/to/toolchain.cmake
+```
+
+也可以继续用环境变量覆盖默认值：
 
 ```bash
 BUILD_DIR="$PWD/build-macos" CONFIGURATION=Release ./package_macos.sh

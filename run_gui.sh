@@ -15,6 +15,10 @@ case "$(uname -s)" in
         cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE=Release 2>/dev/null
         cmake --build "${BUILD_DIR}"
         export DYLD_FRAMEWORK_PATH="${FRAMEWORK_DIR}${DYLD_FRAMEWORK_PATH:+:${DYLD_FRAMEWORK_PATH}}"
+        APP_EXECUTABLE="${BUILD_DIR}/InvestInsight.app/Contents/MacOS/InvestInsight"
+        if [[ -x "${APP_EXECUTABLE}" ]]; then
+            exec "${APP_EXECUTABLE}"
+        fi
         exec "${BUILD_DIR}/InvestInsight"
         ;;
 esac

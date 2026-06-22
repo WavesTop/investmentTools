@@ -1,6 +1,6 @@
 # InvestInsight Codex 项目上下文
 
-最后更新：2026-06-21
+最后更新：2026-06-22
 
 ## 用途
 
@@ -24,6 +24,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 .\build\Release\InvestInsightEventSmoke.exe
 .\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
+chmod +x ./package_macos.sh && ./package_macos.sh
 ```
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
@@ -62,8 +63,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
 | `src/core/StrategyEngine.cpp` | 生成短中长期观点、止盈止损和操作建议文本。 |
 | `src/domain/AnalysisResult.h` | UI 使用的核心结果结构，尤其是 `SectorSnapshot`。 |
-| `package_windows.ps1` | Windows 1.0 发布打包脚本；生成根目录 `InvestInsight-Windows` 和 zip。 |
-| `package_macos.sh` | macOS 1.0 发布打包脚本；在 macOS 上生成根目录 `.app` 和 zip。 |
+| `run_gui.sh` / `run_gui.bat` | 本地启动脚本；Windows 启动 `build/Release/InvestInsight.exe`，macOS 优先启动 `build/InvestInsight.app/Contents/MacOS/InvestInsight`。 |
+| `package_windows.ps1` | Windows 1.0 发布打包脚本；生成根目录 `InvestInsight-Windows` 和 zip，支持指定构建目录、toolchain、跳过构建和跳过 zip。 |
+| `package_macos.sh` | macOS 1.0 发布打包脚本；在 macOS 上生成根目录 `.app` 和 zip，支持指定构建目录、toolchain、跳过构建和跳过 zip。 |
 | `assets/` | 应用图标源、Windows `.ico`、macOS `.icns`、Qt qrc 图标资源。 |
 | `tools/generate_app_icons.py` | 图标资源生成脚本，需要 Pillow。 |
 | `tools/verify_ui_smoke.ps1` | UI 重构 smoke 验证脚本；构建主程序和 UI smoke 测试程序。 |
@@ -166,6 +168,7 @@ AI 两个阶段：
 - macOS：`chmod +x ./package_macos.sh && ./package_macos.sh`
 
 Windows 脚本默认使用 `build-package-windows` 独立构建目录，并通过 `INVESTINSIGHT_WIN32_SUBSYSTEM=ON` 生成正式 GUI 子系统程序；常规开发构建 `build` 默认不启用该选项，以保留 `--dump-sector-changes` 的控制台诊断体验。
+macOS 脚本默认使用 `build-macos` 独立构建目录，支持 `--build-dir`、`--configuration`、`--toolchain-file`、`--skip-build` 和 `--no-zip`，并会优先从已有 `build/CMakeCache.txt` 继承 `CMAKE_TOOLCHAIN_FILE`。本地 `run_gui.sh` 在 macOS 上构建 `build` 后应启动 `.app` 内的新二进制，避免误跑旧的 `build/InvestInsight`。
 
 图标资源已接入三层：
 
