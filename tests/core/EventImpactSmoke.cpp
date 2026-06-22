@@ -304,6 +304,69 @@ void verifyV21HighFrequencyRules()
            "market rule headline uses institution key");
 }
 
+void verifyV21ExpandedImpactPaths()
+{
+    EventExtractionEngine extractor;
+    ImpactGraphEngine graph;
+    const QDateTime publishedAt(QDate(2026, 6, 21), QTime(13, 0), Qt::UTC);
+
+    auto firstImpactSet = [&](const QString &text) {
+        const QList<MacroEvent> events = extractor.extractFromText(text, QStringLiteral("path-test"), publishedAt);
+        expect(!events.isEmpty(), "path sample creates a macro event");
+        return events.isEmpty() ? QList<SectorEventImpact>() : graph.analyze(events.first());
+    };
+
+    const QList<SectorEventImpact> hawkishImpacts = firstImpactSet(
+        QString::fromUtf8("美联储释放鹰派信号，暗示仍可能加息"));
+    const SectorEventImpact *hawkishSemi = findImpact(hawkishImpacts, QString::fromUtf8("半导体"));
+    const SectorEventImpact *hawkishGold = findImpact(hawkishImpacts, QString::fromUtf8("黄金"));
+    expect(hawkishSemi && hawkishSemi->direction == EventImpactDirection::Negative,
+           "hawkish Fed signal pressures semiconductor growth valuation");
+    expect(hawkishSemi && hawkishSemi->horizon == ImpactHorizon::MediumTerm,
+           "hawkish Fed semiconductor impact uses medium-term horizon");
+    expect(hawkishGold && hawkishGold->direction == EventImpactDirection::Negative,
+           "hawkish Fed signal pressures gold via real rates");
+
+    const QList<SectorEventImpact> fiscalImpacts = firstImpactSet(
+        QString::fromUtf8("专项债发行加速，财政稳增长预期升温"));
+    const SectorEventImpact *infrastructure = findImpact(fiscalImpacts, QString::fromUtf8("建筑建材"));
+    const SectorEventImpact *fiscalBroker = findImpact(fiscalImpacts, QString::fromUtf8("证券"));
+    expect(infrastructure && infrastructure->direction == EventImpactDirection::Positive,
+           "fiscal stimulus supports infrastructure chain");
+    expect(infrastructure && infrastructure->relation == EventImpactRelation::Direct,
+           "fiscal infrastructure relation is direct");
+    expect(fiscalBroker && fiscalBroker->relation == EventImpactRelation::Indirect,
+           "fiscal policy also improves brokerage risk appetite indirectly");
+
+    const QList<SectorEventImpact> exportImpacts = firstImpactSet(
+        QString::fromUtf8("美国扩大半导体出口限制，先进芯片供应链再受扰动"));
+    const SectorEventImpact *exportSemi = findImpact(exportImpacts, QString::fromUtf8("半导体"));
+    expect(exportSemi && exportSemi->direction == EventImpactDirection::Mixed,
+           "export controls keep semiconductor impact mixed");
+    expect(exportSemi && exportSemi->relation == EventImpactRelation::Conditional,
+           "export controls use conditional relation");
+    expect(exportSemi && exportSemi->horizon == ImpactHorizon::MediumTerm,
+           "export controls use medium-term horizon");
+    expect(exportSemi && !exportSemi->condition.isEmpty(), "export controls keep invalidation condition");
+
+    const QList<SectorEventImpact> oilImpacts = firstImpactSet(
+        QString::fromUtf8("OPEC 减产叠加地缘冲突，原油供给扰动推动油价上涨"));
+    const SectorEventImpact *oilUpstream = findImpact(oilImpacts, QString::fromUtf8("石油石化"));
+    const SectorEventImpact *transport = findImpact(oilImpacts, QString::fromUtf8("交通运输"));
+    expect(oilUpstream && oilUpstream->direction == EventImpactDirection::Positive,
+           "oil supply shock supports upstream oil chain");
+    expect(transport && transport->direction == EventImpactDirection::Negative,
+           "oil supply shock pressures transport cost");
+
+    const QList<SectorEventImpact> institutionImpacts = firstImpactSet(
+        QString::fromUtf8("证监会优化 IPO 和减持规则，印花税下调预期升温"));
+    const SectorEventImpact *institutionBroker = findImpact(institutionImpacts, QString::fromUtf8("证券"));
+    expect(institutionBroker && institutionBroker->direction == EventImpactDirection::Positive,
+           "market institution reform supports brokerage sector");
+    expect(institutionBroker && institutionBroker->horizon == ImpactHorizon::ShortTerm,
+           "market institution reform uses short-term trading horizon");
+}
+
 void verifyEventRepository()
 {
     QTemporaryDir dir;
@@ -358,6 +421,7 @@ int main(int argc, char *argv[])
     verifyV21ModelFields();
     verifyV21StateAndCheckpointParsing();
     verifyV21HighFrequencyRules();
+    verifyV21ExpandedImpactPaths();
     verifyEventRepository();
 
     if (failures > 0) {
