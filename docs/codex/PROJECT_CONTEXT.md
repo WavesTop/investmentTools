@@ -23,6 +23,7 @@ cmake --build build --config Release -- /m
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 .\build\Release\InvestInsightEventSmoke.exe
 .\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
+.\build\Release\InvestInsight.exe --dump-event-rules
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 chmod +x ./package_macos.sh && ./package_macos.sh
 ```
@@ -30,7 +31,8 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
 第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS、图表渲染，以及主窗口关键 Tab/按钮是否存在。
 第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点、影响路径、事件仓库和证据保留。
-第五个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint` 和受影响板块的 `direction/relation/path`。
+第五个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
+第六个命令用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -40,7 +42,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 
 | 文件 | 责任 |
 | --- | --- |
-| `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze`、`--dump-sector-changes`、`--debug-event-impact` 和 `--ui-smoke` 诊断命令。 |
+| `src/main.cpp` | 应用入口；支持 GUI 启动、`--auto-analyze`、`--dump-sector-changes`、`--debug-event-impact`、`--dump-event-rules` 和 `--ui-smoke` 诊断命令。 |
 | `src/ui/AppTheme.cpp` | UI 主题颜色、Widget 样式、HTML 基础 CSS 和系统暗色模式检测。 |
 | `src/ui/renderers/ChartRenderer.cpp` | 板块详情趋势图、K 线、成交量、MACD、资金流和周/月参考图的独立渲染器。 |
 | `src/ui/renderers/DashboardRenderer.cpp` | 总览工作台 HTML 渲染器，覆盖市场仪表盘、关键事件雷达、板块机会与风险、下一观察点和 AI 摘要。 |
@@ -143,6 +145,7 @@ flowchart TD
 - v2.1 切片 5 已升级事件催化评分：`SectorEventImpact` 会携带来源可信度、新鲜度权重、时间衰减和最新证据时间，`SectorImpactAnalyzer` 公开 `scoreImpact` 并按 `direction * strength * confidence * stateWeight * sourceReliability * noveltyWeight * timeDecay` 计算贡献。
 - v2.1 切片 6 已扩展事件仓库追踪：`TrackedEventRecord` 可保存 `TrackedImpactPerformance`，记录板块、窗口天数、窗口收益和捕获时间，用于后续命中率与滞后性校准。
 - v2.1 切片 7 已补齐 UI 展示：事件雷达新增结构化事件时间线，展示状态、地区、观察点和证据可信度；事件路径和板块详情会展示影响周期、来源可信度和失效条件。
+- v2.1 切片 8 已补齐诊断命令：`--debug-event-impact` 输出事件时间字段、观察点、证据可信度、周期和评分因子；`--dump-event-rules` 输出规则 key、类型、地区、置信度和关键词。
 
 预测：
 

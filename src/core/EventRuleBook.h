@@ -21,6 +21,7 @@ class EventRuleBook
 public:
     EventRuleBook();
 
+    QList<EventRule> rules() const;
     QList<EventRule> matchingRules(const QString &text) const;
     MacroEventState resolveState(const QString &text) const;
     QList<MacroEventCheckpoint> resolveCheckpoints(const QString &text,

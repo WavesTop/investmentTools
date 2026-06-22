@@ -1,5 +1,6 @@
 #include "core/EventExtractionEngine.h"
 #include "core/EventRepository.h"
+#include "core/EventRuleBook.h"
 #include "core/ImpactGraphEngine.h"
 #include "core/SectorImpactAnalyzer.h"
 #include "domain/AnalysisResult.h"
@@ -411,6 +412,26 @@ void verifyV21ScoringFactors()
            "aggregated sector score respects reliability compression");
 }
 
+void verifyV21RuleDiagnostics()
+{
+    EventRuleBook ruleBook;
+    const QList<EventRule> rules = ruleBook.rules();
+    expect(!rules.isEmpty(), "event rule book exposes diagnostic rules");
+
+    bool hasHawkishRule = false;
+    bool hasFiscalRule = false;
+    for (const EventRule &rule : rules) {
+        hasHawkishRule = hasHawkishRule || rule.key == QStringLiteral("fed_hawkish_hike");
+        hasFiscalRule = hasFiscalRule || rule.key == QStringLiteral("china_fiscal_stimulus");
+        if (rule.key == QStringLiteral("fed_hawkish_hike")) {
+            expect(rule.type == MacroEventType::MonetaryPolicy, "diagnostic rule keeps event type");
+            expect(rule.confidence > 0.0, "diagnostic rule keeps confidence");
+        }
+    }
+    expect(hasHawkishRule, "diagnostic rules include hawkish Fed rule");
+    expect(hasFiscalRule, "diagnostic rules include China fiscal rule");
+}
+
 void verifyEventRepository()
 {
     QTemporaryDir dir;
@@ -482,6 +503,7 @@ int main(int argc, char *argv[])
     verifyV21HighFrequencyRules();
     verifyV21ExpandedImpactPaths();
     verifyV21ScoringFactors();
+    verifyV21RuleDiagnostics();
     verifyEventRepository();
 
     if (failures > 0) {

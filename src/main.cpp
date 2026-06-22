@@ -15,6 +15,7 @@
 #endif
 
 #include "core/EventExtractionEngine.h"
+#include "core/EventRuleBook.h"
 #include "core/ImpactGraphEngine.h"
 #include "core/SectorImpactAnalyzer.h"
 #include "core/SectorFetcher.h"
@@ -53,6 +54,56 @@ QIcon applicationIcon()
     return icon;
 }
 
+QString checkpointSummary(const MacroEvent &event)
+{
+    QStringList checkpoints;
+    for (const QString &checkpoint : event.checkpoint.split(QStringLiteral("/"), Qt::SkipEmptyParts)) {
+        if (!checkpoint.trimmed().isEmpty()) checkpoints << checkpoint.trimmed();
+    }
+    for (const MacroEventCheckpoint &checkpoint : event.nextCheckpoints) {
+        if (!checkpoint.name.trimmed().isEmpty()) checkpoints << checkpoint.name.trimmed();
+    }
+    checkpoints.removeDuplicates();
+    return checkpoints.join(QStringLiteral(" / "));
+}
+
+double evidenceReliability(const MacroEvent &event)
+{
+    double sum = 0.0;
+    int count = 0;
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (evidence.reliability <= 0.0) continue;
+        sum += evidence.reliability;
+        ++count;
+    }
+    return count > 0 ? sum / count : event.confidence;
+}
+
+QString isoOrDash(const QDateTime &time)
+{
+    return time.isValid() ? time.toString(Qt::ISODate) : QStringLiteral("-");
+}
+
+int dumpEventRules(int argc, char *argv[])
+{
+    QCoreApplication app(argc, argv);
+    QTextStream out(stdout);
+
+    EventRuleBook ruleBook;
+    for (const EventRule &rule : ruleBook.rules()) {
+        out << "rule"
+            << "\tkey=" << rule.key
+            << "\ttype=" << toString(rule.type)
+            << "\tregion=" << toString(rule.region)
+            << "\tconfidence=" << QString::number(rule.confidence, 'f', 2)
+            << "\tcheckpoint=" << rule.checkpoint
+            << "\trequired=" << rule.requiredAny.join(QStringLiteral("|"))
+            << "\tcontext=" << rule.contextAny.join(QStringLiteral("|"))
+            << '\n';
+    }
+    return 0;
+}
+
 int debugEventImpact(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
@@ -78,13 +129,20 @@ int debugEventImpact(int argc, char *argv[])
 
     for (const MacroEvent &event : events) {
         const QList<SectorEventImpact> impacts = graph.analyze(event);
-        const QMap<QString, double> scores = analyzer.eventCatalystScores(impacts);
+        const QDateTime now = QDateTime::currentDateTimeUtc();
 
         out << "event"
             << "\ttype=" << toString(event.type)
             << "\tstate=" << toString(event.state)
             << "\tregion=" << toString(event.region)
-            << "\tcheckpoint=" << event.checkpoint
+            << "\tcheckpoint=" << checkpointSummary(event)
+            << "\tdetectedAt=" << isoOrDash(event.detectedAt)
+            << "\tpublishedAt=" << isoOrDash(event.publishedAt)
+            << "\texpectedAt=" << isoOrDash(event.expectedAt)
+            << "\tconfirmedAt=" << isoOrDash(event.confirmedAt)
+            << "\tevidenceReliability=" << QString::number(evidenceReliability(event), 'f', 2)
+            << "\tnovelty=" << QString::number(event.novelty, 'f', 2)
+            << "\timportance=" << QString::number(event.importance, 'f', 2)
             << "\ttitle=" << event.title
             << '\n';
 
@@ -92,9 +150,15 @@ int debugEventImpact(int argc, char *argv[])
             out << "sector=" << impact.sector
                 << "\tdirection=" << toString(impact.direction)
                 << "\trelation=" << toString(impact.relation)
+                << "\thorizon=" << toString(impact.horizon)
                 << "\tstrength=" << QString::number(impact.strength, 'f', 2)
                 << "\tconfidence=" << QString::number(impact.confidence, 'f', 2)
-                << "\tscore=" << QString::number(scores.value(impact.sector), 'f', 3)
+                << "\tsourceReliability=" << QString::number(impact.sourceReliability, 'f', 2)
+                << "\tnoveltyWeight=" << QString::number(impact.noveltyWeight, 'f', 2)
+                << "\ttimeDecay=" << QString::number(impact.timeDecay, 'f', 2)
+                << "\tlatestEvidenceAt=" << isoOrDash(impact.latestEvidenceAt)
+                << "\tscore=" << QString::number(analyzer.scoreImpact(impact, now), 'f', 3)
+                << "\tcondition=" << impact.condition
                 << "\tpath=" << impact.path
                 << '\n';
         }
@@ -299,6 +363,9 @@ int main(int argc, char *argv[])
 
     if (hasArgument(argc, argv, "--dump-sector-changes")) {
         return dumpSectorChanges(argc, argv);
+    }
+    if (hasArgument(argc, argv, "--dump-event-rules")) {
+        return dumpEventRules(argc, argv);
     }
     if (hasArgument(argc, argv, "--debug-event-impact")) {
         return debugEventImpact(argc, argv);

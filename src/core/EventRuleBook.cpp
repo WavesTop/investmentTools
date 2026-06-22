@@ -126,6 +126,11 @@ EventRuleBook::EventRuleBook()
     };
 }
 
+QList<EventRule> EventRuleBook::rules() const
+{
+    return m_rules;
+}
+
 QList<EventRule> EventRuleBook::matchingRules(const QString &text) const
 {
     QList<EventRule> matches;
