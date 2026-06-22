@@ -110,6 +110,10 @@ struct SectorEventImpact
     ImpactHorizon horizon = ImpactHorizon::ShortTerm;
     double strength = 0.0;
     double confidence = 0.0;
+    double sourceReliability = 0.0;
+    double noveltyWeight = 1.0;
+    double timeDecay = 1.0;
+    QDateTime latestEvidenceAt;
 };
 
 inline QString toString(MacroEventType type)

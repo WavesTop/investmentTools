@@ -7,6 +7,30 @@ bool allowed(const QString &sector, const QStringList &sectorPool)
     return sectorPool.isEmpty() || sectorPool.contains(sector);
 }
 
+double sourceReliability(const MacroEvent &event)
+{
+    double sum = 0.0;
+    int count = 0;
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (evidence.reliability <= 0.0) continue;
+        sum += evidence.reliability;
+        ++count;
+    }
+    if (count > 0) return qBound(0.0, sum / count, 1.0);
+    return qBound(0.0, event.confidence, 1.0);
+}
+
+QDateTime latestEvidenceAt(const MacroEvent &event)
+{
+    QDateTime latest = event.publishedAt;
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (!evidence.publishedAt.isValid()) continue;
+        if (!latest.isValid() || evidence.publishedAt > latest) latest = evidence.publishedAt;
+    }
+    if (!latest.isValid()) latest = event.detectedAt;
+    return latest;
+}
+
 void addImpact(QList<SectorEventImpact> &impacts,
                const MacroEvent &event,
                const QStringList &sectorPool,
@@ -35,6 +59,10 @@ void addImpact(QList<SectorEventImpact> &impacts,
     impact.explanation = explanation;
     impact.condition = condition;
     impact.horizon = horizon;
+    impact.sourceReliability = sourceReliability(event);
+    impact.noveltyWeight = event.novelty > 0.0 ? qBound(0.35, event.novelty, 1.0) : 1.0;
+    impact.timeDecay = 1.0;
+    impact.latestEvidenceAt = latestEvidenceAt(event);
     impacts.push_back(impact);
 }
 

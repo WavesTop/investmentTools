@@ -140,11 +140,12 @@ flowchart TD
 - v2.1 切片 2 已接入基础状态和观察点解析：传闻、已发生、失效可由关键词识别，FOMC、CPI、PCE、非农、LPR、MLF 等模板观察点会写入 `MacroEvent::nextCheckpoints`，事件仓库可跨重启还原新增状态。
 - v2.1 切片 3 已扩展高频事件抽取：美联储鹰派/加息、国内财政刺激/专项债、半导体出口限制、原油供给扰动和市场制度规则可被结构化为对应 `MacroEventType`。
 - v2.1 切片 4 已补齐第一批高频事件影响路径：美联储鹰派/加息会映射到半导体、黄金、创新药压力，财政稳增长映射到建筑建材、地产、证券，半导体出口限制、原油供给扰动和市场制度优化也会带有方向、关系、条件和影响周期。
+- v2.1 切片 5 已升级事件催化评分：`SectorEventImpact` 会携带来源可信度、新鲜度权重、时间衰减和最新证据时间，`SectorImpactAnalyzer` 公开 `scoreImpact` 并按 `direction * strength * confidence * stateWeight * sourceReliability * noveltyWeight * timeDecay` 计算贡献。
 
 预测：
 
 - `forecastScore` 由动量、今日涨跌、新闻情绪、新闻密度、资金流、热度、均值回归、技术面、估值、拥挤度和轻量事件催化分组合而成。
-- `eventCatalystScore` 来自结构化宏观/政策事件的影响路径，只以小幅 `eventCatalystFactor` 纳入 `forecastScore`，避免未确认事件直接强推买入。
+- `eventCatalystScore` 来自结构化宏观/政策事件的影响路径，并已按来源可信度、新鲜度和证据时间衰减压缩；它只以小幅 `eventCatalystFactor` 纳入 `forecastScore`，避免未确认事件直接强推买入。
 - 数据质量权重和多源一致性权重会压缩低可信度结果。
 - `MarketRegimeDetector` 会按市场状态调整部分因子权重。
 - `AdviceAction` 当前阈值为：大于等于 `0.22` 增配，小于等于 `-0.22` 减配，其余持有。

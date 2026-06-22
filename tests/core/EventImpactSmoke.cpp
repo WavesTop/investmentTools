@@ -367,6 +367,50 @@ void verifyV21ExpandedImpactPaths()
            "market institution reform uses short-term trading horizon");
 }
 
+void verifyV21ScoringFactors()
+{
+    SectorImpactAnalyzer analyzer;
+    const QDateTime now(QDate(2026, 6, 21), QTime(14, 0), Qt::UTC);
+
+    SectorEventImpact base;
+    base.sector = QString::fromUtf8("半导体");
+    base.direction = EventImpactDirection::Positive;
+    base.state = MacroEventState::Expected;
+    base.strength = 0.8;
+    base.confidence = 0.8;
+    base.sourceReliability = 1.0;
+    base.noveltyWeight = 1.0;
+    base.latestEvidenceAt = now.addSecs(-3600);
+
+    const double baseScore = analyzer.scoreImpact(base, now);
+
+    SectorEventImpact weakSource = base;
+    weakSource.sourceReliability = 0.35;
+    expect(analyzer.scoreImpact(weakSource, now) < baseScore * 0.5,
+           "low source reliability compresses event score");
+
+    SectorEventImpact repeated = base;
+    repeated.noveltyWeight = 0.4;
+    expect(analyzer.scoreImpact(repeated, now) < baseScore * 0.5,
+           "low novelty compresses repeated event score");
+
+    SectorEventImpact oldEvidence = base;
+    oldEvidence.latestEvidenceAt = now.addDays(-9);
+    expect(analyzer.scoreImpact(oldEvidence, now) < baseScore * 0.7,
+           "old evidence decays event score");
+
+    SectorEventImpact invalidated = base;
+    invalidated.state = MacroEventState::Invalidated;
+    expect(analyzer.scoreImpact(invalidated, now) == 0.0,
+           "invalidated event contributes no score");
+
+    const QMap<QString, double> scores = analyzer.eventCatalystScores({base, weakSource}, now);
+    expect(scores.value(QString::fromUtf8("半导体")) > baseScore,
+           "aggregated sector score includes multiple impacts");
+    expect(scores.value(QString::fromUtf8("半导体")) < baseScore * 1.5,
+           "aggregated sector score respects reliability compression");
+}
+
 void verifyEventRepository()
 {
     QTemporaryDir dir;
@@ -422,6 +466,7 @@ int main(int argc, char *argv[])
     verifyV21StateAndCheckpointParsing();
     verifyV21HighFrequencyRules();
     verifyV21ExpandedImpactPaths();
+    verifyV21ScoringFactors();
     verifyEventRepository();
 
     if (failures > 0) {
