@@ -191,6 +191,8 @@ private:
     QPushButton *m_refreshButton = nullptr;
     QPushButton *m_backToSetupButton = nullptr;
     QCheckBox *m_aiToggle = nullptr;
+    QLabel *m_workspaceTitle = nullptr;
+    QLabel *m_workspaceMeta = nullptr;
     QTabWidget *m_tabWidget = nullptr;
     QTabWidget *m_overviewSubTabs = nullptr;
     ClickableBrowser *m_overviewBrowser = nullptr;
@@ -204,6 +206,7 @@ private:
     QComboBox  *m_viewMode        = nullptr;  // 0=简明, 1=专业
     QMap<QString, int> m_openSectorTabs;
     int m_chatTabIndex = -1;
+    int m_configTabIndex = -1;
     QTextBrowser *m_chatDisplay = nullptr;
     QLineEdit *m_chatInput = nullptr;
     QPushButton *m_chatSendBtn = nullptr;

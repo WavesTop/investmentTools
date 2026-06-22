@@ -165,6 +165,22 @@ int runUiSmoke()
         }
         return false;
     };
+    auto hasButtonWithObjectName = [&buttons](const QString &text, const QString &objectName) {
+        for (QPushButton *button : buttons) {
+            if (button->objectName() == objectName && button->text().contains(text)) return true;
+        }
+        return false;
+    };
+    auto visibleTopLevelTabs = [&tabWidgets]() {
+        int count = 0;
+        for (QTabWidget *tabs : tabWidgets) {
+            if (tabs->parentWidget() && tabs->parentWidget()->objectName() == QStringLiteral("workspacePane")
+                && tabs->tabBar() && tabs->tabBar()->isVisible()) {
+                ++count;
+            }
+        }
+        return count;
+    };
     auto clickButton = [&buttons](const QString &text) {
         for (QPushButton *button : buttons) {
             if (button->text().contains(text)) {
@@ -174,17 +190,6 @@ int runUiSmoke()
         }
         return false;
     };
-
-    const QStringList requiredTabs = {
-        QString::fromUtf8("总览工作台"),
-        QString::fromUtf8("总览"),
-        QString::fromUtf8("事件雷达"),
-        QString::fromUtf8("板块机会"),
-        QString::fromUtf8("策略跟踪")
-    };
-    for (const QString &tab : requiredTabs) {
-        if (!hasTab(tab)) missing << QString::fromUtf8("tab:") + tab;
-    }
 
     const QStringList requiredButtons = {
         QString::fromUtf8("开始分析"),
@@ -201,6 +206,29 @@ int runUiSmoke()
     if (!hasLabel(QStringLiteral("InvestInsight"))) missing << "label:InvestInsight";
     if (!hasLabel(QString::fromUtf8("后台刷新与提醒"))) missing << QString::fromUtf8("label:后台刷新与提醒");
     if (!hasLabel(QString::fromUtf8("数据源健康"))) missing << QString::fromUtf8("label:数据源健康");
+    if (hasButtonWithObjectName(QString::fromUtf8("AI 助手"), QStringLiteral("secondaryBtn"))) {
+        missing << QString::fromUtf8("top-shortcut:AI 助手");
+    }
+    if (hasButtonWithObjectName(QString::fromUtf8("配置"), QStringLiteral("secondaryBtn"))) {
+        missing << QString::fromUtf8("top-shortcut:配置");
+    }
+    if (visibleTopLevelTabs() > 0) {
+        missing << QString::fromUtf8("visible-tabs:workspace");
+    }
+
+    if (clickButton(QString::fromUtf8("配置"))) {
+        const QList<QLabel *> configLabels = window.findChildren<QLabel *>();
+        auto hasConfigLabel = [&configLabels](const QString &text) {
+            for (QLabel *label : configLabels) {
+                if (label->text().contains(text)) return true;
+            }
+            return false;
+        };
+        if (!hasConfigLabel(QString::fromUtf8("AI 接入配置"))) missing << QString::fromUtf8("visible-label:AI 接入配置");
+        if (!hasConfigLabel(QString::fromUtf8("我的持仓"))) missing << QString::fromUtf8("visible-label:我的持仓");
+    } else {
+        missing << QString::fromUtf8("click:配置");
+    }
 
     if (clickButton(QString::fromUtf8("AI 助手"))) {
         const QList<QLabel *> chatLabels = window.findChildren<QLabel *>();

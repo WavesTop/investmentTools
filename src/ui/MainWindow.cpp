@@ -47,6 +47,7 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 #include <QDesktopServices>
 #include <QFormLayout>
 #include <QFrame>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -164,7 +165,7 @@ void MainWindow::beginRefresh()
     m_refreshButton->setEnabled(false);
     m_aiToggle->setEnabled(false);
     m_tabWidget->setEnabled(false);
-    m_backToSetupButton->setEnabled(false);
+    if (m_backToSetupButton) m_backToSetupButton->setEnabled(false);
     m_currentProgress = 0;
     m_loadingBar->setVisible(true);
     m_loadingBar->setRange(0, 100);
@@ -236,7 +237,7 @@ void MainWindow::onRefreshFinished()
     m_tabWidget->setEnabled(true);
     m_refreshButton->setEnabled(true);
     m_aiToggle->setEnabled(m_orchestrator.isAIAvailable());
-    m_backToSetupButton->setEnabled(true);
+    if (m_backToSetupButton) m_backToSetupButton->setEnabled(true);
     m_loadingBar->setValue(100);
     m_loadingBar->setVisible(false);
     m_progressPollTimer->stop();
@@ -276,6 +277,8 @@ void MainWindow::openSectorTab(const QString &sectorName)
 {
     if (m_openSectorTabs.contains(sectorName)) {
         m_tabWidget->setCurrentIndex(m_openSectorTabs.value(sectorName));
+        if (m_workspaceTitle) m_workspaceTitle->setText(sectorName + QString::fromUtf8("详情"));
+        if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("行情、事件、路径、技术面和证据新闻"));
         return;
     }
 
@@ -289,6 +292,8 @@ void MainWindow::openSectorTab(const QString &sectorName)
             const int idx = stw->addClosableTab(browser, s.industry + " " + pct(s.todayChangePct));
             m_openSectorTabs.insert(sectorName, idx);
             m_tabWidget->setCurrentIndex(idx);
+            if (m_workspaceTitle) m_workspaceTitle->setText(s.industry + QString::fromUtf8("详情"));
+            if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("行情、事件、路径、技术面和证据新闻"));
             return;
         }
     }
@@ -299,6 +304,8 @@ void MainWindow::openIndexTab(const QString &indexKey)
     const QString tabKey = "index:" + indexKey;
     if (m_openSectorTabs.contains(tabKey)) {
         m_tabWidget->setCurrentIndex(m_openSectorTabs.value(tabKey));
+        if (m_workspaceTitle) m_workspaceTitle->setText(indexKey + QString::fromUtf8(" 指数详情"));
+        if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("指数趋势、市场风控和数据质量"));
         return;
     }
 
@@ -325,6 +332,8 @@ void MainWindow::openIndexTab(const QString &indexKey)
     const int tabIdx = stw->addClosableTab(browser, idx->name + " " + pct(idx->changePct));
     m_openSectorTabs.insert(tabKey, tabIdx);
     m_tabWidget->setCurrentIndex(tabIdx);
+    if (m_workspaceTitle) m_workspaceTitle->setText(idx->name + QString::fromUtf8("详情"));
+    if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("指数趋势、市场风控和数据质量"));
 }
 
 void MainWindow::onTabCloseRequested(int index)
@@ -427,16 +436,12 @@ void MainWindow::buildUi()
     root->setSpacing(0);
 
     m_pages = new QStackedWidget(central);
-    m_setupPage = new QWidget(m_pages);
     m_mainPage = new QWidget(m_pages);
-    m_pages->addWidget(m_setupPage);
     m_pages->addWidget(m_mainPage);
     root->addWidget(m_pages);
     setCentralWidget(central);
 
-    auto *setupLayout = new QVBoxLayout(m_setupPage);
     auto *mainLayout = new QVBoxLayout(m_mainPage);
-    buildSetupPage(setupLayout);
     buildMainPage(mainLayout);
 
     m_refreshWatcher = new QFutureWatcher<AnalysisResult>(this);
@@ -451,7 +456,7 @@ void MainWindow::buildUi()
     });
 
     loadSavedAIConfigToForm();
-    m_pages->setCurrentWidget(m_setupPage);
+    m_pages->setCurrentWidget(m_mainPage);
 }
 
 static QHBoxLayout *makeKeyRow(const QString &placeholder, QLineEdit **editOut, QWidget *parent)
@@ -484,38 +489,28 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(0);
 
-    auto *header = new QWidget(m_setupPage);
-    header->setFixedHeight(120);
-    header->setStyleSheet(
-        "background:qlineargradient(x1:0,y1:0,x2:1,y2:1,"
-        "stop:0 #4338CA,stop:0.5 #4F46E5,stop:1 #6366F1);");
-    auto *hl = new QVBoxLayout(header);
-    hl->setContentsMargins(48, 24, 48, 18);
-    auto *appTitle = new QLabel("InvestInsight", header);
-    appTitle->setStyleSheet("color:#fff;font-size:28px;font-weight:800;letter-spacing:-0.5px;");
-    auto *appSub = new QLabel(QString::fromUtf8("行业信息驱动的投资分析工具 · 配置中心"), header);
-    appSub->setStyleSheet("color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px;letter-spacing:0.5px;");
-    hl->addWidget(appTitle);
-    hl->addWidget(appSub);
-
     auto *content = new QWidget(m_setupPage);
     auto *cl = new QVBoxLayout(content);
-    cl->setContentsMargins(40, 24, 40, 24);
+    cl->setContentsMargins(24, 24, 24, 24);
     cl->setSpacing(18);
 
-    // ===== 配置 Tabs（AI接入 / 我的持仓）=====
-    auto *configTabs = new QTabWidget(content);
-    configTabs->setDocumentMode(true);
-    configTabs->setElideMode(Qt::ElideNone);
-    configTabs->tabBar()->setStyle(new PaddedTabStyle(configTabs->tabBar()->style()));
+    auto *configGrid = new QWidget(content);
+    auto *configGridLayout = new QGridLayout(configGrid);
+    configGridLayout->setContentsMargins(0, 0, 0, 0);
+    configGridLayout->setHorizontalSpacing(18);
+    configGridLayout->setVerticalSpacing(18);
 
-    // ──────────────── Tab A: AI接入配置 ────────────────
-    auto *aiTabWidget = new QWidget(configTabs);
+    // ──────────────── AI 接入配置 ────────────────
+    auto *aiTabWidget = new QWidget(content);
     auto *aiTabLayout = new QVBoxLayout(aiTabWidget);
-    aiTabLayout->setContentsMargins(0, 12, 0, 0);
+    aiTabLayout->setContentsMargins(0, 0, 0, 0);
     aiTabLayout->setSpacing(12);
 
-    auto *aiCard = new QGroupBox(QString::fromUtf8("AI 接入配置（Key 仅保存在本机，不写入代码）"), aiTabWidget);
+    auto *aiTitle = new QLabel(QString::fromUtf8("AI 接入配置"), aiTabWidget);
+    aiTitle->setObjectName("cardTitle");
+    aiTabLayout->addWidget(aiTitle);
+
+    auto *aiCard = new QGroupBox(QString::fromUtf8("Key 仅保存在本机，不写入代码"), aiTabWidget);
     auto *af = new QFormLayout(aiCard);
     af->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
     af->setSpacing(10);
@@ -550,15 +545,18 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
 
     aiTabLayout->addWidget(aiCard);
     aiTabLayout->addStretch(1);
-    configTabs->addTab(aiTabWidget, QString::fromUtf8("AI 接入配置"));
 
-    // ──────────────── Tab B: 我的持仓 ────────────────
-    auto *pfTabWidget = new QWidget(configTabs);
+    // ──────────────── 我的持仓 ────────────────
+    auto *pfTabWidget = new QWidget(content);
     auto *pfTabLayout = new QVBoxLayout(pfTabWidget);
-    pfTabLayout->setContentsMargins(0, 12, 0, 0);
+    pfTabLayout->setContentsMargins(0, 0, 0, 0);
     pfTabLayout->setSpacing(10);
 
-    auto *pfCard = new QGroupBox(QString::fromUtf8("我的持仓（可选 · 用于个性化操作建议）"), pfTabWidget);
+    auto *pfTitle = new QLabel(QString::fromUtf8("我的持仓"), pfTabWidget);
+    pfTitle->setObjectName("cardTitle");
+    pfTabLayout->addWidget(pfTitle);
+
+    auto *pfCard = new QGroupBox(QString::fromUtf8("可选 · 用于个性化操作建议"), pfTabWidget);
     auto *pfl = new QVBoxLayout(pfCard);
     pfl->setSpacing(8);
     pfl->setContentsMargins(14, 20, 14, 14);
@@ -876,9 +874,8 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
     });
 
     pfTabLayout->addWidget(pfCard, 1);
-    configTabs->addTab(pfTabWidget, QString::fromUtf8("我的持仓"));
 
-    m_enterButton = new QPushButton(QString::fromUtf8("保存并进入主界面  →"), content);
+    m_enterButton = new QPushButton(QString::fromUtf8("保存配置"), content);
     m_enterButton->setFixedHeight(48);
     m_enterButton->setStyleSheet(
         "QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,"
@@ -923,12 +920,16 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
         QString::fromUtf8("多源财经新闻：用于事件雷达、影响路径和 AI 复盘。")
     }));
 
-    cl->addWidget(configTabs, 1);
+    configGridLayout->addWidget(aiTabWidget, 0, 0);
+    configGridLayout->addWidget(pfTabWidget, 0, 1);
+    configGridLayout->setColumnStretch(0, 1);
+    configGridLayout->setColumnStretch(1, 1);
+
+    cl->addWidget(configGrid, 1);
     cl->addWidget(opsGrid);
     cl->addSpacing(12);
     cl->addWidget(m_enterButton);
 
-    root->addWidget(header);
     root->addWidget(content, 1);
 }
 
@@ -1002,27 +1003,10 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     auto *topBar = new QHBoxLayout(topBarW);
     topBar->setContentsMargins(30, 18, 30, 16);
     topBar->setSpacing(12);
-    auto *workspaceTitle = new QLabel(QString::fromUtf8("综合总览"), topBarW);
-    workspaceTitle->setObjectName("workspaceTitle");
-    auto *workspaceMeta = new QLabel(QString::fromUtf8("等待分析 · AI 与规则引擎就绪"), topBarW);
-    workspaceMeta->setObjectName("statusLabel");
-
-    m_refreshButton = new QPushButton("▶  开始分析", m_mainPage);
-    m_refreshButton->setObjectName("refreshBtn");
-
-    m_aiToggle = new QCheckBox("AI", m_mainPage);
-    m_aiToggle->setChecked(m_orchestrator.isAIEnabled() && m_orchestrator.isAIAvailable());
-    m_aiToggle->setEnabled(m_orchestrator.isAIAvailable());
-    m_aiToggle->setToolTip(m_orchestrator.isAIAvailable()
-        ? "启用/关闭 AI 智能分析"
-        : "未配置 AI API Key");
-
-    m_backToSetupButton = new QPushButton(QString::fromUtf8("配置"), m_mainPage);
-    m_backToSetupButton->setObjectName("secondaryBtn");
-    connect(m_backToSetupButton, &QPushButton::clicked, this, [this]() {
-        loadSavedAIConfigToForm();
-        m_pages->setCurrentWidget(m_setupPage);
-    });
+    m_workspaceTitle = new QLabel(QString::fromUtf8("综合总览"), topBarW);
+    m_workspaceTitle->setObjectName("workspaceTitle");
+    m_workspaceMeta = new QLabel(QString::fromUtf8("等待分析 · AI 与规则引擎就绪"), topBarW);
+    m_workspaceMeta->setObjectName("statusLabel");
 
     m_statusLabel = new QLabel("就绪", m_mainPage);
     m_statusLabel->setObjectName("statusLabel");
@@ -1031,18 +1015,9 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_loadingBar->setVisible(false);
     m_loadingBar->setTextVisible(false);
 
-    auto *chatButton = new QPushButton(QString::fromUtf8("AI 助手"), m_mainPage);
-    chatButton->setObjectName("secondaryBtn");
-    chatButton->setToolTip("打开AI智能问答助手");
-    connect(chatButton, &QPushButton::clicked, this, &MainWindow::openChatTab);
-
-    topBar->addWidget(workspaceTitle);
-    topBar->addWidget(workspaceMeta);
+    topBar->addWidget(m_workspaceTitle);
+    topBar->addWidget(m_workspaceMeta);
     topBar->addStretch(1);
-    topBar->addWidget(m_refreshButton);
-    topBar->addWidget(chatButton);
-    topBar->addWidget(m_backToSetupButton);
-    topBar->addWidget(m_aiToggle);
     topBar->addWidget(m_statusLabel);
 
     m_tabWidget = new ScrollableTabWidget(workspace);
@@ -1052,6 +1027,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_tabWidget->tabBar()->setExpanding(false);
     m_tabWidget->setDocumentMode(true);
     m_tabWidget->tabBar()->setStyle(new PaddedTabStyle(m_tabWidget->tabBar()->style()));
+    m_tabWidget->tabBar()->hide();
 
     // ---- 总览工作台：4个子Tab（总览 / 事件雷达 / 板块机会 / 策略跟踪）----
     auto *overviewContainer = new QWidget(workspace);
@@ -1065,8 +1041,42 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_overviewSubTabs->tabBar()->setExpanding(false);
     m_overviewSubTabs->tabBar()->setStyle(new PaddedTabStyle(m_overviewSubTabs->tabBar()->style()));
 
-    // -- 子Tab 1: 总览 --
-    m_dashboardBrowser = new ClickableBrowser(m_overviewSubTabs);
+    // -- 子页 1: 总览 --
+    auto *dashboardPage = new QWidget(m_overviewSubTabs);
+    auto *dashboardLayout = new QVBoxLayout(dashboardPage);
+    dashboardLayout->setContentsMargins(22, 18, 22, 22);
+    dashboardLayout->setSpacing(14);
+
+    auto *analysisCard = new QFrame(dashboardPage);
+    analysisCard->setObjectName("configCard");
+    auto *analysisLayout = new QHBoxLayout(analysisCard);
+    analysisLayout->setContentsMargins(26, 18, 26, 18);
+    analysisLayout->setSpacing(18);
+    auto *analysisText = new QWidget(analysisCard);
+    auto *analysisTextLayout = new QVBoxLayout(analysisText);
+    analysisTextLayout->setContentsMargins(0, 0, 0, 0);
+    analysisTextLayout->setSpacing(4);
+    auto *analysisTitle = new QLabel(QString::fromUtf8("分析控制"), analysisText);
+    analysisTitle->setObjectName("cardTitle");
+    auto *analysisMeta = new QLabel(QString::fromUtf8("点击后刷新行情、新闻、事件雷达和策略跟踪。"), analysisText);
+    analysisMeta->setObjectName("cardMeta");
+    analysisTextLayout->addWidget(analysisTitle);
+    analysisTextLayout->addWidget(analysisMeta);
+
+    m_refreshButton = new QPushButton(QString::fromUtf8("▶  开始分析"), analysisCard);
+    m_refreshButton->setObjectName("refreshBtn");
+    m_refreshButton->setMinimumWidth(142);
+    m_aiToggle = new QCheckBox(QString::fromUtf8("AI 深度分析"), analysisCard);
+    m_aiToggle->setChecked(m_orchestrator.isAIEnabled() && m_orchestrator.isAIAvailable());
+    m_aiToggle->setEnabled(m_orchestrator.isAIAvailable());
+    m_aiToggle->setToolTip(m_orchestrator.isAIAvailable()
+        ? QString::fromUtf8("启用/关闭 AI 智能分析")
+        : QString::fromUtf8("未配置 AI API Key"));
+    analysisLayout->addWidget(analysisText, 1);
+    analysisLayout->addWidget(m_refreshButton);
+    analysisLayout->addWidget(m_aiToggle);
+
+    m_dashboardBrowser = new ClickableBrowser(dashboardPage);
     m_dashboardBrowser->onTabJump = [this](int idx) {
         if (idx <= 0 || idx > static_cast<int>(m_lastResult.sectors.size())) return;
         const QString &name = m_lastResult.sectors[idx - 1].industry;
@@ -1075,7 +1085,9 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_dashboardBrowser->onIndexJump = [this](const QString &key) {
         openIndexTab(key);
     };
-    m_overviewSubTabs->addTab(m_dashboardBrowser, "总览");
+    dashboardLayout->addWidget(analysisCard);
+    dashboardLayout->addWidget(m_dashboardBrowser, 1);
+    m_overviewSubTabs->addTab(dashboardPage, "总览");
 
     // -- 子Tab 2: 事件雷达 --
     m_eventRadarBrowser = new ClickableBrowser(m_overviewSubTabs);
@@ -1166,6 +1178,11 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
     m_tabWidget->addTab(overviewContainer, "总览工作台");
     m_overviewSubTabs->tabBar()->hide();
 
+    m_setupPage = new QWidget(m_tabWidget);
+    auto *configLayout = new QVBoxLayout(m_setupPage);
+    buildSetupPage(configLayout);
+    m_configTabIndex = m_tabWidget->addTab(m_setupPage, QString::fromUtf8("配置"));
+
     // 过滤控件全部触发重新渲染（仅影响板块&指数信息子Tab）
     auto rerender = [this]() {
         if (!m_lastResult.sectors.isEmpty() || m_lastResult.marketCtx.valid) renderOverview(m_lastResult);
@@ -1182,21 +1199,48 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
         m_sortBy->setCurrentIndex(0);
         rerender();
     });
-    connect(navGroup, qOverload<int>(&QButtonGroup::idClicked), this, [this](int id) {
+    auto setWorkspaceHeader = [this](const QString &title, const QString &meta) {
+        if (m_workspaceTitle) m_workspaceTitle->setText(title);
+        if (m_workspaceMeta) m_workspaceMeta->setText(meta);
+    };
+    auto setOverviewHeader = [setWorkspaceHeader](int index) {
+        const QStringList titles = {
+            QString::fromUtf8("综合总览"),
+            QString::fromUtf8("事件雷达"),
+            QString::fromUtf8("板块机会"),
+            QString::fromUtf8("策略跟踪")
+        };
+        const QStringList metas = {
+            QString::fromUtf8("市场温度、关键事件、机会风险和分析控制"),
+            QString::fromUtf8("事件状态、时间节点、传导路径和影响板块"),
+            QString::fromUtf8("板块评分、事件催化、趋势状态和风险排序"),
+            QString::fromUtf8("建议动作、持仓影响、信号表现和后续检查点")
+        };
+        if (index >= 0 && index < titles.size()) {
+            setWorkspaceHeader(titles[index], metas[index]);
+        }
+    };
+    connect(navGroup, qOverload<int>(&QButtonGroup::idClicked), this, [this, setOverviewHeader, setWorkspaceHeader](int id) {
         if (id >= 0 && id <= 3 && m_overviewSubTabs) {
             m_tabWidget->setCurrentIndex(0);
             m_overviewSubTabs->setCurrentIndex(id);
+            setOverviewHeader(id);
         } else if (id == 4) {
             openChatTab();
         } else if (id == 5) {
             loadSavedAIConfigToForm();
-            m_pages->setCurrentWidget(m_setupPage);
+            if (m_configTabIndex >= 0) {
+                m_tabWidget->setCurrentIndex(m_configTabIndex);
+            }
+            setWorkspaceHeader(QString::fromUtf8("配置"),
+                QString::fromUtf8("AI 接入、持仓、数据刷新和提醒设置"));
         }
     });
     const QList<QPushButton *> navButtons = {navOverview, navEvents, navSectors, navStrategy};
-    connect(m_overviewSubTabs, &QTabWidget::currentChanged, this, [navButtons](int index) {
+    connect(m_overviewSubTabs, &QTabWidget::currentChanged, this, [navButtons, setOverviewHeader](int index) {
         if (index >= 0 && index < navButtons.size()) {
             navButtons[index]->setChecked(true);
+            setOverviewHeader(index);
         }
     });
 
@@ -1606,14 +1650,17 @@ void MainWindow::saveAndEnterMainPage()
     m_aiToggle->setChecked(m_orchestrator.isAIEnabled() && m_orchestrator.isAIAvailable());
     m_aiToggle->setEnabled(m_orchestrator.isAIAvailable());
     
-    m_statusLabel->setText("就绪（点击“开始分析”）");
-    m_pages->setCurrentWidget(m_mainPage);
+    m_statusLabel->setText(QString::fromUtf8("配置已保存"));
+    if (m_workspaceTitle) m_workspaceTitle->setText(QString::fromUtf8("配置"));
+    if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("AI 接入、持仓、数据刷新和提醒设置"));
 }
 
 void MainWindow::openChatTab()
 {
     if (m_chatTabIndex >= 0 && m_chatTabIndex < m_tabWidget->count()) {
         m_tabWidget->setCurrentIndex(m_chatTabIndex);
+        if (m_workspaceTitle) m_workspaceTitle->setText(QString::fromUtf8("AI 助手"));
+        if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("基于当前分析结果的问答和复盘"));
         return;
     }
 
@@ -1766,6 +1813,8 @@ void MainWindow::openChatTab()
     m_chatTabIndex = static_cast<ScrollableTabWidget *>(m_tabWidget)->addClosableTab(
         chatTab, QString::fromUtf8("AI助手"));
     m_tabWidget->setCurrentIndex(m_chatTabIndex);
+    if (m_workspaceTitle) m_workspaceTitle->setText(QString::fromUtf8("AI 助手"));
+    if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("基于当前分析结果的问答和复盘"));
 }
 
 void MainWindow::sendChatMessage()
