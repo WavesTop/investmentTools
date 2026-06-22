@@ -53,6 +53,16 @@ const SectorEventImpact *findImpact(const QList<SectorEventImpact> &impacts, con
     return nullptr;
 }
 
+bool hasCheckpoint(const MacroEvent &event, const QString &name)
+{
+    for (const MacroEventCheckpoint &checkpoint : event.nextCheckpoints) {
+        if (checkpoint.name.contains(name, Qt::CaseInsensitive)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void verifyExtraction()
 {
     EventExtractionEngine engine;
@@ -193,6 +203,57 @@ void verifyV21ModelFields()
     expect(impact.horizon == ImpactHorizon::MediumTerm, "sector impact stores horizon");
 }
 
+void verifyV21StateAndCheckpointParsing()
+{
+    EventExtractionEngine engine;
+    const QDateTime publishedAt(QDate(2026, 6, 21), QTime(11, 0), Qt::UTC);
+
+    const QList<MacroEvent> rumorEvents = engine.extractFromText(
+        QString::fromUtf8("市场传闻美联储可能提前降息，交易员关注下次 FOMC"),
+        QStringLiteral("state-test"),
+        publishedAt);
+    const MacroEvent *rumor = findFirst(rumorEvents, MacroEventType::MonetaryPolicy);
+    expect(rumor != nullptr, "rumor Fed headline creates an event");
+    if (rumor) {
+        expect(rumor->state == MacroEventState::Rumor, "unconfirmed policy rumor resolves to Rumor");
+        expect(hasCheckpoint(*rumor, QStringLiteral("FOMC")), "Fed rumor keeps FOMC checkpoint");
+        expect(hasCheckpoint(*rumor, QStringLiteral("CPI")), "Fed rumor keeps CPI checkpoint");
+    }
+
+    const QList<MacroEvent> invalidatedEvents = engine.extractFromText(
+        QString::fromUtf8("美联储官员否认近期降息可能，降息交易逻辑落空"),
+        QStringLiteral("state-test"),
+        publishedAt);
+    const MacroEvent *invalidated = findFirst(invalidatedEvents, MacroEventType::MonetaryPolicy);
+    expect(invalidated != nullptr, "invalidated Fed headline creates an event");
+    if (invalidated) {
+        expect(invalidated->state == MacroEventState::Invalidated,
+               "denied policy expectation resolves to Invalidated");
+    }
+
+    const QList<MacroEvent> occurredEvents = engine.extractFromText(
+        QString::fromUtf8("FOMC 会议落地后市场开始交易降息结果"),
+        QStringLiteral("state-test"),
+        publishedAt);
+    const MacroEvent *occurred = findFirst(occurredEvents, MacroEventType::MonetaryPolicy);
+    expect(occurred != nullptr, "occurred Fed meeting headline creates an event");
+    if (occurred) {
+        expect(occurred->state == MacroEventState::Occurred, "post-event policy text resolves to Occurred");
+    }
+
+    const QList<MacroEvent> chinaEvents = engine.extractFromText(
+        QString::fromUtf8("央行 LPR 调整预期升温，市场关注下次报价和 MLF 操作"),
+        QStringLiteral("state-test"),
+        publishedAt);
+    const MacroEvent *china = findFirst(chinaEvents, MacroEventType::MonetaryPolicy);
+    expect(china != nullptr, "China monetary headline creates an event");
+    if (china) {
+        expect(china->region == MacroEventRegion::China, "China monetary headline keeps China region");
+        expect(hasCheckpoint(*china, QStringLiteral("LPR")), "China monetary event keeps LPR checkpoint");
+        expect(hasCheckpoint(*china, QStringLiteral("MLF")), "China monetary event keeps MLF checkpoint");
+    }
+}
+
 void verifyEventRepository()
 {
     QTemporaryDir dir;
@@ -210,23 +271,29 @@ void verifyEventRepository()
     EventRepository repository(path);
     const QDateTime firstSeen(QDate(2026, 6, 21), QTime(9, 30), Qt::UTC);
     const QDateTime secondSeen(QDate(2026, 6, 21), QTime(10, 0), Qt::UTC);
+    const QDateTime thirdSeen(QDate(2026, 6, 21), QTime(10, 30), Qt::UTC);
 
     QList<MacroEvent> tracked = repository.trackEvents({event, event}, firstSeen);
     expect(tracked.size() == 1, "same event is returned once in one batch");
 
     event.state = MacroEventState::Confirmed;
     repository.trackEvents({event}, secondSeen);
+    event.state = MacroEventState::Invalidated;
+    repository.trackEvents({event}, thirdSeen);
 
     const QList<TrackedEventRecord> records = repository.records();
     expect(records.size() == 1, "repository keeps one record for repeated event");
-    expect(records.first().seenCount == 3, "repository increments seen count");
+    expect(records.first().seenCount == 4, "repository increments seen count");
     expect(records.first().firstSeenAt == firstSeen, "repository preserves first seen time");
-    expect(records.first().lastSeenAt == secondSeen, "repository updates last seen time");
+    expect(records.first().lastSeenAt == thirdSeen, "repository updates last seen time");
     expect(records.first().stateHistory.contains(QStringLiteral("Expected")), "repository stores initial state");
     expect(records.first().stateHistory.contains(QStringLiteral("Confirmed")), "repository stores state change");
+    expect(records.first().stateHistory.contains(QStringLiteral("Invalidated")), "repository stores invalidated state");
 
     EventRepository reloaded(path);
     expect(reloaded.records().size() == 1, "repository reloads persisted records");
+    expect(reloaded.records().first().currentState == MacroEventState::Invalidated,
+           "repository reloads invalidated state");
 }
 
 } // namespace
@@ -239,6 +306,7 @@ int main(int argc, char *argv[])
     verifyImpactPaths();
     verifyAnalysisResultFields();
     verifyV21ModelFields();
+    verifyV21StateAndCheckpointParsing();
     verifyEventRepository();
 
     if (failures > 0) {

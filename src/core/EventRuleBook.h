@@ -23,6 +23,9 @@ public:
 
     QList<EventRule> matchingRules(const QString &text) const;
     MacroEventState resolveState(const QString &text) const;
+    QList<MacroEventCheckpoint> resolveCheckpoints(const QString &text,
+                                                   MacroEventType type,
+                                                   MacroEventRegion region) const;
 
 private:
     QList<EventRule> m_rules;

@@ -38,6 +38,7 @@ QList<MacroEvent> EventExtractionEngine::extractFromHeadlines(const QList<RawHea
             event.confidence = rule.confidence;
             event.detectedAt = QDateTime::currentDateTimeUtc();
             event.publishedAt = headline.timestamp;
+            event.nextCheckpoints = m_ruleBook.resolveCheckpoints(text, event.type, event.region);
 
             MacroEventEvidence evidence;
             evidence.source = headline.source;

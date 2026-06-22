@@ -20,6 +20,20 @@ bool hasAllContext(const QString &text, const EventRule &rule)
     return rule.contextAny.isEmpty() || containsAny(text, rule.contextAny);
 }
 
+void addCheckpoint(QList<MacroEventCheckpoint> &checkpoints,
+                   const QString &name,
+                   const QString &reason)
+{
+    for (const MacroEventCheckpoint &checkpoint : checkpoints) {
+        if (checkpoint.name == name) return;
+    }
+
+    MacroEventCheckpoint checkpoint;
+    checkpoint.name = name;
+    checkpoint.reason = reason;
+    checkpoints.push_back(checkpoint);
+}
+
 } // namespace
 
 EventRuleBook::EventRuleBook()
@@ -99,6 +113,24 @@ QList<EventRule> EventRuleBook::matchingRules(const QString &text) const
 
 MacroEventState EventRuleBook::resolveState(const QString &text) const
 {
+    if (text.contains(QString::fromUtf8("否认")) || text.contains(QString::fromUtf8("辟谣"))
+        || text.contains(QString::fromUtf8("落空")) || text.contains(QString::fromUtf8("证伪"))
+        || text.contains(QString::fromUtf8("不考虑")) || text.contains(QString::fromUtf8("无计划"))) {
+        return MacroEventState::Invalidated;
+    }
+
+    if (text.contains(QString::fromUtf8("落地后")) || text.contains(QString::fromUtf8("会后"))
+        || text.contains(QString::fromUtf8("公布后")) || text.contains(QString::fromUtf8("实施后"))
+        || text.contains(QString::fromUtf8("兑现后")) || text.contains(QString::fromUtf8("交易结果"))) {
+        return MacroEventState::Occurred;
+    }
+
+    if (text.contains(QString::fromUtf8("传闻")) || text.contains(QString::fromUtf8("传出"))
+        || text.contains(QString::fromUtf8("据传")) || text.contains(QString::fromUtf8("未证实"))
+        || text.contains(QString::fromUtf8("消息称"))) {
+        return MacroEventState::Rumor;
+    }
+
     if (text.contains(QString::fromUtf8("修正")) || text.contains(QString::fromUtf8("下修"))
         || text.contains(QString::fromUtf8("上修")) || text.contains(QString::fromUtf8("降温"))
         || text.contains(QString::fromUtf8("不及预期")) || text.contains(QString::fromUtf8("高于预期"))
@@ -123,4 +155,60 @@ MacroEventState EventRuleBook::resolveState(const QString &text) const
     }
 
     return MacroEventState::Expected;
+}
+
+QList<MacroEventCheckpoint> EventRuleBook::resolveCheckpoints(const QString &text,
+                                                              MacroEventType type,
+                                                              MacroEventRegion region) const
+{
+    QList<MacroEventCheckpoint> checkpoints;
+
+    const bool isFedRelated = region == MacroEventRegion::US
+        && (type == MacroEventType::MonetaryPolicy || type == MacroEventType::InflationEmployment
+            || containsAny(text, {QStringLiteral("Fed"), QStringLiteral("FOMC"), QString::fromUtf8("美联储")}));
+    if (isFedRelated) {
+        addCheckpoint(checkpoints, QStringLiteral("FOMC"), QStringLiteral("rate decision and dot plot"));
+        addCheckpoint(checkpoints, QStringLiteral("CPI"), QStringLiteral("inflation confirmation"));
+        addCheckpoint(checkpoints, QStringLiteral("PCE"), QStringLiteral("Fed preferred inflation data"));
+        addCheckpoint(checkpoints, QString::fromUtf8("非农"), QStringLiteral("employment confirmation"));
+    }
+
+    const bool isChinaMonetary = region == MacroEventRegion::China
+        && (type == MacroEventType::MonetaryPolicy
+            || containsAny(text, {QStringLiteral("LPR"), QStringLiteral("MLF"), QString::fromUtf8("降准"),
+                                  QString::fromUtf8("央行")}));
+    if (isChinaMonetary) {
+        addCheckpoint(checkpoints, QStringLiteral("LPR"), QStringLiteral("loan prime rate quote"));
+        addCheckpoint(checkpoints, QStringLiteral("MLF"), QStringLiteral("medium-term lending facility operation"));
+        addCheckpoint(checkpoints, QString::fromUtf8("央行公开市场操作"), QStringLiteral("liquidity operation"));
+    }
+
+    if (type == MacroEventType::FiscalPolicy
+        || containsAny(text, {QString::fromUtf8("专项债"), QString::fromUtf8("财政"),
+                              QString::fromUtf8("特别国债")})) {
+        addCheckpoint(checkpoints, QString::fromUtf8("专项债发行"), QStringLiteral("fiscal funding pace"));
+        addCheckpoint(checkpoints, QString::fromUtf8("政策细则落地"), QStringLiteral("implementation details"));
+    }
+
+    if (type == MacroEventType::IndustrialPolicy) {
+        addCheckpoint(checkpoints, QString::fromUtf8("政策细则"), QStringLiteral("industry policy details"));
+        addCheckpoint(checkpoints, QString::fromUtf8("企业订单"), QStringLiteral("company order validation"));
+    }
+
+    if (type == MacroEventType::CommoditySupplyDemand) {
+        addCheckpoint(checkpoints, QString::fromUtf8("库存数据"), QStringLiteral("inventory confirmation"));
+        addCheckpoint(checkpoints, QString::fromUtf8("供需数据"), QStringLiteral("supply and demand confirmation"));
+    }
+
+    if (type == MacroEventType::GeopoliticsTrade) {
+        addCheckpoint(checkpoints, QString::fromUtf8("出口限制细则"), QStringLiteral("restriction details"));
+        addCheckpoint(checkpoints, QString::fromUtf8("关税或制裁清单"), QStringLiteral("tariff or sanction list"));
+    }
+
+    if (type == MacroEventType::MarketInstitution) {
+        addCheckpoint(checkpoints, QString::fromUtf8("证监会细则"), QStringLiteral("market rule details"));
+        addCheckpoint(checkpoints, QString::fromUtf8("交易所执行规则"), QStringLiteral("exchange implementation rules"));
+    }
+
+    return checkpoints;
 }

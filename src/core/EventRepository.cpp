@@ -12,9 +12,12 @@ namespace {
 
 MacroEventState stateFromString(const QString &state)
 {
+    if (state == QStringLiteral("Rumor")) return MacroEventState::Rumor;
     if (state == QStringLiteral("Scheduled")) return MacroEventState::Scheduled;
     if (state == QStringLiteral("Confirmed")) return MacroEventState::Confirmed;
+    if (state == QStringLiteral("Occurred")) return MacroEventState::Occurred;
     if (state == QStringLiteral("Revised")) return MacroEventState::Revised;
+    if (state == QStringLiteral("Invalidated")) return MacroEventState::Invalidated;
     return MacroEventState::Expected;
 }
 
