@@ -490,18 +490,18 @@ flowchart TD
 
 配套视觉稿：
 
-- 当前配置页截图：`docs/design/assets/current-ui-screenshot.png`
-- 当前主界面空态截图：`docs/design/assets/current-main-ui-screenshot.png`
-- 用户补充的当前板块详情长截图：`docs/design/assets/current-sector-detail-long-user-reference.png`
-- 优化后的主界面设计稿：`docs/design/assets/investinsight-ui-redesign-dashboard.png`
-- 事件雷达设计稿：`docs/design/assets/investinsight-ui-redesign-event-radar.png`
-- 板块机会设计稿：`docs/design/assets/investinsight-ui-redesign-sector-opportunities.png`
-- 策略跟踪设计稿：`docs/design/assets/investinsight-ui-redesign-strategy-tracking.png`
-- AI 助手设计稿：`docs/design/assets/investinsight-ui-redesign-ai-assistant.png`
-- 配置页设计稿：`docs/design/assets/investinsight-ui-redesign-config.png`
-- 板块详情长图：`docs/design/assets/investinsight-ui-redesign-sector-detail-long.png`
-- 可编辑 SVG 源稿：`docs/design/assets/investinsight-ui-redesign-dashboard.svg`
-- 设计稿说明：`docs/design/InvestInsight-ui-redesign-mockup.md`
+- 当前配置页截图：`docs/versions/v2.0/design/assets/current-ui-screenshot.png`
+- 当前主界面空态截图：`docs/versions/v2.0/design/assets/current-main-ui-screenshot.png`
+- 用户补充的当前板块详情长截图：`docs/versions/v2.0/design/assets/current-sector-detail-long-user-reference.png`
+- 优化后的主界面设计稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-dashboard.png`
+- 事件雷达设计稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-event-radar.png`
+- 板块机会设计稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-sector-opportunities.png`
+- 策略跟踪设计稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-strategy-tracking.png`
+- AI 助手设计稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-ai-assistant.png`
+- 配置页设计稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-config.png`
+- 板块详情长图：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-sector-detail-long.png`
+- 可编辑 SVG 源稿：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-dashboard.svg`
+- 设计稿说明：`docs/versions/v2.0/design/ui-workbench-redesign.md`
 
 ### 信息架构
 

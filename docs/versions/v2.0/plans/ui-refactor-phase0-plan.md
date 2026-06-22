@@ -17,10 +17,10 @@
 
 - 产品说明：`docs/product/InvestInsight-product-overview.md`
 - 代码地图：`docs/codex/PROJECT_CONTEXT.md`
-- 事件引擎规格：`docs/superpowers/specs/2026-06-20-event-impact-engine-design.md`
-- UI 设计说明：`docs/design/InvestInsight-ui-redesign-mockup.md`
-- 当前板块详情长截图参考：`docs/design/assets/current-sector-detail-long-user-reference.png`
-- 优化后详情长图：`docs/design/assets/investinsight-ui-redesign-sector-detail-long.png`
+- 事件引擎规格：`docs/versions/v2.0/specs/event-impact-engine-design.md`
+- UI 设计说明：`docs/versions/v2.0/design/ui-workbench-redesign.md`
+- 当前板块详情长截图参考：`docs/versions/v2.0/design/assets/current-sector-detail-long-user-reference.png`
+- 优化后详情长图：`docs/versions/v2.0/design/assets/investinsight-ui-redesign-sector-detail-long.png`
 
 ## 切片 0.1：主题与通用样式
 
@@ -136,7 +136,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 范围：
 
 - 在现有主页面基础上增加事件雷达入口或 Tab 骨架。
-- 对齐 `docs/design` 中的总览、事件雷达、板块机会、策略跟踪、AI 助手、配置页和板块详情长图。
+- 对齐 `docs/versions/v2.0/design` 中的总览、事件雷达、板块机会、策略跟踪、AI 助手、配置页和板块详情长图。
 - 0.5 已完成：新增 `EventRadarRenderer`，主窗口增加“事件雷达”子 Tab，展示关键事件队列、事件传导路径、市场风险和失效条件。
 
 验证：

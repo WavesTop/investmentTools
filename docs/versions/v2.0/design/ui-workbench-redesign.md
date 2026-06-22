@@ -1,4 +1,4 @@
-# InvestInsight UI 优化设计稿
+# InvestInsight 2.0 UI 工作台设计稿
 
 最后更新：2026-06-22
 
@@ -81,8 +81,8 @@ AI 助手：
 运行方式：
 
 ```powershell
-& "C:\Users\oneDayDay\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" docs\design\render_investinsight_ui_mockup.py
-& "C:\Users\oneDayDay\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" docs\design\render_investinsight_ui_mockup_pages.py
+& "C:\Users\oneDayDay\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" docs\versions\v2.0\design\render_investinsight_ui_mockup.py
+& "C:\Users\oneDayDay\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" docs\versions\v2.0\design\render_investinsight_ui_mockup_pages.py
 ```
 
 ## 设计重点

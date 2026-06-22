@@ -4,7 +4,7 @@
 
 ## 用途
 
-这是给后续 Codex 处理本仓库前阅读的项目地图。开始改代码前先读本文件，再按需要查看具体源码。凡是修改了产品定位、数据源、分析流水线、评分因子、UI 主流程或验证命令，都要同步更新本文档和 `docs/product/InvestInsight-product-overview.md`。
+这是给后续 Codex 处理本仓库前阅读的项目地图。开始改代码前先读 `docs/README.md`、本文件和 `docs/product/InvestInsight-product-overview.md`，再按需要查看具体源码。凡是修改了产品定位、数据源、分析流水线、评分因子、UI 主流程、打包发布或验证命令，都要同步更新相关文档。
 
 ## 技术栈
 
@@ -33,6 +33,8 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 第五个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint` 和受影响板块的 `direction/relation/path`。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
+
+文档组织约定：`docs/README.md` 是总入口；版本相关的设计稿、规格、实施计划和截图素材统一放在 `docs/versions/vX.Y/` 下，文件名使用稳定主题名，不再用日期作为文件名主键。跨版本长期有效的项目地图、产品说明保留在 `docs/codex/` 和 `docs/product/`。
 
 ## 重要文件地图
 
@@ -78,10 +80,12 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `tests/ui/IndexDetailRendererSmoke.cpp` | 指数详情 HTML smoke 测试，校验图表嵌入、技术指标、市场风控和数据质量。 |
 | `tests/ui/EventRadarRendererSmoke.cpp` | 事件雷达 HTML smoke 测试，校验事件队列、传导路径、风险区块和未来催化展示。 |
 | `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件抽取、状态识别和证据保留；后续继续覆盖路径映射和诊断命令。 |
-| `docs/release/PACKAGING.md` | Windows/macOS 打包和使用说明。 |
-| `docs/design/InvestInsight-ui-redesign-mockup.md` | UI 优化设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
-| `docs/superpowers/plans/2026-06-20-ui-refactor-phase0-plan.md` | UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
-| `docs/superpowers/plans/2026-06-21-event-impact-engine-phase1-5-plan.md` | 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
+| `docs/README.md` | 文档总入口，说明按职责和版本查看文档的路径。 |
+| `docs/versions/v1.0/release/PACKAGING.md` | 1.0 Windows/macOS 打包和使用说明。 |
+| `docs/versions/v2.0/design/ui-workbench-redesign.md` | 2.0 UI 工作台设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
+| `docs/versions/v2.0/specs/event-impact-engine-design.md` | 2.0 事件传导引擎规格说明。 |
+| `docs/versions/v2.0/plans/ui-refactor-phase0-plan.md` | 2.0 UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
+| `docs/versions/v2.0/plans/event-impact-engine-phase1-5-plan.md` | 2.0 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
 
 ## 当前主流程
 
@@ -154,7 +158,7 @@ AI 两个阶段：
 
 `MainWindow` 当前以手动刷新为主。`m_progressPollTimer` 用于轮询后台分析进度；`m_autoRefreshTimer` 在头文件中存在，但当前没有形成完整的后台常驻刷新产品能力。后续如果实现定时刷新、系统托盘或提醒，需要同步更新产品说明。
 
-当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主界面已经按 `docs/design/InvestInsight-ui-redesign-mockup.md` 落地为左侧导航 + 顶部状态条 + 内容工作区：左侧入口包含“总览、事件雷达、板块机会、策略跟踪、AI 助手、配置”，顶部只显示当前页面标题、说明和运行状态，不再放置 AI 助手/配置快捷按钮或外层页签。“开始分析”和 AI 开关已经移动到总览页的分析控制卡片中，配置页作为左侧“配置”导航对应的右侧完整页面嵌入工作台。主题颜色、Widget 样式、HTML 基础 CSS 和暗色模式检测已拆到 `src/ui/AppTheme.cpp`，并新增 `sideNav`、`topStatusBar`、`workspace-shell`、`metric-grid`、`configCard`、`chatContextPanel` 等工作台样式。板块详情图表渲染已拆到 `src/ui/renderers/ChartRenderer.cpp`，`MainWindow::buildDataDashboardHtml` 已委托 `src/ui/renderers/DashboardRenderer.cpp`，`MainWindow::buildEventRadarHtml` 已委托 `src/ui/renderers/EventRadarRenderer.cpp`，`MainWindow::buildSectorTableHtml` 已委托 `src/ui/renderers/SectorTableRenderer.cpp`，`MainWindow::buildStrategyHtml` 已委托 `src/ui/renderers/StrategyRenderer.cpp`，`MainWindow::buildSectorHtml` 已委托 `src/ui/renderers/SectorDetailRenderer.cpp`，`MainWindow::buildIndexHtml` 已委托 `src/ui/renderers/IndexDetailRenderer.cpp`。
+当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主界面已经按 `docs/versions/v2.0/design/ui-workbench-redesign.md` 落地为左侧导航 + 顶部状态条 + 内容工作区：左侧入口包含“总览、事件雷达、板块机会、策略跟踪、AI 助手、配置”，顶部只显示当前页面标题、说明和运行状态，不再放置 AI 助手/配置快捷按钮或外层页签。“开始分析”和 AI 开关已经移动到总览页的分析控制卡片中，配置页作为左侧“配置”导航对应的右侧完整页面嵌入工作台。主题颜色、Widget 样式、HTML 基础 CSS 和暗色模式检测已拆到 `src/ui/AppTheme.cpp`，并新增 `sideNav`、`topStatusBar`、`workspace-shell`、`metric-grid`、`configCard`、`chatContextPanel` 等工作台样式。板块详情图表渲染已拆到 `src/ui/renderers/ChartRenderer.cpp`，`MainWindow::buildDataDashboardHtml` 已委托 `src/ui/renderers/DashboardRenderer.cpp`，`MainWindow::buildEventRadarHtml` 已委托 `src/ui/renderers/EventRadarRenderer.cpp`，`MainWindow::buildSectorTableHtml` 已委托 `src/ui/renderers/SectorTableRenderer.cpp`，`MainWindow::buildStrategyHtml` 已委托 `src/ui/renderers/StrategyRenderer.cpp`，`MainWindow::buildSectorHtml` 已委托 `src/ui/renderers/SectorDetailRenderer.cpp`，`MainWindow::buildIndexHtml` 已委托 `src/ui/renderers/IndexDetailRenderer.cpp`。
 
 总览页已改为工作台式信息结构，包含分析控制、关键事件雷达、板块机会与风险和下一观察点；板块机会页在完整模式下新增事件催化列和风险提示列；策略跟踪页新增“跟踪状态”指标卡片；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；板块详情页在投资结论之后新增“核心评分”“信号解释”“影响路径”“阶段收益与回测”“资金流与相关板块”等分区，并继续保留事件驱动、趋势图表、技术指标、资金流、回测、新闻证据和数据质量。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
 
@@ -177,6 +181,7 @@ macOS 脚本默认使用 `build-macos` 独立构建目录，支持 `--build-dir`
 - `assets/macos/app-icon.icns` + CMake bundle 属性：macOS Dock/Finder 图标。
 
 打包产物 `InvestInsight-Windows*`、`InvestInsight-macOS*` 和 zip 已加入 `.gitignore`，不要提交生成包。
+打包脚本、启动脚本、CMake bundle/部署参数或应用图标变更时，必须同步更新 `docs/versions/v1.0/release/PACKAGING.md` 或对应版本的发布说明。
 
 ## 修改建议
 

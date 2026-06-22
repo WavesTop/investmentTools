@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 
-OUT_DIR = Path("docs/design/assets")
+OUT_DIR = Path("docs/versions/v2.0/design/assets")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 FONT_PATH = Path(r"C:\Windows\Fonts\msyh.ttc")

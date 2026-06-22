@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 W, H = 1920, 1080
-OUT = Path("docs/design/assets/investinsight-ui-redesign-dashboard.png")
+OUT = Path("docs/versions/v2.0/design/assets/investinsight-ui-redesign-dashboard.png")
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 FONT_PATH = Path(r"C:\Windows\Fonts\msyh.ttc")

@@ -2,7 +2,7 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 按 `docs/design/InvestInsight-ui-redesign-mockup.md` 将主界面改为投研工作台风格。
+**目标：** 按 `docs/versions/v2.0/design/ui-workbench-redesign.md` 将主界面改为投研工作台风格。
 
 **架构：** 保留 Qt Widgets + HTML renderer 架构，不重写业务逻辑。`MainWindow` 负责左侧导航、顶部状态和页面容器；各结果页视觉继续在 renderer 中完成，避免把大段 HTML 塞回主窗口。
 
