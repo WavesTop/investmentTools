@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QCoreApplication>
+#include <QEvent>
 #include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
@@ -226,6 +227,26 @@ int runUiSmoke()
         };
         if (!hasConfigLabel(QString::fromUtf8("AI 接入配置"))) missing << QString::fromUtf8("visible-label:AI 接入配置");
         if (!hasConfigLabel(QString::fromUtf8("我的持仓"))) missing << QString::fromUtf8("visible-label:我的持仓");
+
+        window.clearDynamicResultPagesForRefresh();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        if (clickButton(QString::fromUtf8("配置"))) {
+            const QList<QLabel *> preservedLabels = window.findChildren<QLabel *>();
+            auto hasPreservedLabel = [&preservedLabels](const QString &text) {
+                for (QLabel *label : preservedLabels) {
+                    if (label->text().contains(text)) return true;
+                }
+                return false;
+            };
+            if (!hasPreservedLabel(QString::fromUtf8("AI 接入配置"))) {
+                missing << QString::fromUtf8("post-refresh-label:AI 接入配置");
+            }
+            if (!hasPreservedLabel(QString::fromUtf8("我的持仓"))) {
+                missing << QString::fromUtf8("post-refresh-label:我的持仓");
+            }
+        } else {
+            missing << QString::fromUtf8("click:配置-after-refresh");
+        }
     } else {
         missing << QString::fromUtf8("click:配置");
     }

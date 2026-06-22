@@ -146,6 +146,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
     void autoAnalyze();
+    void clearDynamicResultPagesForRefresh();
 
 private:
     void beginRefresh();

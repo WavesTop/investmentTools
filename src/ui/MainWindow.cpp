@@ -190,17 +190,33 @@ void MainWindow::pollProgress()
     m_statusLabel->setText(m_currentStage);
 }
 
+void MainWindow::clearDynamicResultPagesForRefresh()
+{
+    if (!m_tabWidget) return;
+
+    const int configIndex = m_setupPage ? m_tabWidget->indexOf(m_setupPage) : -1;
+    for (int i = m_tabWidget->count() - 1; i >= 0; --i) {
+        if (i == 0 || i == configIndex) continue;
+
+        QWidget *w = m_tabWidget->widget(i);
+        m_tabWidget->removeTab(i);
+        if (w) w->deleteLater();
+    }
+
+    m_openSectorTabs.clear();
+    m_chatTabIndex = -1;
+    m_chatDisplay = nullptr;
+    m_chatInput = nullptr;
+    m_chatSendBtn = nullptr;
+    m_configTabIndex = m_setupPage ? m_tabWidget->indexOf(m_setupPage) : -1;
+}
+
 void MainWindow::onRefreshFinished()
 {
     const AnalysisResult result = m_refreshWatcher->result();
     m_lastResult = result;
 
-    while (m_tabWidget->count() > 1) {
-        QWidget *w = m_tabWidget->widget(1);
-        m_tabWidget->removeTab(1);
-        w->deleteLater();
-    }
-    m_openSectorTabs.clear();
+    clearDynamicResultPagesForRefresh();
 
     // 缓存板块名到 QSettings，供持仓下拉框使用
     // 合并：本次API返回的板块 + 用户持仓中已有的板块名，防止因API波动导致持仓板块从下拉框消失
