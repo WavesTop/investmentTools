@@ -447,10 +447,25 @@ void verifyEventRepository()
     expect(records.first().stateHistory.contains(QStringLiteral("Confirmed")), "repository stores state change");
     expect(records.first().stateHistory.contains(QStringLiteral("Invalidated")), "repository stores invalidated state");
 
+    repository.recordPerformance(event.id, QString::fromUtf8("半导体"), 1, 2.4,
+                                 QDateTime(QDate(2026, 6, 22), QTime(15, 0), Qt::UTC));
+    repository.recordPerformance(event.id, QString::fromUtf8("半导体"), 3, -1.2,
+                                 QDateTime(QDate(2026, 6, 24), QTime(15, 0), Qt::UTC));
+    repository.recordPerformance(event.id, QString::fromUtf8("黄金"), 20, 8.5,
+                                 QDateTime(QDate(2026, 7, 21), QTime(15, 0), Qt::UTC));
+
+    const QList<TrackedEventRecord> performanceRecords = repository.records();
+    expect(performanceRecords.first().performances.size() == 3,
+           "repository stores multiple impact performance windows");
+    expect(performanceRecords.first().performances.first().windowDays == 1,
+           "performance record stores window days");
+
     EventRepository reloaded(path);
     expect(reloaded.records().size() == 1, "repository reloads persisted records");
     expect(reloaded.records().first().currentState == MacroEventState::Invalidated,
            "repository reloads invalidated state");
+    expect(reloaded.records().first().performances.size() == 3,
+           "repository reloads persisted performance records");
 }
 
 } // namespace

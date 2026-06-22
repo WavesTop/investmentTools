@@ -59,7 +59,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/core/EventExtractionEngine.cpp` | 从新闻标题/摘要抽取结构化 `MacroEvent`，保留来源、发布时间、检测时间和证据可信度。 |
 | `src/core/ImpactGraphEngine.cpp` | 事件影响路径规则库，把宏观事件映射到直接/间接影响板块和解释路径。 |
 | `src/core/SectorImpactAnalyzer.cpp` | 聚合事件路径结果，生成板块级 `eventCatalystScore` 原始分。 |
-| `src/core/EventRepository.cpp` | 本地 JSON 事件追踪仓库，记录事件首次发现、最近出现、出现次数和状态变化。 |
+| `src/core/EventRepository.cpp` | 本地 JSON 事件追踪仓库，记录事件首次发现、最近出现、出现次数、状态变化和受影响板块的事后窗口表现。 |
 | `src/core/AIAnalyzer.cpp` | 可选 AI 分析；新闻归因 Stage 1 和重点板块深度研判 Stage 2。 |
 | `src/core/MarketContext.cpp` | 指数、A 股涨跌家数、板块资金流合计、市场风险分。 |
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
@@ -141,6 +141,7 @@ flowchart TD
 - v2.1 切片 3 已扩展高频事件抽取：美联储鹰派/加息、国内财政刺激/专项债、半导体出口限制、原油供给扰动和市场制度规则可被结构化为对应 `MacroEventType`。
 - v2.1 切片 4 已补齐第一批高频事件影响路径：美联储鹰派/加息会映射到半导体、黄金、创新药压力，财政稳增长映射到建筑建材、地产、证券，半导体出口限制、原油供给扰动和市场制度优化也会带有方向、关系、条件和影响周期。
 - v2.1 切片 5 已升级事件催化评分：`SectorEventImpact` 会携带来源可信度、新鲜度权重、时间衰减和最新证据时间，`SectorImpactAnalyzer` 公开 `scoreImpact` 并按 `direction * strength * confidence * stateWeight * sourceReliability * noveltyWeight * timeDecay` 计算贡献。
+- v2.1 切片 6 已扩展事件仓库追踪：`TrackedEventRecord` 可保存 `TrackedImpactPerformance`，记录板块、窗口天数、窗口收益和捕获时间，用于后续命中率与滞后性校准。
 
 预测：
 
