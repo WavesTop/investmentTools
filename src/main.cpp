@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDir>
 #include <QEvent>
 #include <QIcon>
 #include <QLabel>
@@ -37,6 +38,19 @@ QString argumentAfter(int argc, char *argv[], const QString &flag)
         }
     }
     return QString();
+}
+
+QIcon applicationIcon()
+{
+    QIcon icon(QStringLiteral(":/icons/app-icon.png"));
+#ifdef Q_OS_MACOS
+    if (icon.isNull()) {
+        const QDir resourcesDir(QCoreApplication::applicationDirPath()
+                                + QStringLiteral("/../Resources"));
+        icon = QIcon(resourcesDir.filePath(QStringLiteral("app-icon.png")));
+    }
+#endif
+    return icon;
 }
 
 int debugEventImpact(int argc, char *argv[])
@@ -291,7 +305,10 @@ int main(int argc, char *argv[])
     }
 
     QApplication app(argc, argv);
-    app.setWindowIcon(QIcon(":/icons/app-icon.png"));
+    const QIcon icon = applicationIcon();
+    if (!icon.isNull()) {
+        app.setWindowIcon(icon);
+    }
 
 #ifdef Q_OS_WIN
     app.setStyle(QStyleFactory::create("Fusion"));

@@ -6,12 +6,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
-set(CMAKE_AUTORCC ON)
+if(APPLE)
+    set(CMAKE_AUTORCC OFF)
+else()
+    set(CMAKE_AUTORCC ON)
+endif()
 
 option(INVESTINSIGHT_WIN32_SUBSYSTEM "Build Windows executable with GUI subsystem" OFF)
 
 set(APP_ICON_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/assets/windows/app-icon.rc")
 set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/assets/macos/app-icon.icns")
+set(APP_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/assets/app-icon.png")
+set(APP_ICON_QRC "${CMAKE_CURRENT_SOURCE_DIR}/assets/app.qrc")
 
 find_package(Qt5 COMPONENTS Core Widgets Network Concurrent QUIET)
 if(Qt5_FOUND)
@@ -21,7 +27,8 @@ else()
     set(QT_LIBS Qt6::Core Qt6::Widgets Qt6::Network Qt6::Concurrent)
 
     # Work around macOS SDKs where AGL.framework is removed.
-    foreach(_qt6_tgt Qt6::Gui Qt6::GuiPrivate Qt6::Widgets Qt6::WidgetsPrivate
+    foreach(_qt6_tgt WrapOpenGL::WrapOpenGL
+                     Qt6::Gui Qt6::GuiPrivate Qt6::Widgets Qt6::WidgetsPrivate
                      Qt6::Core Qt6::CorePrivate Qt6::OpenGL Qt6::OpenGLPrivate
                      Qt6::QCocoaIntegrationPlugin Qt6::QCocoaWindowPlugin)
         if(TARGET ${_qt6_tgt})
@@ -88,16 +95,21 @@ set(APP_SOURCES
     src/core/ExplainabilityEngine.cpp
     src/providers/RealFinanceNewsProvider.cpp
     src/providers/RealLinkageProvider.cpp
-    assets/app.qrc
 )
+
+if(NOT APPLE)
+    list(APPEND APP_SOURCES "${APP_ICON_QRC}")
+endif()
 
 if(WIN32)
     list(APPEND APP_SOURCES "${APP_ICON_WINDOWS}")
 endif()
 
 if(APPLE)
-    list(APPEND APP_SOURCES "${APP_ICON_MACOS}")
+    list(APPEND APP_SOURCES "${APP_ICON_MACOS}" "${APP_ICON_PNG}")
     set_source_files_properties("${APP_ICON_MACOS}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+    set_source_files_properties("${APP_ICON_PNG}" PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 
