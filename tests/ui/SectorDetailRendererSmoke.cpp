@@ -50,8 +50,11 @@ SectorSnapshot makeSector()
     impact.explanation = QString::fromUtf8("半导体受益于成长风格估值修复");
     impact.direction = EventImpactDirection::Positive;
     impact.relation = EventImpactRelation::Indirect;
+    impact.horizon = ImpactHorizon::MediumTerm;
+    impact.condition = QString::fromUtf8("若 FOMC 转鹰则路径失效");
     impact.strength = 0.68;
     impact.confidence = 0.76;
+    impact.sourceReliability = 0.91;
     snap.eventImpacts << impact;
     snap.strategy.actionLabel = QString::fromUtf8("回调分批加仓");
     snap.strategy.shortTermView = QString::fromUtf8("短期维持强势");
@@ -119,6 +122,9 @@ int runSectorDetailRendererSmoke()
     expect(html.contains(QString::fromUtf8("资金流")), "sector detail contains fund flow");
     expect(html.contains(QString::fromUtf8("事件驱动")), "sector detail contains event impact section");
     expect(html.contains(QString::fromUtf8("美债收益率下行")), "sector detail renders structured event path");
+    expect(html.contains(QStringLiteral("MediumTerm")), "sector detail renders impact horizon");
+    expect(html.contains(QStringLiteral("0.91")), "sector detail renders source reliability");
+    expect(html.contains(QString::fromUtf8("若 FOMC 转鹰则路径失效")), "sector detail renders invalidation condition");
     expect(html.contains(QString::fromUtf8("策略回测")), "sector detail contains backtest");
     expect(html.contains(QString::fromUtf8("新闻证据")), "sector detail contains news evidence");
     expect(html.contains(QString::fromUtf8("数据质量")), "sector detail contains data quality");

@@ -146,6 +146,52 @@ QString renderSummary(const AnalysisResult &analysis,
     return h;
 }
 
+QString checkpointText(const MacroEvent &event)
+{
+    QStringList checkpoints;
+    if (!event.checkpoint.trimmed().isEmpty()) checkpoints << event.checkpoint.trimmed();
+    for (const MacroEventCheckpoint &checkpoint : event.nextCheckpoints) {
+        if (!checkpoint.name.trimmed().isEmpty()) checkpoints << checkpoint.name.trimmed();
+    }
+    checkpoints.removeDuplicates();
+    return checkpoints.isEmpty() ? QString::fromUtf8("等待后续观察点") : checkpoints.join(QStringLiteral(" / "));
+}
+
+double evidenceReliability(const MacroEvent &event)
+{
+    double sum = 0.0;
+    int count = 0;
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (evidence.reliability <= 0.0) continue;
+        sum += evidence.reliability;
+        ++count;
+    }
+    return count > 0 ? sum / count : event.confidence;
+}
+
+QString renderEventTimeline(const AnalysisResult &analysis, const ThemeColors &theme)
+{
+    QString h = "<div class='section-title'>结构化事件时间线</div>";
+    if (analysis.macroEvents.isEmpty()) {
+        h += "<div class='narrative'>暂无结构化宏观事件，等待新闻抽取结果补充。</div>";
+        return h;
+    }
+
+    h += "<table class='overview'><tr><th>事件</th><th>状态</th><th>地区</th><th>观察点</th><th>证据可信度</th></tr>";
+    int rows = 0;
+    for (const MacroEvent &event : analysis.macroEvents) {
+        h += "<tr><td><b>" + escaped(event.title) + "</b></td>"
+            + "<td>" + escaped(toString(event.state)) + "</td>"
+            + "<td>" + escaped(toString(event.region)) + "</td>"
+            + "<td>" + escaped(checkpointText(event)) + "</td>"
+            + "<td style='color:" + changeColor(evidenceReliability(event), theme)
+            + ";font-weight:700;'>" + escaped(num(evidenceReliability(event), 2)) + "</td></tr>";
+        if (++rows >= 6) break;
+    }
+    h += "</table>";
+    return h;
+}
+
 QString renderQueue(const QList<const SectorSnapshot *> &items, const ThemeColors &theme)
 {
     QString h;
@@ -180,7 +226,11 @@ QString renderPath(const QList<const SectorSnapshot *> &items)
             for (const SectorEventImpact &impact : sector->eventImpacts) {
                 h += "<tr><td>" + escaped(impact.eventTitle) + "</td>"
                     + "<td><b>" + escaped(sector->industry) + "</b></td>"
-                    + "<td>" + escaped(impact.path + QString::fromUtf8("；") + impact.explanation) + "</td></tr>";
+                    + "<td>" + escaped(impact.path + QString::fromUtf8("；") + impact.explanation)
+                    + "<br/><span class='meta'>" + escaped(toString(impact.horizon))
+                    + QString::fromUtf8(" · 失效条件：")
+                    + escaped(impact.condition.isEmpty() ? QString::fromUtf8("等待后续验证") : impact.condition)
+                    + "</span></td></tr>";
                 if (++rows >= 5) break;
             }
             if (rows >= 5) break;
@@ -249,6 +299,7 @@ QString EventRadarRenderer::render(const AnalysisResult &analysis,
     h += "<h1>事件雷达</h1>";
     h += "<p class='meta'>将新闻、未来催化、行情确认和风险条件组织为一个可扫描的事件工作台。</p>";
     h += renderSummary(analysis, items, theme);
+    h += renderEventTimeline(analysis, theme);
     h += renderQueue(items, theme);
     if (!options.simpleMode) {
         h += renderPath(items);

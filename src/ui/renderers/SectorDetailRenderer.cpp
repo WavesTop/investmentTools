@@ -181,7 +181,14 @@ QString renderImpactPath(const SectorSnapshot &sector, const ThemeColors &theme)
             h += "<div class='meta' style='margin:4px 0 0 0;'>"
                 + escaped(impactRelationText(impact.relation)) + QString::fromUtf8("影响 · ")
                 + escaped(impactDirectionText(impact.direction)) + QString::fromUtf8(" · 置信度 ")
-                + num(impact.confidence * 100.0, 0) + "%</div>";
+                + num(impact.confidence * 100.0, 0) + "%"
+                + QString::fromUtf8(" · 周期 ") + escaped(toString(impact.horizon))
+                + QString::fromUtf8(" · 来源可信度 ") + num(impact.sourceReliability, 2)
+                + "</div>";
+            if (!impact.condition.isEmpty()) {
+                h += "<div class='meta' style='margin:4px 0 0 0;color:" + theme.warningColor + ";'>"
+                    + QString::fromUtf8("失效条件：") + escaped(impact.condition) + "</div>";
+            }
             h += "</div>";
         }
     }
@@ -302,16 +309,22 @@ QString renderEventImpacts(const SectorSnapshot &sector, const ThemeColors &them
     }
     h += "</div>";
 
-    h += "<table class='overview'><tr><th>事件</th><th>方向</th><th>关系</th><th>路径与解释</th></tr>";
+    h += "<table class='overview'><tr><th>事件</th><th>方向</th><th>关系</th><th>路径与解释</th><th>周期/证据</th></tr>";
     if (sector.eventImpacts.isEmpty()) {
-        h += "<tr><td colspan='4'>暂无结构化影响路径，等待事件引擎补充。</td></tr>";
+        h += "<tr><td colspan='5'>暂无结构化影响路径，等待事件引擎补充。</td></tr>";
     } else {
         for (const SectorEventImpact &impact : sector.eventImpacts) {
             h += "<tr><td>" + escaped(impact.eventTitle) + "</td>"
                 + "<td>" + escaped(impactDirectionText(impact.direction)) + "</td>"
                 + "<td>" + escaped(impactRelationText(impact.relation)) + "</td>"
                 + "<td>" + escaped(impact.path) + "<br/><span class='meta'>"
-                + escaped(impact.explanation) + "</span></td></tr>";
+                + escaped(impact.explanation) + "</span></td>"
+                + "<td>" + escaped(toString(impact.horizon)) + "<br/><span class='meta'>"
+                + QString::fromUtf8("来源可信度 ") + num(impact.sourceReliability, 2)
+                + "</span><br/><span class='meta'>"
+                + QString::fromUtf8("失效条件：")
+                + escaped(impact.condition.isEmpty() ? QString::fromUtf8("等待后续验证") : impact.condition)
+                + "</span></td></tr>";
         }
     }
     h += "</table>";

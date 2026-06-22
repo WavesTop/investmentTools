@@ -3,6 +3,7 @@
 
 #include "domain/AnalysisResult.h"
 
+#include <QDateTime>
 #include <QTextStream>
 
 namespace {
@@ -40,8 +41,11 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double forec
     impact.explanation = QString::fromUtf8("半导体受益于成长风格估值修复");
     impact.direction = EventImpactDirection::Positive;
     impact.relation = EventImpactRelation::Indirect;
+    impact.horizon = ImpactHorizon::MediumTerm;
+    impact.condition = QString::fromUtf8("若 FOMC 转鹰则路径失效");
     impact.strength = 0.68;
     impact.confidence = 0.76;
+    impact.sourceReliability = 0.91;
     snap.eventImpacts << impact;
     snap.eventCatalystScore = 0.24;
     snap.eventSummary = QString::fromUtf8("美联储降息预期通过成长估值链条形成间接催化");
@@ -59,6 +63,22 @@ AnalysisResult makeAnalysis()
     analysis.marketCtx.riskLevel = QString::fromUtf8("风险偏好回暖");
     analysis.riskRadar.compositeRisk = 58.0;
     analysis.riskRadar.riskAdvice = QString::fromUtf8("控制追高，等待回撤确认");
+    MacroEvent event;
+    event.title = QString::fromUtf8("美联储议息会议临近，市场关注 CPI 和 FOMC 路径");
+    event.type = MacroEventType::MonetaryPolicy;
+    event.state = MacroEventState::Scheduled;
+    event.region = MacroEventRegion::US;
+    event.detectedAt = QDateTime(QDate(2026, 6, 21), QTime(10, 0), Qt::UTC);
+    event.checkpoint = QStringLiteral("FOMC / CPI");
+    MacroEventCheckpoint checkpoint;
+    checkpoint.name = QStringLiteral("CPI");
+    checkpoint.reason = QStringLiteral("inflation confirmation");
+    event.nextCheckpoints << checkpoint;
+    MacroEventEvidence evidence;
+    evidence.source = QStringLiteral("Reuters");
+    evidence.reliability = 0.91;
+    event.evidence << evidence;
+    analysis.macroEvents << event;
     return analysis;
 }
 
@@ -78,6 +98,12 @@ int runEventRadarRendererSmoke()
     expect(html.contains(QString::fromUtf8("关键事件队列")), "event radar html contains event queue");
     expect(html.contains(QString::fromUtf8("事件传导路径")), "event radar html contains transmission path");
     expect(html.contains(QString::fromUtf8("风险与失效条件")), "event radar html contains risk section");
+    expect(html.contains(QString::fromUtf8("结构化事件时间线")), "event radar html contains event timeline");
+    expect(html.contains(QStringLiteral("Scheduled")), "event radar html renders event state");
+    expect(html.contains(QStringLiteral("CPI")), "event radar html renders next checkpoint");
+    expect(html.contains(QStringLiteral("0.91")), "event radar html renders evidence reliability");
+    expect(html.contains(QStringLiteral("MediumTerm")), "event radar html renders impact horizon");
+    expect(html.contains(QString::fromUtf8("若 FOMC 转鹰则路径失效")), "event radar html renders invalidation condition");
     expect(html.contains(QString::fromUtf8("事件催化分")), "event radar html renders catalyst score");
     expect(html.contains(QString::fromUtf8("美债收益率下行")), "event radar html renders structured impact path");
     expect(html.contains(QString::fromUtf8("半导体")), "event radar html renders sector names");

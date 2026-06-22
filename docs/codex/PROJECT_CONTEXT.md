@@ -142,6 +142,7 @@ flowchart TD
 - v2.1 切片 4 已补齐第一批高频事件影响路径：美联储鹰派/加息会映射到半导体、黄金、创新药压力，财政稳增长映射到建筑建材、地产、证券，半导体出口限制、原油供给扰动和市场制度优化也会带有方向、关系、条件和影响周期。
 - v2.1 切片 5 已升级事件催化评分：`SectorEventImpact` 会携带来源可信度、新鲜度权重、时间衰减和最新证据时间，`SectorImpactAnalyzer` 公开 `scoreImpact` 并按 `direction * strength * confidence * stateWeight * sourceReliability * noveltyWeight * timeDecay` 计算贡献。
 - v2.1 切片 6 已扩展事件仓库追踪：`TrackedEventRecord` 可保存 `TrackedImpactPerformance`，记录板块、窗口天数、窗口收益和捕获时间，用于后续命中率与滞后性校准。
+- v2.1 切片 7 已补齐 UI 展示：事件雷达新增结构化事件时间线，展示状态、地区、观察点和证据可信度；事件路径和板块详情会展示影响周期、来源可信度和失效条件。
 
 预测：
 
@@ -167,7 +168,7 @@ AI 两个阶段：
 
 当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主界面已经按 `docs/versions/v2.0/design/ui-workbench-redesign.md` 落地为左侧导航 + 顶部状态条 + 内容工作区：左侧入口包含“总览、事件雷达、板块机会、策略跟踪、AI 助手、配置”，顶部只显示当前页面标题、说明和运行状态，不再放置 AI 助手/配置快捷按钮或外层页签。“开始分析”和 AI 开关已经移动到总览页的分析控制卡片中，配置页作为左侧“配置”导航对应的右侧完整页面嵌入工作台。主题颜色、Widget 样式、HTML 基础 CSS 和暗色模式检测已拆到 `src/ui/AppTheme.cpp`，并新增 `sideNav`、`topStatusBar`、`workspace-shell`、`metric-grid`、`configCard`、`chatContextPanel` 等工作台样式。板块详情图表渲染已拆到 `src/ui/renderers/ChartRenderer.cpp`，`MainWindow::buildDataDashboardHtml` 已委托 `src/ui/renderers/DashboardRenderer.cpp`，`MainWindow::buildEventRadarHtml` 已委托 `src/ui/renderers/EventRadarRenderer.cpp`，`MainWindow::buildSectorTableHtml` 已委托 `src/ui/renderers/SectorTableRenderer.cpp`，`MainWindow::buildStrategyHtml` 已委托 `src/ui/renderers/StrategyRenderer.cpp`，`MainWindow::buildSectorHtml` 已委托 `src/ui/renderers/SectorDetailRenderer.cpp`，`MainWindow::buildIndexHtml` 已委托 `src/ui/renderers/IndexDetailRenderer.cpp`。
 
-总览页已改为工作台式信息结构，包含分析控制、关键事件雷达、板块机会与风险和下一观察点；板块机会页在完整模式下新增事件催化列和风险提示列；策略跟踪页新增“跟踪状态”指标卡片；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；板块详情页在投资结论之后新增“核心评分”“信号解释”“影响路径”“阶段收益与回测”“资金流与相关板块”等分区，并继续保留事件驱动、趋势图表、技术指标、资金流、回测、新闻证据和数据质量。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
+总览页已改为工作台式信息结构，包含分析控制、关键事件雷达、板块机会与风险和下一观察点；板块机会页在完整模式下新增事件催化列和风险提示列；策略跟踪页新增“跟踪状态”指标卡片；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；事件雷达已新增结构化事件时间线，板块详情页在投资结论之后新增“核心评分”“信号解释”“影响路径”“阶段收益与回测”“资金流与相关板块”等分区，并继续保留事件驱动、趋势图表、技术指标、资金流、回测、新闻证据和数据质量。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
 
 板块详情页重构时不要删减当前已有量化信息。新的详情长图要求保留投资信号、短中长期收益、核心评分、技术指标、阶段收益/回测、资金流、相关板块、新闻证据和数据质量。
 
