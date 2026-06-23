@@ -3,6 +3,7 @@
 #include <QDateTime>
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 enum class MacroEventType
 {
@@ -75,6 +76,22 @@ struct MacroEventEvidence
     double reliability = 0.0;
 };
 
+struct AIReadableInsight
+{
+    QString readableTitle;
+    QString summary;
+    QString whyItMatters;
+    QString impactPath;
+    QStringList affectedSectors;
+    QString primaryReason;
+    QString primaryRisk;
+    QString nextCheckpoint;
+    double confidence = 0.0;
+    QStringList sourceRefs;
+    QString disagreementNotes;
+    bool valid = false;
+};
+
 struct MacroEvent
 {
     QString id;
@@ -94,6 +111,7 @@ struct MacroEvent
     double importance = 0.0;
     double confidence = 0.0;
     QList<MacroEventEvidence> evidence;
+    AIReadableInsight aiInsight;
 };
 
 struct SectorEventImpact

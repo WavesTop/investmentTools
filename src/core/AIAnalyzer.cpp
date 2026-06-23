@@ -4,6 +4,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonParseError>
 #include <QMutex>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
@@ -29,6 +30,169 @@ QStringList deduplicateFactors(const QList<QStringList> &allFactors)
         }
     }
     return merged;
+}
+
+QString trimmedString(const QJsonObject &object, const char *key)
+{
+    return object.value(QLatin1String(key)).toString().trimmed();
+}
+
+QStringList stringArray(const QJsonObject &object, const char *key)
+{
+    QStringList values;
+    const QJsonArray array = object.value(QLatin1String(key)).toArray();
+    for (const QJsonValue &value : array) {
+        const QString text = value.toString().trimmed();
+        if (!text.isEmpty()) values.push_back(text);
+    }
+    values.removeDuplicates();
+    return values;
+}
+
+QString firstText(const QStringList &items)
+{
+    for (const QString &item : items) {
+        if (!item.trimmed().isEmpty()) return item.trimmed();
+    }
+    return {};
+}
+
+bool hasAnyReadableField(const AIReadableInsight &insight)
+{
+    return !insight.readableTitle.isEmpty()
+        || !insight.summary.isEmpty()
+        || !insight.whyItMatters.isEmpty()
+        || !insight.impactPath.isEmpty()
+        || !insight.primaryReason.isEmpty()
+        || !insight.primaryRisk.isEmpty()
+        || !insight.nextCheckpoint.isEmpty()
+        || !insight.disagreementNotes.isEmpty()
+        || !insight.affectedSectors.isEmpty()
+        || !insight.sourceRefs.isEmpty();
+}
+
+AIReadableInsight readableInsightFromJson(const QJsonObject &object)
+{
+    AIReadableInsight insight;
+    insight.readableTitle = trimmedString(object, "readable_title");
+    if (insight.readableTitle.isEmpty()) insight.readableTitle = trimmedString(object, "readableTitle");
+    insight.summary = trimmedString(object, "summary");
+    insight.whyItMatters = trimmedString(object, "why_it_matters");
+    if (insight.whyItMatters.isEmpty()) insight.whyItMatters = trimmedString(object, "whyItMatters");
+    insight.impactPath = trimmedString(object, "impact_path");
+    if (insight.impactPath.isEmpty()) insight.impactPath = trimmedString(object, "impactPath");
+    insight.affectedSectors = stringArray(object, "affected_sectors");
+    if (insight.affectedSectors.isEmpty()) insight.affectedSectors = stringArray(object, "affectedSectors");
+    insight.primaryReason = trimmedString(object, "primary_reason");
+    if (insight.primaryReason.isEmpty()) insight.primaryReason = trimmedString(object, "primaryReason");
+    insight.primaryRisk = trimmedString(object, "primary_risk");
+    if (insight.primaryRisk.isEmpty()) insight.primaryRisk = trimmedString(object, "primaryRisk");
+    insight.nextCheckpoint = trimmedString(object, "next_checkpoint");
+    if (insight.nextCheckpoint.isEmpty()) insight.nextCheckpoint = trimmedString(object, "nextCheckpoint");
+    insight.confidence = object.value("confidence").toDouble(0.0);
+    insight.sourceRefs = stringArray(object, "source_refs");
+    if (insight.sourceRefs.isEmpty()) insight.sourceRefs = stringArray(object, "sourceRefs");
+    insight.disagreementNotes = trimmedString(object, "disagreement_notes");
+    if (insight.disagreementNotes.isEmpty()) insight.disagreementNotes = trimmedString(object, "disagreementNotes");
+
+    if (insight.summary.isEmpty()) insight.summary = trimmedString(object, "prediction_reason");
+    if (insight.primaryReason.isEmpty()) insight.primaryReason = firstText(stringArray(object, "positive_factors"));
+    if (insight.primaryRisk.isEmpty()) insight.primaryRisk = firstText(stringArray(object, "negative_factors"));
+    if (insight.nextCheckpoint.isEmpty()) insight.nextCheckpoint = firstText(stringArray(object, "future_events"));
+
+    insight.valid = hasAnyReadableField(insight);
+    return insight;
+}
+
+QString firstNonEmptyText(const QStringList &items)
+{
+    for (const QString &item : items) {
+        const QString text = item.trimmed();
+        if (!text.isEmpty()) return text;
+    }
+    return {};
+}
+
+AIReadableInsight mergeReadableInsights(const QList<AIAnalyzer::SectorAIResult> &results)
+{
+    AIReadableInsight merged;
+    QStringList affectedSectors;
+    QStringList sourceRefs;
+    double confidenceSum = 0.0;
+    int confidenceCount = 0;
+
+    for (const AIAnalyzer::SectorAIResult &result : results) {
+        const AIReadableInsight &current = result.readable;
+        if (!current.valid) continue;
+        if (merged.readableTitle.isEmpty()) merged.readableTitle = current.readableTitle;
+        if (merged.summary.isEmpty()) merged.summary = current.summary;
+        if (merged.whyItMatters.isEmpty()) merged.whyItMatters = current.whyItMatters;
+        if (merged.impactPath.isEmpty()) merged.impactPath = current.impactPath;
+        if (merged.primaryReason.isEmpty()) merged.primaryReason = current.primaryReason;
+        if (merged.primaryRisk.isEmpty()) merged.primaryRisk = current.primaryRisk;
+        if (merged.nextCheckpoint.isEmpty()) merged.nextCheckpoint = current.nextCheckpoint;
+        if (merged.disagreementNotes.isEmpty()) merged.disagreementNotes = current.disagreementNotes;
+        affectedSectors.append(current.affectedSectors);
+        sourceRefs.append(current.sourceRefs);
+        if (current.confidence > 0.0) {
+            confidenceSum += current.confidence;
+            ++confidenceCount;
+        }
+    }
+
+    if (merged.summary.isEmpty()) {
+        QStringList reasons;
+        for (const AIAnalyzer::SectorAIResult &result : results) reasons << result.predictionReason;
+        merged.summary = firstNonEmptyText(reasons);
+    }
+    if (merged.primaryReason.isEmpty()) {
+        for (const AIAnalyzer::SectorAIResult &result : results) {
+            merged.primaryReason = firstNonEmptyText(result.positiveFactors);
+            if (!merged.primaryReason.isEmpty()) break;
+        }
+    }
+    if (merged.primaryRisk.isEmpty()) {
+        for (const AIAnalyzer::SectorAIResult &result : results) {
+            merged.primaryRisk = firstNonEmptyText(result.negativeFactors);
+            if (!merged.primaryRisk.isEmpty()) break;
+        }
+    }
+    if (merged.nextCheckpoint.isEmpty()) {
+        for (const AIAnalyzer::SectorAIResult &result : results) {
+            merged.nextCheckpoint = firstNonEmptyText(result.futureEvents);
+            if (!merged.nextCheckpoint.isEmpty()) break;
+        }
+    }
+
+    affectedSectors.removeDuplicates();
+    sourceRefs.removeDuplicates();
+    merged.affectedSectors = affectedSectors;
+    merged.sourceRefs = sourceRefs;
+    merged.confidence = confidenceCount > 0 ? confidenceSum / confidenceCount : 0.0;
+    merged.valid = hasAnyReadableField(merged);
+    return merged;
+}
+
+AdviceAction actionFromAiLabel(const QString &label)
+{
+    if (label.contains(QString::fromUtf8("增")) || label.contains(QStringLiteral("Increase"), Qt::CaseInsensitive))
+        return AdviceAction::Increase;
+    if (label.contains(QString::fromUtf8("减")) || label.contains(QStringLiteral("Decrease"), Qt::CaseInsensitive))
+        return AdviceAction::Decrease;
+    return AdviceAction::Hold;
+}
+
+QString ruleActionLabel(AdviceAction action)
+{
+    switch (action) {
+    case AdviceAction::Increase:
+        return QString::fromUtf8("增配");
+    case AdviceAction::Decrease:
+        return QString::fromUtf8("减配");
+    case AdviceAction::Hold:
+    default:
+        return QString::fromUtf8("持有");
+    }
 }
 } // namespace
 
@@ -255,6 +419,50 @@ AINewsDigestResult AIAnalyzer::parseDigestResponse(const QString &content) const
     }
 
     result.valid = !result.newsSignals.isEmpty();
+    return result;
+}
+
+AICollaborationParseResult AIAnalyzer::parseCollaborationResponse(const QString &content) const
+{
+    AICollaborationParseResult result;
+
+    QString normalized = content.trimmed();
+    normalized.remove("```json");
+    normalized.remove("```JSON");
+    normalized.remove("```");
+
+    const int braceStart = normalized.indexOf('{');
+    const int braceEnd = normalized.lastIndexOf('}');
+    if (braceStart < 0 || braceEnd <= braceStart) {
+        result.errorMessage = QStringLiteral("AI collaboration response has no JSON object");
+        return result;
+    }
+    normalized = normalized.mid(braceStart, braceEnd - braceStart + 1);
+
+    QJsonParseError parseError;
+    const QJsonDocument doc = QJsonDocument::fromJson(normalized.toUtf8(), &parseError);
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        result.errorMessage = QStringLiteral("AI collaboration JSON parse failed: ")
+            + parseError.errorString();
+        return result;
+    }
+
+    const QJsonObject root = doc.object();
+    const QJsonObject sectors = root.value("sectors").toObject();
+    if (sectors.isEmpty()) {
+        result.errorMessage = QStringLiteral("AI collaboration JSON has no sectors object");
+        return result;
+    }
+
+    for (const QString &sectorName : sectors.keys()) {
+        const AIReadableInsight insight = readableInsightFromJson(sectors.value(sectorName).toObject());
+        if (insight.valid) result.sectors.insert(sectorName, insight);
+    }
+
+    result.valid = !result.sectors.isEmpty();
+    if (!result.valid) {
+        result.errorMessage = QStringLiteral("AI collaboration JSON has no readable sector insights");
+    }
     return result;
 }
 
@@ -605,7 +813,19 @@ QString AIAnalyzer::buildDeepPrompt(const AnalysisResult &result, int maxSectors
         "- **future_events**：一个字符串数组，列出未来1-3个月内该板块可能面临的重要事件或催化剂，"
         "每条40-80字，包含预计时间和预期影响。例如：\"4月下旬科技类公司一季报密集披露，业绩超预期"
         "个股或带动板块估值修复\"、\"5月国产大飞机商业首航一周年，航空制造板块关注度将提升\"。"
-        "至少给出2-4个前瞻事件。\n\n");
+        "至少给出2-4个前瞻事件。\n\n"
+        "### AI 协同可读性字段（只用于 UI 展示，不得覆盖规则评分或最终动作）\n"
+        "- **readable_title**：16-30字，用普通投资者能理解的话概括核心事件或判断。\n"
+        "- **summary**：一句话说明这件事是什么，避免堆关键词。\n"
+        "- **why_it_matters**：一句话说明它为什么会影响市场或板块。\n"
+        "- **impact_path**：用「事件 -> 传导变量 -> 板块影响 -> 验证点」写清楚路径。\n"
+        "- **affected_sectors**：数组，列出受影响板块，可带方向，例如「半导体设备：正向」。\n"
+        "- **primary_reason**：该板块最重要的一条机会理由，必须具体、可核对。\n"
+        "- **primary_risk**：该板块最重要的一条风险或失效条件，必须具体、可核对。\n"
+        "- **next_checkpoint**：下一步需要跟踪的数据、会议、财报或价格/资金验证点。\n"
+        "- **confidence**：0-1的解释置信度。\n"
+        "- **source_refs**：数组，引用输入新闻标题、来源或证据编号，不要编造不存在的来源。\n"
+        "- **disagreement_notes**：当 AI 判断与规则动作或评分方向不一致时，用一句话说明分歧。\n\n");
 
     prompt += QString::fromUtf8(
         "JSON格式：\n"
@@ -621,7 +841,18 @@ QString AIAnalyzer::buildDeepPrompt(const AnalysisResult &result, int maxSectors
         "      \"prediction_reason\": \"预测研判...\",\n"
         "      \"trend_summary\": \"4-8字趋势概括\",\n"
         "      \"investment_strategy\": \"投资策略建议...\",\n"
-        "      \"future_events\": [\"未来事件1\", \"未来事件2\"]\n"
+        "      \"future_events\": [\"未来事件1\", \"未来事件2\"],\n"
+        "      \"readable_title\": \"用户可读事件标题\",\n"
+        "      \"summary\": \"一句话说明事件是什么\",\n"
+        "      \"why_it_matters\": \"一句话说明为什么重要\",\n"
+        "      \"impact_path\": \"事件 -> 传导变量 -> 板块影响 -> 验证点\",\n"
+        "      \"affected_sectors\": [\"板块A：正向\", \"板块B：负向\"],\n"
+        "      \"primary_reason\": \"首要机会理由\",\n"
+        "      \"primary_risk\": \"首要风险或失效条件\",\n"
+        "      \"next_checkpoint\": \"下一观察点\",\n"
+        "      \"confidence\": 0.78,\n"
+        "      \"source_refs\": [\"新闻标题或来源\"],\n"
+        "      \"disagreement_notes\": \"规则与 AI 分歧说明，可为空\"\n"
         "    }\n"
         "  }\n"
         "}\n");
@@ -735,6 +966,7 @@ AIAnalyzer::ProviderResult AIAnalyzer::callProvider(const AIProvider &provider,
             sr.negativeFactors.push_back(v.toString());
         for (const QJsonValue &v : so.value("future_events").toArray())
             sr.futureEvents.push_back(v.toString());
+        sr.readable = readableInsightFromJson(so);
 
         pr.sectors[key] = sr;
     }
@@ -797,6 +1029,20 @@ void AIAnalyzer::aggregateResults(const QList<ProviderResult> &results,
         }
         if (sectorResults.isEmpty()) continue;
 
+        s.aiInsight = mergeReadableInsights(sectorResults);
+        for (const SectorAIResult &sr : sectorResults) {
+            if (sr.suggestedAction.trimmed().isEmpty()) continue;
+            const AdviceAction aiAction = actionFromAiLabel(sr.suggestedAction);
+            if (aiAction != s.action) {
+                if (s.aiInsight.disagreementNotes.isEmpty()) {
+                    s.aiInsight.disagreementNotes = QString::fromUtf8("AI 倾向「%1」，规则动作保持「%2」；请以规则评分、事件证据和技术指标共同验证。")
+                        .arg(sr.suggestedAction, ruleActionLabel(s.action));
+                }
+                s.aiInsight.valid = true;
+                break;
+            }
+        }
+
         if (multiProvider && sectorResults.size() > 1) {
             s.aiAnalysis = QString::fromUtf8("【多模型对比分析】\n\n");
             int agreeIncrease = 0, agreeHold = 0, agreeDecrease = 0;
@@ -826,13 +1072,16 @@ void AIAnalyzer::aggregateResults(const QList<ProviderResult> &results,
                     .arg(agreeIncrease).arg(agreeHold).arg(agreeDecrease).arg(total);
             }
             s.aiAnalysis += QString::fromUtf8("▎共识结论：") + consensus;
-
+            AdviceAction consensusAction = AdviceAction::Hold;
             if (agreeIncrease > agreeDecrease && agreeIncrease > agreeHold)
-                s.action = AdviceAction::Increase;
+                consensusAction = AdviceAction::Increase;
             else if (agreeDecrease > agreeIncrease && agreeDecrease > agreeHold)
-                s.action = AdviceAction::Decrease;
-            else
-                s.action = AdviceAction::Hold;
+                consensusAction = AdviceAction::Decrease;
+            if (consensusAction != s.action && s.aiInsight.disagreementNotes.isEmpty()) {
+                s.aiInsight.disagreementNotes = consensus + QString::fromUtf8("；规则动作仍保持「%1」。")
+                    .arg(ruleActionLabel(s.action));
+                s.aiInsight.valid = true;
+            }
 
             QList<QStringList> allPos, allNeg;
             QStringList allReasons, allTrends, allStrategies, allFutureEvents;
@@ -857,10 +1106,6 @@ void AIAnalyzer::aggregateResults(const QList<ProviderResult> &results,
             s.aiAnalysis = sr.analysis;
             s.aiPredictionReason = sr.predictionReason;
             s.aiTrendSummary = sr.trendSummary;
-
-            if (sr.suggestedAction == QString::fromUtf8("增配")) s.action = AdviceAction::Increase;
-            else if (sr.suggestedAction == QString::fromUtf8("减配")) s.action = AdviceAction::Decrease;
-            else s.action = AdviceAction::Hold;
 
             if (!sr.positiveFactors.isEmpty()) s.positiveFactors = sr.positiveFactors;
             if (!sr.negativeFactors.isEmpty()) s.negativeFactors = sr.negativeFactors;

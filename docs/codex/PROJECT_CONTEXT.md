@@ -22,6 +22,7 @@ cmake --build build --config Release -- /m
 .\build\Release\InvestInsight.exe --dump-sector-changes
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 .\build\Release\InvestInsightEventSmoke.exe
+.\build\Release\InvestInsightAIAnalyzerSmoke.exe
 .\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
 .\build\Release\InvestInsight.exe --dump-event-rules
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
@@ -32,8 +33,9 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS、图表渲染，以及主窗口关键 Tab/按钮是否存在。
 涉及 UI 或用户可见内容显示改动时，还需要通过自动化入口、调试参数或测试接口跳转到目标页面，等待渲染完成后截图确认，并在交付说明或提交说明中记录截图路径或验证结论。
 第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点、影响路径、事件仓库和证据保留。
-第五个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
-第六个命令用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
+第五个命令用于 AI 协同分析 smoke 验证，当前覆盖结构化可读字段 JSON 解析和异常兜底。
+第六个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
+第七个命令用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -63,7 +65,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/core/ImpactGraphEngine.cpp` | 事件影响路径规则库，把宏观事件映射到直接/间接影响板块和解释路径。 |
 | `src/core/SectorImpactAnalyzer.cpp` | 聚合事件路径结果，生成板块级 `eventCatalystScore` 原始分。 |
 | `src/core/EventRepository.cpp` | 本地 JSON 事件追踪仓库，记录事件首次发现、最近出现、出现次数、状态变化和受影响板块的事后窗口表现。 |
-| `src/core/AIAnalyzer.cpp` | 可选 AI 分析；新闻归因 Stage 1 和重点板块深度研判 Stage 2。 |
+| `src/core/AIAnalyzer.cpp` | 可选 AI 分析；新闻归因 Stage 1、重点板块深度研判 Stage 2，以及 v2.2 AI 协同可读字段解析。 |
 | `src/core/MarketContext.cpp` | 指数、A 股涨跌家数、板块资金流合计、市场风险分。 |
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
 | `src/core/StrategyEngine.cpp` | 生成短中长期观点、止盈止损和操作建议文本。 |
@@ -83,6 +85,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `tests/ui/IndexDetailRendererSmoke.cpp` | 指数详情 HTML smoke 测试，校验图表嵌入、技术指标、市场风控和数据质量。 |
 | `tests/ui/EventRadarRendererSmoke.cpp` | 事件雷达 HTML smoke 测试，校验事件队列、传导路径、风险区块和未来催化展示。 |
 | `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件模型字段、事件抽取、状态识别、证据保留、路径映射和仓库追踪。 |
+| `tests/core/AIAnalyzerSmoke.cpp` | AI 协同分析 smoke 测试，校验固定 JSON 样本可解析、无效 JSON 可兜底。 |
 | `docs/README.md` | 文档总入口，说明按职责和版本查看文档的路径。 |
 | `docs/versions/v1.0/release/PACKAGING.md` | 1.0 Windows/macOS 打包和使用说明。 |
 | `docs/versions/v2.0/design/ui-workbench-redesign.md` | 2.0 UI 工作台设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
@@ -165,9 +168,9 @@ AI Provider 配置保存在本地 `QSettings`，不要写入仓库。当前 `AIA
 AI 两个阶段：
 
 - Stage 1：对新闻标题做板块归因和情绪/影响强度识别。
-- Stage 2：对 Top N 板块做深度分析，并把 AI 理由追加到策略说明中。
+- Stage 2：对 Top N 板块做深度分析，并把 AI 理由、可读标题、摘要、影响路径、首要理由/风险、下一观察点和规则分歧说明写入独立展示字段。
 
-v2.2 计划把 AI 从“补充理由”扩展为协同分析层：AI 参与事件标题改写、摘要生成、影响路径解释、理由/风险去重和规则分歧提示；但不直接覆盖 `forecastScore`、`eventCatalystScore` 或最终建议动作。AI 输出需要结构化 JSON，失败或关闭时继续使用规则引擎结果。
+v2.2 已开始把 AI 从“补充理由”扩展为协同分析层：`AIReadableInsight` 会保存可读标题、摘要、影响路径、理由/风险去重和规则分歧提示；AI 不直接覆盖 `forecastScore`、`eventCatalystScore` 或最终建议动作。AI 输出需要结构化 JSON，失败或关闭时继续使用规则引擎结果。
 
 ## UI 状态
 

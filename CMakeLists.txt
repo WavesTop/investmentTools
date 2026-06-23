@@ -197,3 +197,20 @@ if(MSVC)
 endif()
 
 target_link_libraries(InvestInsightEventSmoke PRIVATE ${QT_LIBS})
+
+add_executable(InvestInsightAIAnalyzerSmoke
+    tests/core/AIAnalyzerSmoke.cpp
+    src/core/AIAnalyzer.cpp
+    src/core/HttpClient.cpp
+)
+
+target_include_directories(InvestInsightAIAnalyzerSmoke
+    PRIVATE
+        src
+)
+
+if(MSVC)
+    target_compile_options(InvestInsightAIAnalyzerSmoke PRIVATE /utf-8)
+endif()
+
+target_link_libraries(InvestInsightAIAnalyzerSmoke PRIVATE ${QT_LIBS})

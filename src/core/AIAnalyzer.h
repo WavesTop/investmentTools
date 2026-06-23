@@ -31,6 +31,13 @@ struct AINewsDigestResult
     QString errorMessage;
 };
 
+struct AICollaborationParseResult
+{
+    bool valid = false;
+    QString errorMessage;
+    QMap<QString, AIReadableInsight> sectors;
+};
+
 class AIAnalyzer
 {
 public:
@@ -50,10 +57,11 @@ public:
 
     QString chatQuery(const QString &userQuestion, const AnalysisResult &context) const;
 
+    AICollaborationParseResult parseCollaborationResponse(const QString &content) const;
+
     void saveEnabledToConfig(bool enabled) const;
     void configureProviders(const QList<AIProvider> &providers, bool enabled, int deepAnalysisTopN);
 
-private:
     struct SectorAIResult
     {
         QString analysis;
@@ -64,8 +72,10 @@ private:
         QStringList positiveFactors;
         QStringList negativeFactors;
         QStringList futureEvents;
+        AIReadableInsight readable;
     };
 
+private:
     struct ProviderResult
     {
         QString providerName;

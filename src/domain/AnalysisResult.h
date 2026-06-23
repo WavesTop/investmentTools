@@ -170,6 +170,7 @@ struct SectorSnapshot
     QString aiAnalysis;
     QString aiPredictionReason;
     QString aiTrendSummary;
+    AIReadableInsight aiInsight;
     QStringList positiveFactors;
     QStringList negativeFactors;
     QStringList newsHeadlines;

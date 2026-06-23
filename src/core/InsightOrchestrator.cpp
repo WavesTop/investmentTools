@@ -1302,22 +1302,7 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
             : "未配置 AI Key，使用规则引擎分析");
     }
 
-    // ========== 阶段 5.5: 将AI前瞻事件纳入预测评分微调 ==========
-    for (SectorSnapshot &s : result.sectors) {
-        if (s.futureEventsAI.isEmpty()) continue;
-        int positiveEvents = 0, negativeEvents = 0;
-        for (const QString &ev : s.futureEventsAI) {
-            bool hasPositive = ev.contains("利好") || ev.contains("增长") || ev.contains("突破")
-                || ev.contains("提升") || ev.contains("扩大") || ev.contains("催化");
-            bool hasNegative = ev.contains("风险") || ev.contains("收缩") || ev.contains("下行")
-                || ev.contains("压力") || ev.contains("限制");
-            if (hasPositive) ++positiveEvents;
-            if (hasNegative) ++negativeEvents;
-        }
-        double eventBias = (positiveEvents - negativeEvents) * 0.02;
-        eventBias = qBound(-0.05, eventBias, 0.05);
-        s.forecastScore = qBound(-1.0, s.forecastScore + eventBias, 1.0);
-    }
+    // AI 前瞻事件只作为解释与观察点展示，不直接改写规则评分或最终动作。
 
     // ========== 阶段 6: 最终一致性校验 ==========
     reportProgress(progress, 97, "正在做最终一致性校验...");
