@@ -93,6 +93,7 @@ set(APP_SOURCES
     src/core/FlowStructureAnalyzer.cpp
     src/core/MarketRegimeDetector.cpp
     src/core/ExplainabilityEngine.cpp
+    src/core/RecommendationTracker.cpp
     src/providers/RealFinanceNewsProvider.cpp
     src/providers/RealLinkageProvider.cpp
 )

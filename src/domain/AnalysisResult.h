@@ -18,6 +18,7 @@
 #include "core/ExplainabilityEngine.h"
 #include "core/MarketRegimeDetector.h"
 #include "domain/MacroEvent.h"
+#include "domain/RecommendationLifecycle.h"
 
 struct EventMarker
 {
@@ -232,6 +233,12 @@ struct SectorSnapshot
     double bestStrategyTrackedReturn = 0.0;
     QString bestStrategyCurrentSignal;
     QString investmentRecommendation;
+    double directionScore = 0.0;
+    double entryTimingScore = 0.0;
+    QString recommendationStateLabel;
+    QString recommendationReason;
+    QString recommendationWarning;
+    QString recommendationInvalidation;
     // 周期分析
     CycleAnalysis cycle;
 
@@ -252,6 +259,7 @@ struct AnalysisResult
     QStringList aiErrors;
     bool aiAvailable = false;
     QList<MacroEvent> macroEvents;
+    QList<RecommendationRecord> recommendationRecords;
     QList<SectorSnapshot> sectors;
 
     MarketContext marketCtx;
