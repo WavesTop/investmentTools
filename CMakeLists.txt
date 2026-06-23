@@ -215,3 +215,19 @@ if(MSVC)
 endif()
 
 target_link_libraries(InvestInsightAIAnalyzerSmoke PRIVATE ${QT_LIBS})
+
+add_executable(InvestInsightRecommendationSmoke
+    tests/core/RecommendationTrackerSmoke.cpp
+    src/core/RecommendationTracker.cpp
+)
+
+target_include_directories(InvestInsightRecommendationSmoke
+    PRIVATE
+        src
+)
+
+if(MSVC)
+    target_compile_options(InvestInsightRecommendationSmoke PRIVATE /utf-8)
+endif()
+
+target_link_libraries(InvestInsightRecommendationSmoke PRIVATE ${QT_LIBS})
