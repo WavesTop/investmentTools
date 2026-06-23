@@ -48,4 +48,6 @@
 - 涉及板块行情口径时，修改后运行 `build\Release\InvestInsight.exe --dump-sector-changes`，重点核对有色金属、半导体、锂电池。
 - 常规代码修改后运行 `cmake --build build --config Release -- /m`。
 - UI 重构或界面样式修改后运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1`。
+- 涉及 UI 或用户可见内容显示改动时，除 UI smoke 外还必须进行截图确认；优先通过自动化入口、调试参数或测试接口直接跳转到目标界面并等待渲染完成，不强制模拟鼠标点击。
+- 截图确认应覆盖受影响页面，例如总览、事件雷达、板块机会、策略跟踪、AI 助手、配置或板块详情，并在交付说明或提交说明中记录截图路径或验证结论。
 - 不要提交 AI Key、个人持仓明细或本地缓存数据。

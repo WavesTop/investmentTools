@@ -30,6 +30,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 
 第二个命令用于核对板块今日涨幅口径，当前重点输出有色金属、半导体、锂电池。
 第三个命令用于 UI 重构 smoke 验证，会构建 Release 主程序和 `InvestInsightUiSmoke`，并检查主题、Widget 样式、HTML 基础 CSS、图表渲染，以及主窗口关键 Tab/按钮是否存在。
+涉及 UI 或用户可见内容显示改动时，还需要通过自动化入口、调试参数或测试接口跳转到目标页面，等待渲染完成后截图确认，并在交付说明或提交说明中记录截图路径或验证结论。
 第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点、影响路径、事件仓库和证据保留。
 第五个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
 第六个命令用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
@@ -89,6 +90,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `docs/versions/v2.0/plans/ui-refactor-phase0-plan.md` | 2.0 UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
 | `docs/versions/v2.0/plans/event-impact-engine-phase1-5-plan.md` | 2.0 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
 | `docs/versions/v2.1/plans/event-impact-engine-completion-plan.md` | 2.1 事件传导引擎补完计划，记录事件模型、状态时间、路径规则、评分、追踪和 UI 的剩余实现切片。 |
+| `docs/versions/v2.2/plans/ui-content-readability-optimization-plan.md` | 2.2 UI 内容可读性优化计划，记录事件证据链、理由去重、板块机会表格、板块详情趋势图和截图验证要求。 |
 
 ## 当前主流程
 
