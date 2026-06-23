@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QDateTime>
 #include <QTextStream>
 
 namespace {
@@ -46,6 +47,35 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double score
     return snap;
 }
 
+RecommendationRecord makeLifecycleRecord(const QString &sector,
+                                         RecommendationState state,
+                                         double todayChange,
+                                         double returnSinceFirst)
+{
+    RecommendationRecord record;
+    record.sector = sector;
+    record.state = state;
+    record.firstAction = AdviceAction::Increase;
+    record.currentAction = state == RecommendationState::Invalidated
+        ? AdviceAction::Decrease : AdviceAction::Hold;
+    record.firstSeenAt = QDateTime(QDate(2026, 6, 22), QTime(10, 0), Qt::UTC);
+    record.lastSeenAt = QDateTime(QDate(2026, 6, 23), QTime(10, 0), Qt::UTC);
+    record.trackingDays = 2;
+    record.initialScore = 0.31;
+    record.currentScore = 0.24;
+    record.todayChangePct = todayChange;
+    record.returnSinceFirst = returnSinceFirst;
+    record.directionScore = 0.22;
+    record.entryTimingScore = state == RecommendationState::OverheatedNoChase ? -0.18 : 0.08;
+    record.stateReason = QString::fromUtf8("方向仍需跟踪，当前状态已降级复核");
+    record.warningReason = state == RecommendationState::RiskWarning
+        ? QString::fromUtf8("今日跌幅较大，需要复核推荐逻辑")
+        : QString();
+    record.invalidationCondition = QString::fromUtf8("方向分低于 -0.12 或事件催化失效");
+    record.active = state != RecommendationState::Invalidated;
+    return record;
+}
+
 QString portfolioJson()
 {
     QJsonArray arr;
@@ -67,6 +97,10 @@ AnalysisResult makeAnalysis()
                      << makeSector(QString::fromUtf8("锂电池"), AdviceAction::Decrease, -0.28, -1.85)
                      << makeSector(QString::fromUtf8("机器人"), AdviceAction::Increase, 0.31, 1.22)
                      << makeSector(QString::fromUtf8("证券"), AdviceAction::Hold, 0.02, 0.18);
+    analysis.recommendationRecords
+        << makeLifecycleRecord(QString::fromUtf8("有色金属"), RecommendationState::RiskWarning, -8.0, -9.0)
+        << makeLifecycleRecord(QString::fromUtf8("半导体"), RecommendationState::PullbackWatch, -1.5, 1.2)
+        << makeLifecycleRecord(QString::fromUtf8("机器人"), RecommendationState::OverheatedNoChase, 5.4, 7.8);
     analysis.marketCtx.shanghai.name = QString::fromUtf8("上证指数");
     analysis.marketCtx.shanghai.changePct = 0.46;
     analysis.marketCtx.shanghai.changePctValid = true;
@@ -87,6 +121,10 @@ int runStrategyRendererSmoke()
     expect(html.contains("table.fund"), "strategy html keeps shared fund table class");
     expect(html.contains(QString::fromUtf8("市场操作建议")), "strategy html contains market action section");
     expect(html.contains(QString::fromUtf8("跟踪状态")), "strategy html contains tracking state cards");
+    expect(html.contains(QString::fromUtf8("推荐跟踪 / 信号复盘")), "strategy html contains lifecycle tracking section");
+    expect(html.contains(QString::fromUtf8("风险预警")), "strategy html renders risk warning state");
+    expect(html.contains(QString::fromUtf8("过热不追")), "strategy html renders overheated no-chase state");
+    expect(html.contains(QString::fromUtf8("方向分低于 -0.12")), "strategy html renders invalidation condition");
     expect(html.contains(QString::fromUtf8("推荐关注板块")), "strategy html contains top opportunity section");
     expect(html.contains(QString::fromUtf8("建议回避板块")), "strategy html contains avoid section");
     expect(html.contains(QString::fromUtf8("指数方向参考")), "strategy html contains index reference");

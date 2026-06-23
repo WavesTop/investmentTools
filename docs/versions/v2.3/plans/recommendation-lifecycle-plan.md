@@ -2,6 +2,13 @@
 
 最后更新：2026-06-23
 
+## 实施进度
+
+- 已新增 `RecommendationState`、`RecommendationRecord`、`RecommendationTracker` 和 `InvestInsightRecommendationSmoke`，覆盖过热不追、回调观察、风险预警、失效移除和 JSON 往返。
+- 已接入 `InsightOrchestrator` 最终一致性校验之后，分析结果会生成 `AnalysisResult::recommendationRecords`，并回写 `SectorSnapshot` 的方向分、时机分、生命周期状态和失效条件。
+- 已在策略跟踪页新增“推荐跟踪 / 信号复盘”模块，展示当前状态、今日涨跌、推荐后表现、方向分、时机分、动作、状态原因、预警和失效条件。
+- 已通过 Release 构建、推荐生命周期 smoke、事件 smoke、AI smoke、UI smoke 和自动截图验证；截图保存于 `docs/versions/v2.3/screenshots/recommendation-lifecycle/`。
+
 ## 背景
 
 当前推荐更接近“当日结果排序”：强势上涨的板块容易被推到前面，一旦回落又可能快速消失。用户看到的体验会变成“涨了才推荐，跌了就不见”，尤其是基金申购存在成交延后时，这会明显削弱信任。

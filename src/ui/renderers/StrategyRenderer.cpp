@@ -53,6 +53,33 @@ QString actionText(AdviceAction action)
     }
 }
 
+QString signedPct(double value)
+{
+    return (value > 0.0 ? "+" : "") + num(value) + "%";
+}
+
+QString stateColor(RecommendationState state, const ThemeColors &theme)
+{
+    switch (state) {
+    case RecommendationState::RiskWarning:
+        return "#DC2626";
+    case RecommendationState::OverheatedNoChase:
+        return "#D97706";
+    case RecommendationState::PullbackWatch:
+        return "#2563EB";
+    case RecommendationState::NewSignal:
+    case RecommendationState::Active:
+        return "#059669";
+    case RecommendationState::LogicReview:
+        return "#7C3AED";
+    case RecommendationState::Invalidated:
+        return theme.mutedColor;
+    case RecommendationState::None:
+    default:
+        return theme.neutralColor;
+    }
+}
+
 QString inferTrend(double change)
 {
     if (change >= 2.0) return QString::fromUtf8("强势看多");
@@ -241,6 +268,77 @@ QString renderTrackingState(const QList<StrategyRow> &sectorRows,
     return h;
 }
 
+QString lifecycleSectorLink(const RecommendationRecord &record, const AnalysisResult &analysis)
+{
+    for (int i = 0; i < analysis.sectors.size(); ++i) {
+        if (analysis.sectors[i].industry == record.sector) {
+            return "<a href='jump-" + QString::number(i + 1) + "'>" + escaped(record.sector) + "</a>";
+        }
+    }
+    return escaped(record.sector);
+}
+
+QString renderRecommendationLifecycle(const AnalysisResult &analysis, const ThemeColors &theme)
+{
+    if (analysis.recommendationRecords.isEmpty()) {
+        return "<hr class='divider'/><div class='section-title'>推荐跟踪 / 信号复盘</div>"
+            "<div class='narrative'>当前没有进入生命周期跟踪的板块。系统会在方向分达标、此前有推荐记录或触发风险复核时保留跟踪。</div>";
+    }
+
+    int riskCount = 0;
+    int pullbackCount = 0;
+    int overheatedCount = 0;
+    for (const RecommendationRecord &record : analysis.recommendationRecords) {
+        if (record.state == RecommendationState::RiskWarning) ++riskCount;
+        if (record.state == RecommendationState::PullbackWatch) ++pullbackCount;
+        if (record.state == RecommendationState::OverheatedNoChase) ++overheatedCount;
+    }
+
+    QString h = "<hr class='divider'/><div class='section-title'>推荐跟踪 / 信号复盘 "
+        "<span style='font-size:11px;font-weight:400;color:" + theme.mutedColor + ";'>"
+        + QString::number(analysis.recommendationRecords.size()) + QString::fromUtf8(" 条记录</span></div>");
+    h += "<div class='narrative'>"
+        + QString::fromUtf8("这里记录推荐后的状态变化：风险预警 ")
+        + QString::number(riskCount)
+        + QString::fromUtf8(" 个，回调观察 ")
+        + QString::number(pullbackCount)
+        + QString::fromUtf8(" 个，过热不追 ")
+        + QString::number(overheatedCount)
+        + QString::fromUtf8(" 个。方向分看逻辑是否还在，时机分看当前是否适合追。")
+        + "</div>";
+
+    h += "<table class='fund'><tr><th>板块</th><th>状态</th><th>表现</th><th>方向/时机</th><th>动作</th><th>复盘说明</th></tr>";
+    const int count = qMin(12, analysis.recommendationRecords.size());
+    for (int i = 0; i < count; ++i) {
+        const RecommendationRecord &record = analysis.recommendationRecords[i];
+        const QString color = stateColor(record.state, theme);
+        QString note = escaped(record.stateReason);
+        if (!record.warningReason.isEmpty()) {
+            note += QString::fromUtf8("<br/><span style='color:%1;'>预警：%2</span>")
+                .arg(color, escaped(record.warningReason));
+        }
+        if (!record.invalidationCondition.isEmpty()) {
+            note += QString::fromUtf8("<br/><span style='color:%1;'>失效条件：%2</span>")
+                .arg(theme.mutedColor, escaped(record.invalidationCondition));
+        }
+
+        h += "<tr><td style='font-weight:700;'>" + lifecycleSectorLink(record, analysis)
+            + "<div class='meta'>跟踪 " + QString::number(record.trackingDays)
+            + QString::fromUtf8(" 天</div></td><td style='color:") + color
+            + ";font-weight:700;'>" + escaped(recommendationStateLabel(record.state))
+            + "</td><td style='font-size:11px;'>今日 <span style='color:"
+            + colorFor(record.todayChangePct, theme) + ";font-weight:700;'>"
+            + signedPct(record.todayChangePct) + "</span><br/>推荐后 "
+            + "<span style='color:" + colorFor(record.returnSinceFirst, theme) + ";font-weight:700;'>"
+            + signedPct(record.returnSinceFirst) + "</span></td><td style='font-size:11px;'>方向 "
+            + num(record.directionScore) + "<br/>时机 " + num(record.entryTimingScore)
+            + "</td><td>" + escaped(actionText(record.currentAction))
+            + "</td><td style='font-size:11px;line-height:1.55;'>" + note + "</td></tr>";
+    }
+    h += "</table>";
+    return h;
+}
+
 QString renderPortfolio(const AnalysisResult &analysis,
                         const QString &portfolioJson,
                         const ThemeColors &theme)
@@ -337,6 +435,7 @@ QString StrategyRenderer::render(const AnalysisResult &analysis,
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
     h += "<h1 style='font-size:18px;'>策略跟踪</h1>";
     h += renderTrackingState(sectorRows, indexRows, options.portfolioBatchesJson, theme);
+    h += renderRecommendationLifecycle(analysis, theme);
     h += renderMarketAdvice(sectorRows, indexRows, theme);
     h += renderPortfolio(analysis, options.portfolioBatchesJson, theme);
     h += renderFutureEvents(analysis, theme);

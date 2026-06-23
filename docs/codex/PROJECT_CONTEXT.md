@@ -23,10 +23,11 @@ cmake --build build --config Release -- /m
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 .\build\Release\InvestInsightEventSmoke.exe
 .\build\Release\InvestInsightAIAnalyzerSmoke.exe
+.\build\Release\InvestInsightRecommendationSmoke.exe
 .\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
 .\build\Release\InvestInsight.exe --dump-event-rules
 .\build\Release\InvestInsight.exe --auto-analyze-no-ai
-.\build\Release\InvestInsight.exe --capture-ui-screenshots docs\versions\v2.2\screenshots\ui-readability
+.\build\Release\InvestInsight.exe --capture-ui-screenshots docs\versions\v2.3\screenshots\recommendation-lifecycle
 powershell -NoProfile -ExecutionPolicy Bypass -File .\package_windows.ps1
 chmod +x ./package_macos.sh && ./package_macos.sh
 ```
@@ -36,9 +37,10 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 涉及 UI 或用户可见内容显示改动时，还需要通过自动化入口、调试参数或测试接口跳转到目标页面，等待渲染完成后截图确认，并在交付说明或提交说明中记录截图路径或验证结论。
 第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点、影响路径、事件仓库和证据保留。
 第五个命令用于 AI 协同分析 smoke 验证，当前覆盖结构化可读字段 JSON 解析和异常兜底。
-第六个命令用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
-第七个命令用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
-第八个命令用于 UI 自动分析验证：启动后自动分析但关闭 AI 深度调用，避免截图流程等待外部模型。第九个命令用于 UI 截图验证：自动分析完成后依次切换总览、事件雷达、板块机会、策略跟踪和板块详情，并保存 PNG 截图。
+`InvestInsightRecommendationSmoke` 用于推荐生命周期 smoke 验证，覆盖过热不追、回调观察、风险预警、失效移除和本地记录序列化。
+`--debug-event-impact` 用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
+`--dump-event-rules` 用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
+`--auto-analyze-no-ai` 用于 UI 自动分析验证：启动后自动分析但关闭 AI 深度调用，避免截图流程等待外部模型。`--capture-ui-screenshots` 用于 UI 截图验证：自动分析完成后依次切换总览、事件雷达、板块机会、策略跟踪和板块详情，并保存 PNG 截图。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -53,7 +55,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/ui/renderers/ChartRenderer.cpp` | 板块详情趋势图、K 线、成交量、MACD、资金流和周/月参考图的独立渲染器。 |
 | `src/ui/renderers/DashboardRenderer.cpp` | 总览工作台 HTML 渲染器，覆盖市场仪表盘、关键事件雷达、板块机会与风险、下一观察点和 AI 摘要。 |
 | `src/ui/renderers/SectorTableRenderer.cpp` | 板块机会 HTML 渲染器，覆盖板块/指数混合列表、筛选、排序、事件催化、MACD/RSI/KDJ、均线、量能、资金和数据审计摘要。 |
-| `src/ui/renderers/StrategyRenderer.cpp` | 策略跟踪 HTML 渲染器，覆盖跟踪状态卡片、市场操作建议、Top 板块、持仓诊断和策略验证日历。 |
+| `src/ui/renderers/StrategyRenderer.cpp` | 策略跟踪 HTML 渲染器，覆盖跟踪状态卡片、推荐跟踪/信号复盘、市场操作建议、Top 板块、持仓诊断和策略验证日历。 |
 | `src/ui/renderers/SectorDetailRenderer.cpp` | 板块详情 HTML 渲染器，覆盖投资结论、核心评分、AI 协同解读、信号解释、事件驱动、影响路径、图表、阶段收益、资金流、回测、新闻证据和数据质量。 |
 | `src/ui/renderers/IndexDetailRenderer.cpp` | 指数详情 HTML 渲染器，覆盖指数方向、趋势图表、技术指标、市场风控和数据质量。 |
 | `src/ui/renderers/EventRadarRenderer.cpp` | 事件雷达 HTML 渲染器，覆盖结构化事件、事件催化分、传导路径、市场风险和失效条件。 |
@@ -72,6 +74,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/core/MarketContext.cpp` | 指数、A 股涨跌家数、板块资金流合计、市场风险分。 |
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
 | `src/core/StrategyEngine.cpp` | 生成短中长期观点、止盈止损和操作建议文本。 |
+| `src/core/RecommendationTracker.cpp` | 推荐生命周期跟踪器，计算方向分、入场时机分，生成新信号、推荐中、过热不追、回调观察、风险预警和失效移除记录，并用 `QSettings` 保存本地历史。 |
 | `src/domain/AnalysisResult.h` | UI 使用的核心结果结构，尤其是 `SectorSnapshot`。 |
 | `run_gui.sh` / `run_gui.bat` | 本地启动脚本；Windows 启动 `build/Release/InvestInsight.exe`，macOS 优先启动 `build/InvestInsight.app/Contents/MacOS/InvestInsight`。 |
 | `package_windows.ps1` | Windows 1.0 发布打包脚本；生成根目录 `InvestInsight-Windows` 和 zip，支持指定构建目录、toolchain、跳过构建和跳过 zip。 |
@@ -89,6 +92,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `tests/ui/EventRadarRendererSmoke.cpp` | 事件雷达 HTML smoke 测试，校验事件队列、传导路径、风险区块和未来催化展示。 |
 | `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件模型字段、事件抽取、状态识别、证据保留、路径映射和仓库追踪。 |
 | `tests/core/AIAnalyzerSmoke.cpp` | AI 协同分析 smoke 测试，校验固定 JSON 样本可解析、无效 JSON 可兜底。 |
+| `tests/core/RecommendationTrackerSmoke.cpp` | 推荐生命周期 smoke 测试，校验过热不追、风险预警、回调观察、失效移除和 JSON 往返。 |
 | `docs/README.md` | 文档总入口，说明按职责和版本查看文档的路径。 |
 | `docs/versions/v1.0/release/PACKAGING.md` | 1.0 Windows/macOS 打包和使用说明。 |
 | `docs/versions/v2.0/design/ui-workbench-redesign.md` | 2.0 UI 工作台设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
@@ -120,7 +124,8 @@ flowchart TD
     J --> K
     EG --> K
     K --> L["StrategyEngine / RotationDetector / ExplainabilityEngine"]
-    L --> M["AnalysisResult"]
+    L --> RT["RecommendationTracker 推荐生命周期"]
+    RT --> M["AnalysisResult"]
     M --> N["MainWindow::onRefreshFinished 渲染 UI"]
 ```
 
@@ -163,6 +168,7 @@ flowchart TD
 - `MarketRegimeDetector` 会按市场状态调整部分因子权重。
 - `AdviceAction` 当前阈值为：大于等于 `0.22` 增配，小于等于 `-0.22` 减配，其余持有。
 - 趋势生命周期解释链会修正过热、派发、下跌等状态下的过度乐观动作。
+- v2.3 起新增 `RecommendationTracker`：在最终一致性校验之后，把一次性动作转成推荐生命周期记录，并区分 `directionScore` 和 `entryTimingScore`。上涨过热会进入“过热不追”，推荐后大跌会保留为“风险预警”，方向仍在但价格回落会进入“回调观察”，逻辑转弱才进入“失效移除”。
 
 ## AI 配置
 

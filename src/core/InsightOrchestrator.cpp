@@ -25,6 +25,7 @@
 #include "core/FlowStructureAnalyzer.h"
 #include "core/MarketRegimeDetector.h"
 #include "core/ExplainabilityEngine.h"
+#include "core/RecommendationTracker.h"
 #include "core/EventExtractionEngine.h"
 #include "core/EventRepository.h"
 #include "core/ImpactGraphEngine.h"
@@ -1340,6 +1341,10 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
             s.strategy.operationAdvice += "\n\n【AI研判】" + s.aiPredictionReason;
         }
     }
+
+    reportProgress(progress, 98, "正在更新推荐跟踪状态...");
+    RecommendationTracker recommendationTracker;
+    result.recommendationRecords = recommendationTracker.update(result.sectors);
 
     reportProgress(progress, 100, "分析完成");
     return result;
