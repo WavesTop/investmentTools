@@ -285,15 +285,22 @@ QString renderFutureEvents(const AnalysisResult &analysis, const ThemeColors &th
     QString h;
     int count = 0;
     for (const SectorSnapshot &sector : analysis.sectors) {
-        count += sector.upcomingEvents.size() + sector.futureEventsAI.size();
+        if (sector.aiInsight.valid && !sector.aiInsight.nextCheckpoint.isEmpty()) ++count;
+        else count += qMin(2, sector.upcomingEvents.size() + sector.futureEventsAI.size());
     }
     if (count == 0) return {};
 
-    h += "<hr class='divider'/><div class='section-title'>&#128197; 未来事件日历 "
+    h += "<hr class='divider'/><div class='section-title'>&#128197; 策略验证日历 "
         "<span style='font-size:11px;font-weight:400;color:" + theme.mutedColor + ";'>"
-        + QString::number(count) + QString::fromUtf8(" 条前瞻事件</span></div>");
+        + QString::number(count) + QString::fromUtf8(" 条观察点</span></div>");
     for (const SectorSnapshot &sector : analysis.sectors) {
-        const QStringList events = sector.upcomingEvents + sector.futureEventsAI;
+        QStringList events;
+        if (sector.aiInsight.valid && !sector.aiInsight.nextCheckpoint.isEmpty()) {
+            events << sector.aiInsight.nextCheckpoint;
+        } else {
+            events = sector.upcomingEvents + sector.futureEventsAI;
+            while (events.size() > 2) events.removeLast();
+        }
         if (events.isEmpty()) continue;
         h += "<div style='margin-bottom:8px;'><div style='font-size:12px;font-weight:700;color:"
             + theme.sectionTitleColor + ";margin-bottom:4px;'>" + escaped(sector.industry) + "</div>";

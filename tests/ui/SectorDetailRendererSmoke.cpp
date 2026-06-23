@@ -43,6 +43,14 @@ SectorSnapshot makeSector()
     snap.newsHeadlines << QString::fromUtf8("半导体设备订单持续改善");
     snap.eventCatalystScore = 0.24;
     snap.eventSummary = QString::fromUtf8("美联储降息预期通过成长估值链条形成间接催化");
+    snap.aiInsight.valid = true;
+    snap.aiInsight.readableTitle = QString::fromUtf8("先进封装需求带动设备链");
+    snap.aiInsight.summary = QString::fromUtf8("订单改善与成长估值修复共同支撑半导体。");
+    snap.aiInsight.impactPath = QString::fromUtf8("订单改善 -> 设备稼动率 -> 板块估值 -> 财报验证");
+    snap.aiInsight.primaryReason = QString::fromUtf8("订单和资金信号共振");
+    snap.aiInsight.primaryRisk = QString::fromUtf8("财报确认不足会削弱行情");
+    snap.aiInsight.nextCheckpoint = QString::fromUtf8("跟踪设备公司订单指引");
+    snap.aiInsight.disagreementNotes = QString::fromUtf8("AI 偏积极，规则仍需回调确认");
     SectorEventImpact impact;
     impact.eventTitle = QString::fromUtf8("美联储降息预期升温");
     impact.sector = snap.industry;
@@ -80,6 +88,7 @@ SectorSnapshot makeSector()
     news.date = "2026-06-20";
     news.source = QString::fromUtf8("财联社");
     news.title = QString::fromUtf8("先进封装需求继续提升");
+    news.url = QStringLiteral("https://example.com/advanced-packaging");
     snap.newsEntries << news;
 
     const QDate start(2026, 1, 2);
@@ -113,6 +122,9 @@ int runSectorDetailRendererSmoke()
     expect(html.contains(QString::fromUtf8("投资结论")), "sector detail contains investment conclusion");
     expect(html.contains("metric-grid"), "sector detail uses first-screen metric grid");
     expect(html.contains(QString::fromUtf8("核心评分")), "sector detail contains core score block");
+    expect(html.contains(QString::fromUtf8("AI 协同解读")), "sector detail contains AI readable insight block");
+    expect(html.contains(QString::fromUtf8("订单改善 -&gt; 设备稼动率")), "sector detail renders AI impact path");
+    expect(html.contains(QStringLiteral("href='https://example.com/advanced-packaging'")), "sector detail renders news source link");
     expect(html.contains(QString::fromUtf8("信号解释")), "sector detail contains signal explanation block");
     expect(html.contains(QString::fromUtf8("影响路径")), "sector detail contains impact path block");
     expect(html.contains(QString::fromUtf8("阶段收益与回测")), "sector detail contains staged return block");

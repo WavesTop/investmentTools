@@ -24,6 +24,13 @@ QString escaped(const QString &text)
     return text.toHtmlEscaped();
 }
 
+QString linkHtml(const QString &title, const QString &url)
+{
+    const QString safeTitle = escaped(title);
+    if (url.trimmed().isEmpty()) return safeTitle;
+    return "<a href='" + escaped(url.trimmed()) + "'>" + safeTitle + "</a>";
+}
+
 QString colorFor(double value, const ThemeColors &theme)
 {
     if (value > 0.001) return "#EF4444";
@@ -134,6 +141,41 @@ QString renderCoreScores(const SectorSnapshot &sector, const ThemeColors &theme)
     return h;
 }
 
+QString renderAiReadableInsight(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    if (!sector.aiInsight.valid) return {};
+
+    QString h = "<div class='section-title'>AI 协同解读 <span class='ai-badge'>AI</span></div>";
+    h += "<div class='callout'>";
+    if (!sector.aiInsight.readableTitle.isEmpty()) {
+        h += "<div style='font-size:14px;font-weight:800;color:" + theme.headingColor + ";margin-bottom:6px;'>"
+            + escaped(sector.aiInsight.readableTitle) + "</div>";
+    }
+    if (!sector.aiInsight.summary.isEmpty()) {
+        h += "<div style='font-size:12px;line-height:1.7;color:" + theme.bodyColor + ";'>"
+            + escaped(sector.aiInsight.summary) + "</div>";
+    }
+    h += "<table class='overview' style='margin-top:10px;'><tr><th>项目</th><th>内容</th></tr>";
+    if (!sector.aiInsight.whyItMatters.isEmpty())
+        h += "<tr><td>为什么重要</td><td>" + escaped(sector.aiInsight.whyItMatters) + "</td></tr>";
+    if (!sector.aiInsight.impactPath.isEmpty())
+        h += "<tr><td>影响路径</td><td>" + escaped(sector.aiInsight.impactPath) + "</td></tr>";
+    if (!sector.aiInsight.primaryReason.isEmpty())
+        h += "<tr><td>首要理由</td><td>" + escaped(sector.aiInsight.primaryReason) + "</td></tr>";
+    if (!sector.aiInsight.primaryRisk.isEmpty())
+        h += "<tr><td>首要风险</td><td>" + escaped(sector.aiInsight.primaryRisk) + "</td></tr>";
+    if (!sector.aiInsight.nextCheckpoint.isEmpty())
+        h += "<tr><td>下一观察</td><td>" + escaped(sector.aiInsight.nextCheckpoint) + "</td></tr>";
+    if (!sector.aiInsight.disagreementNotes.isEmpty())
+        h += "<tr><td>规则分歧</td><td style='color:" + theme.warningColor + ";'>"
+            + escaped(sector.aiInsight.disagreementNotes) + "</td></tr>";
+    h += "</table>";
+    h += "<div class='meta' style='margin-top:8px;'>"
+        + QString::fromUtf8("AI 内容只用于解释、归纳和交叉验证，不直接改写规则评分或最终动作。")
+        + "</div></div>";
+    return h;
+}
+
 QString renderSignalExplanation(const SectorSnapshot &sector, const ThemeColors &theme)
 {
     QString h = "<div class='section-title'>信号解释</div>";
@@ -164,6 +206,14 @@ QString renderImpactPath(const SectorSnapshot &sector, const ThemeColors &theme)
 {
     QString h = "<div class='section-title'>影响路径</div>";
     h += "<div class='callout'>";
+    if (sector.aiInsight.valid && !sector.aiInsight.impactPath.isEmpty()) {
+        h += "<div style='padding:10px 12px;margin-bottom:8px;border:1px solid " + theme.cardBorder
+            + ";border-radius:8px;background:" + theme.bodyBg + ";'>"
+            + "<div style='font-weight:800;color:" + theme.headingColor + ";font-size:12px;'>"
+            + QString::fromUtf8("AI 归纳路径") + "</div>"
+            + "<div style='margin-top:4px;color:" + theme.bodyColor + ";font-size:12px;'>"
+            + escaped(sector.aiInsight.impactPath) + "</div></div>";
+    }
     if (sector.eventImpacts.isEmpty()) {
         h += "<div style='color:" + theme.mutedColor + ";font-size:12px;'>"
             + (sector.eventSummary.isEmpty()
@@ -402,7 +452,7 @@ QString renderNews(const SectorSnapshot &sector, const ThemeColors &theme)
     }
     for (const NewsEntry &news : sector.newsEntries) {
         h += "<div style='padding:8px 10px;border-bottom:1px solid " + theme.newsItemBorder
-            + ";font-size:12px;'><b>" + escaped(news.title) + "</b>"
+            + ";font-size:12px;'><b>" + linkHtml(news.title, news.url) + "</b>"
             + "<div class='meta'>" + escaped(news.date) + " · " + escaped(news.source) + "</div></div>";
     }
     for (const QString &headline : sector.newsHeadlines) {
@@ -431,6 +481,7 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         + QString::fromUtf8(" 只 · 数据日期 ") + escaped(sector.lastDataDate) + "</div>";
     h += renderConclusion(sector, theme);
     h += renderCoreScores(sector, theme);
+    h += renderAiReadableInsight(sector, theme);
     h += renderSignalExplanation(sector, theme);
     h += renderViews(sector, theme);
     h += renderEventImpacts(sector, theme);

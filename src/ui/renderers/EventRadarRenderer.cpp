@@ -23,6 +23,65 @@ QString escaped(const QString &text)
     return text.toHtmlEscaped();
 }
 
+QString shortText(const QString &text, int maxChars)
+{
+    const QString cleaned = text.simplified();
+    if (cleaned.size() <= maxChars) return cleaned;
+    return cleaned.left(maxChars - 1) + QString::fromUtf8("…");
+}
+
+QString linkHtml(const QString &title, const QString &url)
+{
+    const QString safeTitle = escaped(title);
+    if (url.trimmed().isEmpty()) return safeTitle;
+    return "<a href='" + escaped(url.trimmed()) + "'>" + safeTitle + "</a>";
+}
+
+QString eventUrl(const MacroEvent &event)
+{
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (!evidence.url.trimmed().isEmpty()) return evidence.url.trimmed();
+    }
+    return {};
+}
+
+QString eventSource(const MacroEvent &event)
+{
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (!evidence.source.trimmed().isEmpty()) return evidence.source.trimmed();
+    }
+    return QString::fromUtf8("规则事件");
+}
+
+QString eventPublishedAt(const MacroEvent &event)
+{
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (evidence.publishedAt.isValid()) return evidence.publishedAt.toString("MM-dd HH:mm");
+    }
+    if (event.publishedAt.isValid()) return event.publishedAt.toString("MM-dd HH:mm");
+    if (event.detectedAt.isValid()) return event.detectedAt.toString("MM-dd HH:mm");
+    return {};
+}
+
+QString eventReadableTitle(const MacroEvent &event)
+{
+    if (event.aiInsight.valid && !event.aiInsight.readableTitle.isEmpty()) return event.aiInsight.readableTitle;
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (!evidence.title.trimmed().isEmpty()) return evidence.title.trimmed();
+    }
+    return event.title;
+}
+
+QString eventReadableSummary(const MacroEvent &event)
+{
+    if (event.aiInsight.valid && !event.aiInsight.summary.isEmpty()) return event.aiInsight.summary;
+    if (event.aiInsight.valid && !event.aiInsight.whyItMatters.isEmpty()) return event.aiInsight.whyItMatters;
+    for (const MacroEventEvidence &evidence : event.evidence) {
+        if (!evidence.summary.trimmed().isEmpty()) return evidence.summary.trimmed();
+    }
+    return QString::fromUtf8("等待更多证据确认影响路径。");
+}
+
 QString changeColor(double value, const ThemeColors &theme)
 {
     if (value > 0.001) return "#EF4444";
@@ -59,6 +118,12 @@ QString firstNonEmpty(const QStringList &items, const QString &fallback)
 
 QString primaryEvent(const SectorSnapshot &sector)
 {
+    if (sector.aiInsight.valid && !sector.aiInsight.readableTitle.isEmpty()) {
+        return sector.aiInsight.readableTitle;
+    }
+    if (sector.aiInsight.valid && !sector.aiInsight.summary.isEmpty()) {
+        return sector.aiInsight.summary;
+    }
     if (!sector.eventSummary.isEmpty()) {
         return sector.eventSummary;
     }
@@ -177,15 +242,19 @@ QString renderEventTimeline(const AnalysisResult &analysis, const ThemeColors &t
         return h;
     }
 
-    h += "<table class='overview'><tr><th>事件</th><th>状态</th><th>地区</th><th>观察点</th><th>证据可信度</th></tr>";
+    h += "<table class='overview'><tr><th>事件</th><th>证据链</th><th>状态</th><th>观察点</th><th>影响说明</th></tr>";
     int rows = 0;
     for (const MacroEvent &event : analysis.macroEvents) {
-        h += "<tr><td><b>" + escaped(event.title) + "</b></td>"
+        const QString dateText = eventPublishedAt(event);
+        const QString source = eventSource(event)
+            + (dateText.isEmpty() ? QString() : QString::fromUtf8(" · ") + dateText)
+            + QString::fromUtf8(" · 可信度 ") + num(evidenceReliability(event), 2);
+        h += "<tr><td><b>" + linkHtml(shortText(eventReadableTitle(event), 72), eventUrl(event)) + "</b>"
+            + "<div class='meta'>" + escaped(toString(event.type)) + " · " + escaped(toString(event.region)) + "</div></td>"
+            + "<td class='meta'>" + escaped(source) + "</td>"
             + "<td>" + escaped(toString(event.state)) + "</td>"
-            + "<td>" + escaped(toString(event.region)) + "</td>"
             + "<td>" + escaped(checkpointText(event)) + "</td>"
-            + "<td style='color:" + changeColor(evidenceReliability(event), theme)
-            + ";font-weight:700;'>" + escaped(num(evidenceReliability(event), 2)) + "</td></tr>";
+            + "<td>" + escaped(shortText(eventReadableSummary(event), 82)) + "</td></tr>";
         if (++rows >= 6) break;
     }
     h += "</table>";
@@ -200,16 +269,32 @@ QString renderQueue(const QList<const SectorSnapshot *> &items, const ThemeColor
         h += "<div class='narrative'>暂无可排序事件。请先运行分析，或等待新的新闻、政策和未来事件进入系统。</div>";
         return h;
     }
-    h += "<table class='overview'><tr><th>板块</th><th>事件/催化</th><th>事件催化分</th><th>信号</th><th>今日</th><th>评分</th></tr>";
+    h += "<table class='overview'><tr><th>板块</th><th>可读事件</th><th>影响路径</th><th>首要理由</th><th>下一观察</th><th>信号</th></tr>";
     for (const SectorSnapshot *sector : items) {
+        const QString path = sector->aiInsight.valid && !sector->aiInsight.impactPath.isEmpty()
+            ? sector->aiInsight.impactPath
+            : (sector->eventImpacts.isEmpty()
+                ? sector->eventSummary
+                : sector->eventImpacts.first().path);
+        const QString reason = sector->aiInsight.valid && !sector->aiInsight.primaryReason.isEmpty()
+            ? sector->aiInsight.primaryReason
+            : firstNonEmpty(sector->positiveFactors + sector->negativeFactors,
+                            sector->trendSummary);
+        const QString checkpoint = sector->aiInsight.valid && !sector->aiInsight.nextCheckpoint.isEmpty()
+            ? sector->aiInsight.nextCheckpoint
+            : firstNonEmpty(sector->upcomingEvents + sector->futureEventsAI,
+                            QString::fromUtf8("继续跟踪新闻和资金验证"));
         h += "<tr><td><b>" + escaped(sector->industry) + "</b></td>"
-            + "<td>" + escaped(primaryEvent(*sector)) + "</td>"
-            + "<td style='color:" + changeColor(sector->eventCatalystScore, theme) + ";font-weight:700;'>"
-            + escaped(num(sector->eventCatalystScore, 2)) + "</td>"
-            + "<td>" + escaped(actionText(sector->action)) + "</td>"
-            + "<td style='color:" + changeColor(sector->todayChangePct, theme) + ";'>"
-            + escaped(sector->todayChangePctValid ? pct(sector->todayChangePct) : QString::fromUtf8("暂无")) + "</td>"
-            + "<td>" + escaped(num(sector->forecastScore * 100.0, 0)) + "</td></tr>";
+            + "<td>" + escaped(shortText(primaryEvent(*sector), 64)) + "</td>"
+            + "<td>" + escaped(shortText(path, 72)) + "</td>"
+            + "<td>" + escaped(shortText(reason, 60)) + "</td>"
+            + "<td class='meta'>" + escaped(shortText(checkpoint, 54)) + "</td>"
+            + "<td><span class='tag "
+            + (sector->action == AdviceAction::Increase ? "tag-up" : (sector->action == AdviceAction::Decrease ? "tag-down" : "tag-hold"))
+            + "'>" + escaped(actionText(sector->action)) + "</span>"
+            + "<div class='meta' style='margin-top:4px;'>事件 " + num(sector->eventCatalystScore, 2)
+            + " · 今日 " + escaped(sector->todayChangePctValid ? pct(sector->todayChangePct) : QString::fromUtf8("暂无"))
+            + "</div></td></tr>";
     }
     h += "</table>";
     return h;
@@ -238,10 +323,12 @@ QString renderPath(const QList<const SectorSnapshot *> &items)
         }
 
         const QString trigger = primaryEvent(*sector);
-        const QString effect = firstNonEmpty(sector->positiveFactors + sector->negativeFactors,
-                                             sector->trendSummary.isEmpty()
-                                                 ? QString::fromUtf8("等待行情与新闻交叉确认")
-                                                 : sector->trendSummary);
+        const QString effect = sector->aiInsight.valid && !sector->aiInsight.impactPath.isEmpty()
+            ? sector->aiInsight.impactPath
+            : firstNonEmpty(sector->positiveFactors + sector->negativeFactors,
+                            sector->trendSummary.isEmpty()
+                                ? QString::fromUtf8("等待行情与新闻交叉确认")
+                                : sector->trendSummary);
         h += "<tr><td>" + escaped(trigger) + "</td>"
             + "<td><b>" + escaped(sector->industry) + "</b></td>"
             + "<td>" + escaped(effect) + "</td></tr>";
@@ -270,8 +357,10 @@ QString renderRisk(const AnalysisResult &analysis,
     int rows = 0;
     for (const SectorSnapshot *sector : items) {
         if (sector->negativeFactors.isEmpty() && sector->dataQualityScore >= 80.0) continue;
-        const QString risk = firstNonEmpty(sector->negativeFactors,
-                                           QString::fromUtf8("暂无显著看空因素，重点观察数据是否延续"));
+        const QString risk = sector->aiInsight.valid && !sector->aiInsight.primaryRisk.isEmpty()
+            ? sector->aiInsight.primaryRisk
+            : firstNonEmpty(sector->negativeFactors,
+                            QString::fromUtf8("暂无显著看空因素，重点观察数据是否延续"));
         h += "<tr><td><b>" + escaped(sector->industry) + "</b></td>"
             + "<td>" + escaped(risk) + "</td>"
             + "<td style='color:" + changeColor(sector->dataQualityScore - 70.0, theme) + ";'>"

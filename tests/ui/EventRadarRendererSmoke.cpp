@@ -49,6 +49,12 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double forec
     snap.eventImpacts << impact;
     snap.eventCatalystScore = 0.24;
     snap.eventSummary = QString::fromUtf8("美联储降息预期通过成长估值链条形成间接催化");
+    snap.aiInsight.valid = true;
+    snap.aiInsight.readableTitle = QString::fromUtf8("降息预期抬升成长估值弹性");
+    snap.aiInsight.impactPath = QString::fromUtf8("降息预期 -> 美债收益率 -> 成长估值 -> 财报验证");
+    snap.aiInsight.primaryReason = QString::fromUtf8("成长风格估值修复与订单改善形成共振");
+    snap.aiInsight.primaryRisk = QString::fromUtf8("FOMC 若转鹰，估值修复路径失效");
+    snap.aiInsight.nextCheckpoint = QString::fromUtf8("跟踪 CPI 和 FOMC 点阵图变化");
     return snap;
 }
 
@@ -76,6 +82,10 @@ AnalysisResult makeAnalysis()
     event.nextCheckpoints << checkpoint;
     MacroEventEvidence evidence;
     evidence.source = QStringLiteral("Reuters");
+    evidence.title = QString::fromUtf8("美联储议息会议临近");
+    evidence.summary = QString::fromUtf8("市场关注通胀数据是否改变降息路径。");
+    evidence.url = QStringLiteral("https://example.com/fomc");
+    evidence.publishedAt = QDateTime(QDate(2026, 6, 21), QTime(9, 0), Qt::UTC);
     evidence.reliability = 0.91;
     event.evidence << evidence;
     analysis.macroEvents << event;
@@ -96,6 +106,9 @@ int runEventRadarRendererSmoke()
     expect(html.contains("workspace-shell"), "event radar html uses workspace shell");
     expect(html.contains(QString::fromUtf8("事件雷达")), "event radar html contains title");
     expect(html.contains(QString::fromUtf8("关键事件队列")), "event radar html contains event queue");
+    expect(html.contains(QString::fromUtf8("可读事件")), "event radar html contains readable event column");
+    expect(html.contains(QString::fromUtf8("首要理由")), "event radar html contains primary reason column");
+    expect(html.contains(QString::fromUtf8("下一观察")), "event radar html contains next checkpoint column");
     expect(html.contains(QString::fromUtf8("事件传导路径")), "event radar html contains transmission path");
     expect(html.contains(QString::fromUtf8("风险与失效条件")), "event radar html contains risk section");
     expect(html.contains(QString::fromUtf8("结构化事件时间线")), "event radar html contains event timeline");
@@ -104,8 +117,10 @@ int runEventRadarRendererSmoke()
     expect(html.contains(QStringLiteral("0.91")), "event radar html renders evidence reliability");
     expect(html.contains(QStringLiteral("MediumTerm")), "event radar html renders impact horizon");
     expect(html.contains(QString::fromUtf8("若 FOMC 转鹰则路径失效")), "event radar html renders invalidation condition");
-    expect(html.contains(QString::fromUtf8("事件催化分")), "event radar html renders catalyst score");
+    expect(html.contains(QStringLiteral("href='https://example.com/fomc'")), "event radar html renders evidence link");
+    expect(html.contains(QString::fromUtf8("事件 0.24")), "event radar html renders catalyst score");
     expect(html.contains(QString::fromUtf8("美债收益率下行")), "event radar html renders structured impact path");
+    expect(html.contains(QString::fromUtf8("降息预期 -&gt; 美债收益率")), "event radar html renders AI impact path");
     expect(html.contains(QString::fromUtf8("半导体")), "event radar html renders sector names");
     expect(html.contains(QString::fromUtf8("降息预期")), "event radar html renders future catalyst");
     expect(html.contains(theme.bodyBg), "event radar html applies theme css");

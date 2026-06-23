@@ -37,6 +37,16 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double forec
     snap.positiveFactors << QString::fromUtf8("政策催化") << QString::fromUtf8("资金流改善");
     snap.negativeFactors << QString::fromUtf8("短线涨幅偏高");
     snap.newsHeadlines << QString::fromUtf8("产业链订单出现边际改善");
+    snap.aiInsight.valid = true;
+    snap.aiInsight.readableTitle = QString::fromUtf8("先进封装订单改善");
+    snap.aiInsight.primaryReason = QString::fromUtf8("订单改善与资金流入同时出现，短期关注度提升。");
+    snap.aiInsight.primaryRisk = QString::fromUtf8("若财报确认不足，前期涨幅可能回吐。");
+    snap.aiInsight.nextCheckpoint = QString::fromUtf8("跟踪头部设备公司订单和一季报指引。");
+    NewsEntry news;
+    news.title = QString::fromUtf8("产业链订单出现边际改善");
+    news.source = QString::fromUtf8("测试源");
+    news.url = QStringLiteral("https://example.com/news");
+    snap.newsEntries << news;
     return snap;
 }
 
@@ -75,6 +85,10 @@ int runDashboardRendererSmoke()
     expect(html.contains(QString::fromUtf8("关键事件雷达")), "dashboard html contains event radar section");
     expect(html.contains(QString::fromUtf8("板块机会与风险")), "dashboard html contains opportunity and risk section");
     expect(html.contains(QString::fromUtf8("下一观察点")), "dashboard html contains next checkpoint");
+    expect(html.contains(QString::fromUtf8("首要理由")), "dashboard html contains primary reason column");
+    expect(html.contains(QString::fromUtf8("首要风险")), "dashboard html contains primary risk column");
+    expect(html.contains(QStringLiteral("href='https://example.com/news'")), "dashboard html renders source link");
+    expect(html.contains(QString::fromUtf8("订单改善与资金流入")), "dashboard html renders AI primary reason");
     expect(html.contains(QString::fromUtf8("半导体")), "dashboard html renders sector names");
     expect(html.contains(QString::fromUtf8("AI 综合判断")), "dashboard html renders AI summary");
     expect(html.contains(theme.bodyBg), "dashboard html applies theme css");

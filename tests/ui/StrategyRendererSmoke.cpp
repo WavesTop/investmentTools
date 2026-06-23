@@ -36,6 +36,8 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double score
     snap.cumulativeReturn = change * 2.0;
     snap.upcomingEvents << QString::fromUtf8("产业会议进入召开窗口");
     snap.futureEventsAI << QString::fromUtf8("AI 预计订单兑现节奏加快");
+    snap.aiInsight.valid = true;
+    snap.aiInsight.nextCheckpoint = QString::fromUtf8("跟踪订单兑现和资金回流");
     StrategyBacktest bt;
     bt.name = QString::fromUtf8("趋势跟踪");
     bt.totalTrades = 8;
@@ -89,7 +91,8 @@ int runStrategyRendererSmoke()
     expect(html.contains(QString::fromUtf8("建议回避板块")), "strategy html contains avoid section");
     expect(html.contains(QString::fromUtf8("指数方向参考")), "strategy html contains index reference");
     expect(html.contains(QString::fromUtf8("我的持仓诊断")), "strategy html contains portfolio diagnostics");
-    expect(html.contains(QString::fromUtf8("未来事件日历")), "strategy html contains future events");
+    expect(html.contains(QString::fromUtf8("策略验证日历")), "strategy html contains strategy checkpoints");
+    expect(html.contains(QString::fromUtf8("跟踪订单兑现和资金回流")), "strategy html renders AI checkpoint");
     expect(html.contains("jump-1"), "strategy html keeps sector jump links");
     expect(html.contains("jumpi-SH"), "strategy html keeps index jump links");
     expect(html.contains(theme.bodyBg), "strategy html applies theme css");
