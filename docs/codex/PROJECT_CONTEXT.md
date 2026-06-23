@@ -1,6 +1,6 @@
 # InvestInsight Codex 项目上下文
 
-最后更新：2026-06-22
+最后更新：2026-06-23
 
 ## 用途
 
@@ -90,7 +90,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `docs/versions/v2.0/plans/ui-refactor-phase0-plan.md` | 2.0 UI 重构 Phase 0 执行计划，记录小切片提交边界和验证命令。 |
 | `docs/versions/v2.0/plans/event-impact-engine-phase1-5-plan.md` | 2.0 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
 | `docs/versions/v2.1/plans/event-impact-engine-completion-plan.md` | 2.1 事件传导引擎补完计划，记录事件模型、状态时间、路径规则、评分、追踪和 UI 的剩余实现切片。 |
-| `docs/versions/v2.2/plans/ui-content-readability-optimization-plan.md` | 2.2 UI 内容可读性优化计划，记录事件证据链、理由去重、板块机会表格、板块详情趋势图和截图验证要求。 |
+| `docs/versions/v2.2/plans/ui-content-readability-optimization-plan.md` | 2.2 UI 内容可读性优化计划，记录 AI 协同分析、事件证据链、理由去重、板块机会表格、板块详情趋势图和截图验证要求。 |
 
 ## 当前主流程
 
@@ -166,6 +166,8 @@ AI 两个阶段：
 
 - Stage 1：对新闻标题做板块归因和情绪/影响强度识别。
 - Stage 2：对 Top N 板块做深度分析，并把 AI 理由追加到策略说明中。
+
+v2.2 计划把 AI 从“补充理由”扩展为协同分析层：AI 参与事件标题改写、摘要生成、影响路径解释、理由/风险去重和规则分歧提示；但不直接覆盖 `forecastScore`、`eventCatalystScore` 或最终建议动作。AI 输出需要结构化 JSON，失败或关闭时继续使用规则引擎结果。
 
 ## UI 状态
 
