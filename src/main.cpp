@@ -409,8 +409,22 @@ int main(int argc, char *argv[])
     window.show();
 
     for (int i = 1; i < argc; ++i) {
-        if (QString(argv[i]) == "--auto-analyze") {
+        const QString arg = QString(argv[i]);
+        if (arg == "--auto-analyze") {
             window.autoAnalyze();
+            break;
+        }
+        if (arg == "--auto-analyze-no-ai") {
+            window.autoAnalyze(false);
+            break;
+        }
+        if (arg == "--capture-ui-screenshots") {
+            const QString dir = (i + 1 < argc) ? QString(argv[i + 1]) : QStringLiteral("docs/versions/v2.2/screenshots/ui-readability");
+            window.autoAnalyze(false, dir);
+            break;
+        }
+        if (arg.startsWith("--capture-ui-screenshots=")) {
+            window.autoAnalyze(false, arg.mid(QStringLiteral("--capture-ui-screenshots=").size()));
             break;
         }
     }

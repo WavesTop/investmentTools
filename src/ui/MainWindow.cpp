@@ -44,6 +44,7 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 #include <QButtonGroup>
 #include <QComboBox>
 #include <QCompleter>
+#include <QCoreApplication>
 #include <QDesktopServices>
 #include <QFormLayout>
 #include <QFrame>
@@ -62,6 +63,8 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 #include <QPen>
 #include <QDateTime>
 #include <QDateEdit>
+#include <QDir>
+#include <QEventLoop>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
@@ -148,11 +151,27 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     buildUi();
 }
 
-void MainWindow::autoAnalyze()
+void MainWindow::autoAnalyze(bool enableAI, const QString &screenshotDir)
 {
-    QTimer::singleShot(200, this, [this]() {
+    m_pendingScreenshotDir = screenshotDir;
+    QTimer::singleShot(200, this, [this, enableAI]() {
+        bool restoreAiEnabled = false;
+        bool previousAiEnabled = true;
+        if (!enableAI && m_setupAiEnabled) {
+            previousAiEnabled = m_setupAiEnabled->isChecked();
+            m_setupAiEnabled->setChecked(false);
+            restoreAiEnabled = true;
+        }
         saveAndEnterMainPage();
-        QTimer::singleShot(500, this, [this]() {
+        if (restoreAiEnabled) {
+            QSettings settings("InvestInsight", "InvestInsight");
+            settings.setValue("ai/enabled", previousAiEnabled);
+            m_setupAiEnabled->setChecked(previousAiEnabled);
+        }
+        QTimer::singleShot(500, this, [this, enableAI]() {
+            if (!enableAI && m_aiToggle) {
+                m_aiToggle->setChecked(false);
+            }
             beginRefresh();
         });
     });
@@ -275,6 +294,14 @@ void MainWindow::onRefreshFinished()
     m_statusLabel->setText(statusText);
     QTimer::singleShot(3000, this, [this]() { if (!m_isRefreshing) m_loadingBar->setVisible(false); });
     m_isRefreshing = false;
+    if (!m_pendingScreenshotDir.trimmed().isEmpty()) {
+        const QString dirPath = m_pendingScreenshotDir;
+        m_pendingScreenshotDir.clear();
+        QTimer::singleShot(800, this, [this, dirPath]() {
+            captureUiScreenshots(dirPath);
+            QTimer::singleShot(200, []() { QCoreApplication::quit(); });
+        });
+    }
 }
 
 void MainWindow::renderOverview(const AnalysisResult &analysis)
@@ -287,6 +314,57 @@ void MainWindow::renderOverview(const AnalysisResult &analysis)
         m_overviewBrowser->setHtml(buildSectorTableHtml(analysis));
     if (m_strategyBrowser)
         m_strategyBrowser->setHtml(buildStrategyHtml(analysis));
+}
+
+void MainWindow::captureUiScreenshots(const QString &dirPath)
+{
+    QDir dir;
+    if (!dir.mkpath(dirPath)) return;
+
+    auto settle = []() {
+        for (int i = 0; i < 8; ++i) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        }
+    };
+    auto saveWindow = [this, &dirPath, &settle](const QString &fileName) {
+        settle();
+        grab().save(QDir(dirPath).filePath(fileName));
+    };
+
+    resize(1366, 860);
+    show();
+    raise();
+    activateWindow();
+    auto setHeader = [this](const QString &title, const QString &meta) {
+        if (m_workspaceTitle) m_workspaceTitle->setText(title);
+        if (m_workspaceMeta) m_workspaceMeta->setText(meta);
+    };
+
+    m_tabWidget->setCurrentIndex(0);
+    m_overviewSubTabs->setCurrentIndex(0);
+    setHeader(QString::fromUtf8("综合总览"),
+              QString::fromUtf8("市场温度、关键事件、机会风险和分析控制"));
+    saveWindow("01-overview.png");
+
+    m_overviewSubTabs->setCurrentIndex(1);
+    setHeader(QString::fromUtf8("事件雷达"),
+              QString::fromUtf8("事件状态、时间节点、传导路径和影响板块"));
+    saveWindow("02-event-radar.png");
+
+    m_overviewSubTabs->setCurrentIndex(2);
+    setHeader(QString::fromUtf8("板块机会"),
+              QString::fromUtf8("板块评分、事件催化、趋势状态和风险排序"));
+    saveWindow("03-sector-opportunities.png");
+
+    m_overviewSubTabs->setCurrentIndex(3);
+    setHeader(QString::fromUtf8("策略跟踪"),
+              QString::fromUtf8("建议动作、持仓影响、信号表现和后续检查点"));
+    saveWindow("04-strategy-tracking.png");
+
+    if (!m_lastResult.sectors.isEmpty()) {
+        openSectorTab(m_lastResult.sectors.first().industry);
+        saveWindow("05-sector-detail.png");
+    }
 }
 
 void MainWindow::openSectorTab(const QString &sectorName)
@@ -1148,6 +1226,7 @@ void MainWindow::buildMainPage(QVBoxLayout *mainLayout)
 
     m_viewMode = new QComboBox(filterBar);
     m_viewMode->addItems({"简明模式", "专业模式"});
+    m_viewMode->setCurrentIndex(1);
     m_viewMode->setMinimumWidth(90);
     m_viewMode->setToolTip("简明模式适合快速查看关键信号；专业模式展示完整投研数据");
 
@@ -1667,8 +1746,10 @@ void MainWindow::saveAndEnterMainPage()
     m_aiToggle->setEnabled(m_orchestrator.isAIAvailable());
     
     m_statusLabel->setText(QString::fromUtf8("配置已保存"));
-    if (m_workspaceTitle) m_workspaceTitle->setText(QString::fromUtf8("配置"));
-    if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("AI 接入、持仓、数据刷新和提醒设置"));
+    if (m_tabWidget) m_tabWidget->setCurrentIndex(0);
+    if (m_overviewSubTabs) m_overviewSubTabs->setCurrentIndex(0);
+    if (m_workspaceTitle) m_workspaceTitle->setText(QString::fromUtf8("综合总览"));
+    if (m_workspaceMeta) m_workspaceMeta->setText(QString::fromUtf8("市场温度、关键事件、机会风险和分析控制"));
 }
 
 void MainWindow::openChatTab()

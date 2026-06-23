@@ -145,7 +145,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
-    void autoAnalyze();
+    void autoAnalyze(bool enableAI = true, const QString &screenshotDir = {});
     void clearDynamicResultPagesForRefresh();
 
 private:
@@ -162,6 +162,7 @@ private:
     void loadPortfolioToTable();
 
     void renderOverview(const AnalysisResult &analysis);
+    void captureUiScreenshots(const QString &dirPath);
     void openSectorTab(const QString &sectorName);
     void openIndexTab(const QString &indexKey);
     void onTabCloseRequested(int index);
@@ -219,6 +220,7 @@ private:
     QTimer *m_progressPollTimer = nullptr;
     bool m_isRefreshing = false;
     bool m_darkMode = false;
+    QString m_pendingScreenshotDir;
     std::atomic<int> m_currentProgress{0};
     QString m_currentStage;
     std::shared_ptr<std::function<void()>> m_reorderSoldFn;

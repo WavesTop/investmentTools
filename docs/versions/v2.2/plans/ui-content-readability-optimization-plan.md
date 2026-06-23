@@ -6,7 +6,8 @@
 
 - 切片 1/2 底层能力已完成：新增 `AIReadableInsight` 展示字段，`AIAnalyzer` 支持解析结构化可读字段，并新增 `InvestInsightAIAnalyzerSmoke` 本地 smoke。
 - AI 协同层已调整为解释增强：AI 可输出可读标题、摘要、影响路径、首要理由/风险、下一观察点和规则分歧提示，但不再直接覆盖 `forecastScore` 或最终 `AdviceAction`。
-- 后续继续推进总览、事件雷达、板块机会、策略跟踪和板块详情的 UI 展示切片，并在 UI smoke 与截图验证后提交。
+- 总览、事件雷达、板块机会、策略跟踪和板块详情的 UI 展示切片已进入实现：关键事件和板块机会拆出首要理由/风险/观察点，事件雷达展示可读事件与影响路径，板块机会删除风险提示列并新增 MACD/RSI/KDJ/均线/量能/资金字段，板块详情新增 AI 协同解读和新闻链接，策略页收束为策略验证日历。
+- `--auto-analyze-no-ai` 可用于 UI 自动分析验证；`--capture-ui-screenshots <dir>` 已作为 UI 截图验证入口，启动自动分析但关闭 AI 深度调用，并在分析完成后保存总览、事件雷达、板块机会、策略跟踪和板块详情截图；本轮已通过 UI smoke，并保存截图到 `docs/versions/v2.2/screenshots/ui-readability/`。
 
 ## 背景
 
