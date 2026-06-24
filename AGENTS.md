@@ -33,6 +33,14 @@
 - 涉及平台差异时，需要检查对应平台分支、启动脚本、资源路径、图标、Qt 部署和构建参数，避免只修 Windows 或只修 macOS。
 - 如果改动影响打包、发布、运行脚本或构建参数，必须同时检查并按需更新 `package_windows.ps1`、`package_macos.sh`、`run_gui.bat`、`run_gui.sh` 和对应版本的打包说明，例如 `docs/versions/v1.0/release/PACKAGING.md`。
 
+## Token 与 Skill 使用规则
+
+- 默认不要主动使用 skill，除非用户在消息中显式引用 `$skill`，或系统、安全、任务流程明确要求必须使用。
+- 常规代码修改、文档更新、测试、提交优先使用本项目文档和本地搜索工具，不额外读取 skill 说明。
+- 优先阅读 `docs/README.md`、`docs/codex/PROJECT_CONTEXT.md`、`docs/product/InvestInsight-product-overview.md`，再精准检索相关文件，避免全仓库反复扫描。
+- MCP、联网搜索、浏览器截图只在任务明确需要、信息可能过期、或 UI 改动需要验证时使用。
+- UI 改动仍需截图确认，但应优先使用已有自动化截图入口，避免无意义手动浏览。
+
 ## 提交与验证规则
 
 - 每次 commit 尽量控制在 500 行以内，200 到 300 行最佳；如果历史文档、设计图或二进制资源导致无法严格控制，需要在提交说明或交付说明中解释原因。
