@@ -1,6 +1,6 @@
 # InvestInsight Codex 项目上下文
 
-最后更新：2026-06-23
+最后更新：2026-06-26
 
 ## 用途
 
@@ -24,6 +24,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_ui_smoke.ps1
 .\build\Release\InvestInsightEventSmoke.exe
 .\build\Release\InvestInsightAIAnalyzerSmoke.exe
 .\build\Release\InvestInsightRecommendationSmoke.exe
+.\build\Release\InvestInsightPriceLevelSmoke.exe
 .\build\Release\InvestInsight.exe --debug-event-impact "美联储降息预期升温，市场关注下次 FOMC 会议"
 .\build\Release\InvestInsight.exe --dump-event-rules
 .\build\Release\InvestInsight.exe --auto-analyze-no-ai
@@ -38,6 +39,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 第四个命令用于事件传导引擎 smoke 验证，当前覆盖事件类型、事件状态、地区、观察节点、影响路径、事件仓库和证据保留。
 第五个命令用于 AI 协同分析 smoke 验证，当前覆盖结构化可读字段 JSON 解析和异常兜底。
 `InvestInsightRecommendationSmoke` 用于推荐生命周期 smoke 验证，覆盖过热不追、回调观察、风险预警、失效移除和本地记录序列化。
+`InvestInsightPriceLevelSmoke` 用于技术点位计划 smoke 验证，覆盖上升趋势回调观察、过热不追、下跌风险预警和 K 线不足兜底。
 `--debug-event-impact` 用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
 `--dump-event-rules` 用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
 `--auto-analyze-no-ai` 用于 UI 自动分析验证：启动后自动分析但关闭 AI 深度调用，避免截图流程等待外部模型。`--capture-ui-screenshots` 用于 UI 截图验证：自动分析完成后依次切换总览、事件雷达、板块机会、策略跟踪和板块详情，并保存 PNG 截图。
@@ -75,6 +77,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/core/MarketRegimeDetector.cpp` | 市场状态识别和动态因子权重。 |
 | `src/core/StrategyEngine.cpp` | 生成短中长期观点、止盈止损和操作建议文本。 |
 | `src/core/RecommendationTracker.cpp` | 推荐生命周期跟踪器，计算方向分、入场时机分，生成新信号、推荐中、过热不追、回调观察、风险预警和失效移除记录，并用 `QSettings` 保存本地历史。 |
+| `src/core/PriceLevelAnalyzer.cpp` | v2.4 技术点位分析器，基于 K 线、均线、BOLL、ATR、涨幅和风险收益比生成观察买入区、止损失效位、止盈减仓区和持有周期。 |
 | `src/domain/AnalysisResult.h` | UI 使用的核心结果结构，尤其是 `SectorSnapshot`。 |
 | `run_gui.sh` / `run_gui.bat` | 本地启动脚本；Windows 启动 `build/Release/InvestInsight.exe`，macOS 优先启动 `build/InvestInsight.app/Contents/MacOS/InvestInsight`。 |
 | `package_windows.ps1` | Windows 1.0 发布打包脚本；生成根目录 `InvestInsight-Windows` 和 zip，支持指定构建目录、toolchain、跳过构建和跳过 zip。 |
@@ -93,6 +96,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件模型字段、事件抽取、状态识别、证据保留、路径映射和仓库追踪。 |
 | `tests/core/AIAnalyzerSmoke.cpp` | AI 协同分析 smoke 测试，校验固定 JSON 样本可解析、无效 JSON 可兜底。 |
 | `tests/core/RecommendationTrackerSmoke.cpp` | 推荐生命周期 smoke 测试，校验过热不追、风险预警、回调观察、失效移除和 JSON 往返。 |
+| `tests/core/PriceLevelAnalyzerSmoke.cpp` | 技术点位 smoke 测试，校验观察区、止损位、止盈区、风险收益比和数据不足兜底。 |
 | `docs/README.md` | 文档总入口，说明按职责和版本查看文档的路径。 |
 | `docs/versions/v1.0/release/PACKAGING.md` | 1.0 Windows/macOS 打包和使用说明。 |
 | `docs/versions/v2.0/design/ui-workbench-redesign.md` | 2.0 UI 工作台设计稿说明；包含当前界面截图、总览/事件雷达/板块机会/策略跟踪/AI 助手/配置/板块详情长图和后续实现映射。 |
@@ -169,6 +173,7 @@ flowchart TD
 - `AdviceAction` 当前阈值为：大于等于 `0.22` 增配，小于等于 `-0.22` 减配，其余持有。
 - 趋势生命周期解释链会修正过热、派发、下跌等状态下的过度乐观动作。
 - v2.3 起新增 `RecommendationTracker`：在最终一致性校验之后，把一次性动作转成推荐生命周期记录，并区分 `directionScore` 和 `entryTimingScore`。上涨过热会进入“过热不追”，推荐后大跌会保留为“风险预警”，方向仍在但价格回落会进入“回调观察”，逻辑转弱才进入“失效移除”。
+- v2.4 起新增 `PriceLevelAnalyzer`：在技术指标和策略生成后，为板块生成 `priceLevelPlan`，包含趋势状态、观察买入区、止损失效位、止盈减仓区、风险收益比和持有周期。`RecommendationTracker` 会读取点位计划，风险收益比不足、过热不追或风险预警时压缩入场时机分，避免只因今日涨幅高就强化推荐。
 
 ## AI 配置
 
@@ -187,7 +192,7 @@ v2.2 已开始把 AI 从“补充理由”扩展为协同分析层：`AIReadable
 
 当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主界面已经按 `docs/versions/v2.0/design/ui-workbench-redesign.md` 落地为左侧导航 + 顶部状态条 + 内容工作区：左侧入口包含“总览、事件雷达、板块机会、策略跟踪、AI 助手、配置”，顶部只显示当前页面标题、说明和运行状态，不再放置 AI 助手/配置快捷按钮或外层页签。“开始分析”和 AI 开关已经移动到总览页的分析控制卡片中，配置页作为左侧“配置”导航对应的右侧完整页面嵌入工作台。主题颜色、Widget 样式、HTML 基础 CSS 和暗色模式检测已拆到 `src/ui/AppTheme.cpp`，并新增 `sideNav`、`topStatusBar`、`workspace-shell`、`metric-grid`、`configCard`、`chatContextPanel` 等工作台样式。板块详情图表渲染已拆到 `src/ui/renderers/ChartRenderer.cpp`，`MainWindow::buildDataDashboardHtml` 已委托 `src/ui/renderers/DashboardRenderer.cpp`，`MainWindow::buildEventRadarHtml` 已委托 `src/ui/renderers/EventRadarRenderer.cpp`，`MainWindow::buildSectorTableHtml` 已委托 `src/ui/renderers/SectorTableRenderer.cpp`，`MainWindow::buildStrategyHtml` 已委托 `src/ui/renderers/StrategyRenderer.cpp`，`MainWindow::buildSectorHtml` 已委托 `src/ui/renderers/SectorDetailRenderer.cpp`，`MainWindow::buildIndexHtml` 已委托 `src/ui/renderers/IndexDetailRenderer.cpp`。
 
-总览页已改为工作台式信息结构，包含分析控制、可读关键事件雷达、板块机会与风险和下一观察点；板块机会页默认进入专业模式，完整表格删除“风险提示”列，改为展示事件、MACD、RSI、KDJ、均线、量能、资金、数据质量、建议和主要看点；策略跟踪页新增“跟踪状态”指标卡片，并把完整事件列表收束为“策略验证日历”；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；事件雷达已新增结构化事件时间线，板块详情页在投资结论之后新增“核心评分”“AI 协同解读”“信号解释”“影响路径”“阶段收益与回测”“资金流与相关板块”等分区，并继续保留事件驱动、趋势图表、技术指标、资金流、回测、新闻证据和数据质量。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
+总览页已改为工作台式信息结构，包含分析控制、可读关键事件雷达、板块机会与风险和下一观察点；板块机会页默认进入专业模式，完整表格删除“风险提示”列，改为展示事件、MACD、RSI、KDJ、均线、量能、资金、数据质量、建议、点位计划和主要看点；策略跟踪页新增“跟踪状态”指标卡片，并把完整事件列表收束为“策略验证日历”；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；事件雷达已新增结构化事件时间线，板块详情页在投资结论之后新增“技术点位计划”“核心评分”“AI 协同解读”“信号解释”“影响路径”“阶段收益与回测”“资金流与相关板块”等分区，并继续保留事件驱动、趋势图表、技术指标、资金流、回测、新闻证据和数据质量。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
 
 板块详情页重构时不要删减当前已有量化信息。新的详情长图要求保留投资信号、短中长期收益、核心评分、技术指标、阶段收益/回测、资金流、相关板块、新闻证据和数据质量。
 
