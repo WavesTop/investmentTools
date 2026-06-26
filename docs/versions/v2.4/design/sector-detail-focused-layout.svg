@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1880" viewBox="0 0 1440 1880">
+  <defs>
+    <style>
+      .bg { fill: #f4f7fb; }
+      .nav { fill: #101826; }
+      .panel { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1; }
+      .soft { fill: #f8fafc; stroke: #dbe4f0; stroke-width: 1; }
+      .muted { fill: #64748b; font-size: 15px; }
+      .tiny { fill: #64748b; font-size: 13px; }
+      .title { fill: #0f172a; font-size: 30px; font-weight: 800; }
+      .h2 { fill: #0f172a; font-size: 21px; font-weight: 800; }
+      .h3 { fill: #0f172a; font-size: 17px; font-weight: 800; }
+      .text { fill: #1e293b; font-size: 15px; }
+      .white { fill: #ffffff; }
+      .red { fill: #ef4444; }
+      .green { fill: #059669; }
+      .blue { fill: #2563eb; }
+      .amber { fill: #d97706; }
+      .purple { fill: #7c3aed; }
+      .line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+      text { font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; }
+    </style>
+    <linearGradient id="decision" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff7ed"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="chartBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1440" height="1880"/>
+
+  <!-- Left navigation -->
+  <rect class="nav" x="0" y="0" width="248" height="1880"/>
+  <text class="white" x="28" y="72" font-size="32" font-weight="800">InvestInsight</text>
+  <text x="28" y="102" fill="#94a3b8" font-size="14">新闻驱动的板块洞察</text>
+  <rect x="24" y="176" width="200" height="48" rx="8" fill="#e5edf9"/>
+  <text x="56" y="206" fill="#0f2a55" font-size="16" font-weight="800">总览</text>
+  <text x="56" y="278" fill="#dbeafe" font-size="16" font-weight="700">事件雷达</text>
+  <text x="56" y="350" fill="#dbeafe" font-size="16" font-weight="700">板块机会</text>
+  <rect x="24" y="390" width="200" height="48" rx="8" fill="#e5edf9"/>
+  <text x="56" y="421" fill="#0f2a55" font-size="16" font-weight="800">策略跟踪</text>
+  <text x="56" y="494" fill="#dbeafe" font-size="16" font-weight="700">AI 助手</text>
+  <text x="56" y="566" fill="#dbeafe" font-size="16" font-weight="700">配置</text>
+  <rect x="24" y="1660" width="200" height="86" rx="8" fill="#1e293b" stroke="#475569"/>
+  <text x="44" y="1692" fill="#e2e8f0" font-size="17" font-weight="800">数据状态</text>
+  <circle cx="46" cy="1722" r="6" fill="#22c55e"/>
+  <text x="62" y="1728" fill="#dbeafe" font-size="14">行情等待刷新</text>
+  <circle cx="46" cy="1748" r="6" fill="#fde047"/>
+  <text x="62" y="1754" fill="#dbeafe" font-size="14">新闻等待扫描</text>
+
+  <!-- Main shell -->
+  <rect x="248" y="0" width="1192" height="70" fill="#ffffff" stroke="#e2e8f0"/>
+  <text class="title" x="280" y="44">光伏详情</text>
+  <text class="muted" x="430" y="44">行情 · 事件 · 点位 · 预测 · 证据</text>
+  <text x="1050" y="43" fill="#0f2a55" font-size="14" font-weight="700">✓ 12:45 · 420 板块 · 规则引擎 + AI 校验</text>
+
+  <g transform="translate(280,98)">
+    <!-- Header summary -->
+    <text class="title" x="0" y="0">光伏</text>
+    <text class="red" x="72" y="0" font-size="24" font-weight="800">+2.73%</text>
+    <text class="muted" x="170" y="0">成分股 111 只 · 数据日期 2026-06-26 · 数据质量 80</text>
+
+    <!-- Decision row -->
+    <rect x="0" y="32" width="1128" height="260" rx="10" fill="url(#decision)" stroke="#fed7aa" filter="url(#shadow)"/>
+    <text class="h2" x="26" y="74">决策摘要</text>
+    <rect x="26" y="96" width="124" height="42" rx="7" fill="#fee2e2"/>
+    <text class="red" x="48" y="123" font-size="20" font-weight="900">建议减仓</text>
+    <text class="text" x="170" y="122">上涨后风险收益比下降，先保护利润；等待回踩观察区再评估。</text>
+
+    <g transform="translate(26,156)">
+      <rect class="soft" x="0" y="0" width="172" height="86" rx="8"/>
+      <text class="tiny" x="18" y="28">方向分</text>
+      <text class="red" x="18" y="62" font-size="28" font-weight="900">0.27</text>
+      <text class="tiny" x="86" y="62">偏多</text>
+      <rect class="soft" x="188" y="0" width="172" height="86" rx="8"/>
+      <text class="tiny" x="206" y="28">入场时机</text>
+      <text class="amber" x="206" y="62" font-size="28" font-weight="900">0.08</text>
+      <text class="tiny" x="276" y="62">等待</text>
+      <rect class="soft" x="376" y="0" width="172" height="86" rx="8"/>
+      <text class="tiny" x="394" y="28">风险收益比</text>
+      <text class="blue" x="394" y="62" font-size="28" font-weight="900">0.80</text>
+      <text class="tiny" x="472" y="62">不足</text>
+      <rect class="soft" x="564" y="0" width="172" height="86" rx="8"/>
+      <text class="tiny" x="582" y="28">持有周期</text>
+      <text class="purple" x="582" y="62" font-size="22" font-weight="900">短期观察</text>
+      <rect class="soft" x="752" y="0" width="324" height="86" rx="8"/>
+      <text class="tiny" x="770" y="28">下一动作</text>
+      <text class="text" x="770" y="58" font-weight="800">不追高，跌回观察区后看量能和事件确认。</text>
+    </g>
+  </g>
+
+  <!-- First content grid -->
+  <g transform="translate(280,420)">
+    <rect class="panel" x="0" y="0" width="740" height="520" rx="10" fill="url(#chartBg)"/>
+    <text class="h2" x="24" y="38">趋势图与点位</text>
+    <text class="tiny" x="160" y="38">K 线 · MA20 / MA60 · 观察区 · 止损 / 止盈 · 成交量 · MACD</text>
+
+    <!-- chart area -->
+    <rect x="32" y="68" width="676" height="312" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <line x1="54" y1="322" x2="690" y2="322" stroke="#e2e8f0"/>
+    <line x1="54" y1="260" x2="690" y2="260" stroke="#e2e8f0"/>
+    <line x1="54" y1="198" x2="690" y2="198" stroke="#e2e8f0"/>
+    <line x1="54" y1="136" x2="690" y2="136" stroke="#e2e8f0"/>
+    <rect x="54" y="238" width="636" height="34" fill="#dbeafe" opacity="0.55"/>
+    <text x="64" y="233" fill="#2563eb" font-size="12" font-weight="800">观察买入区 57.74 - 60.61</text>
+    <line x1="54" y1="292" x2="690" y2="292" stroke="#dc2626" stroke-dasharray="6 6"/>
+    <text x="64" y="287" fill="#dc2626" font-size="12" font-weight="800">止损失效位 55.35</text>
+    <line x1="54" y1="118" x2="690" y2="118" stroke="#059669" stroke-dasharray="6 6"/>
+    <text x="64" y="113" fill="#059669" font-size="12" font-weight="800">止盈减仓区 61.46 - 63.85</text>
+    <polyline class="thin" points="56,286 92,278 128,266 164,255 200,250 236,230 272,224 308,210 344,184 380,176 416,156 452,146 488,132 524,120 560,105 596,88 632,96 672,76" stroke="#ef4444"/>
+    <polyline class="thin" points="56,304 128,286 200,268 272,246 344,224 416,200 488,170 560,142 632,126 672,116" stroke="#f59e0b"/>
+    <polyline class="thin" points="56,316 128,304 200,290 272,270 344,246 416,222 488,196 560,174 632,158 672,146" stroke="#7c3aed"/>
+    <g fill="#ef4444" opacity="0.82">
+      <rect x="72" y="330" width="12" height="34"/><rect x="118" y="336" width="12" height="28"/>
+      <rect x="164" y="322" width="12" height="42"/><rect x="210" y="314" width="12" height="50"/>
+      <rect x="256" y="306" width="12" height="58"/><rect x="302" y="298" width="12" height="66"/>
+      <rect x="348" y="290" width="12" height="74"/><rect x="394" y="282" width="12" height="82"/>
+      <rect x="440" y="274" width="12" height="90"/><rect x="486" y="266" width="12" height="98"/>
+      <rect x="532" y="256" width="12" height="108"/><rect x="578" y="248" width="12" height="116"/>
+      <rect x="624" y="262" width="12" height="102"/>
+    </g>
+    <polyline class="thin" points="56,406 104,420 152,410 200,430 248,414 296,438 344,418 392,434 440,416 488,426 536,402 584,410 632,394 680,404" stroke="#2563eb"/>
+    <text class="tiny" x="32" y="408">MACD / 动量</text>
+
+    <g transform="translate(32,402)">
+      <rect class="soft" x="0" y="54" width="206" height="44" rx="6"/>
+      <text class="tiny" x="14" y="81">MA20：59.82 · MA60：55.10</text>
+      <rect class="soft" x="222" y="54" width="206" height="44" rx="6"/>
+      <text class="tiny" x="236" y="81">RSI：77 · 过热边缘</text>
+      <rect class="soft" x="444" y="54" width="232" height="44" rx="6"/>
+      <text class="tiny" x="458" y="81">结论：趋势仍在，但当前不追</text>
+    </g>
+
+    <!-- Right insight column -->
+    <rect class="panel" x="764" y="0" width="364" height="520" rx="10"/>
+    <text class="h2" x="788" y="38">购买建议</text>
+    <rect x="788" y="64" width="316" height="92" rx="8" fill="#fff7ed" stroke="#fed7aa"/>
+    <text class="h3" x="808" y="96">当前动作：减仓 / 等回踩</text>
+    <text class="text" x="808" y="126">趋势没坏，但涨幅兑现过快。</text>
+    <text class="tiny" x="808" y="148">建议把仓位动作和观察点分开，不直接买入。</text>
+
+    <text class="h3" x="788" y="194">关键判断</text>
+    <circle cx="798" cy="224" r="5" fill="#ef4444"/>
+    <text class="text" x="814" y="230">价格接近止盈带，风险收益比不足。</text>
+    <circle cx="798" cy="260" r="5" fill="#2563eb"/>
+    <text class="text" x="814" y="266">回踩 57.74-60.61 后再看量能。</text>
+    <circle cx="798" cy="296" r="5" fill="#059669"/>
+    <text class="text" x="814" y="302">若站稳 63.85，重新进入趋势确认。</text>
+
+    <text class="h3" x="788" y="350">预测摘要</text>
+    <rect class="soft" x="788" y="370" width="316" height="118" rx="8"/>
+    <text class="text" x="808" y="400" font-weight="800">未来 5-20 日：震荡消化</text>
+    <text class="tiny" x="808" y="426">触发条件：成交量缩小但支撑不破。</text>
+    <text class="text" x="808" y="456" font-weight="800">未来 20-60 日：事件验证后再上修</text>
+    <text class="tiny" x="808" y="480">关注装机、硅料价格、政策补贴和订单。</text>
+  </g>
+
+  <!-- Event and forecast layer -->
+  <g transform="translate(280,972)">
+    <rect class="panel" x="0" y="0" width="548" height="356" rx="10"/>
+    <text class="h2" x="24" y="38">相关事件分析</text>
+    <text class="tiny" x="170" y="38">只展示会改变判断的事件，完整新闻放入证据层</text>
+    <line x1="48" y1="82" x2="48" y2="300" stroke="#cbd5e1" stroke-width="2"/>
+    <circle cx="48" cy="90" r="9" fill="#ef4444"/>
+    <text class="h3" x="72" y="96">光伏产业链价格反弹</text>
+    <text class="tiny" x="72" y="124">Confirmed · 商品价格 / 库存 / 供需</text>
+    <text class="text" x="72" y="152">影响路径：组件排产改善 → 盈利预期修复 → 板块估值上修。</text>
+    <circle cx="48" cy="190" r="9" fill="#d97706"/>
+    <text class="h3" x="72" y="196">政策补贴与并网节奏</text>
+    <text class="tiny" x="72" y="224">Scheduled · 未来 2-4 周验证</text>
+    <text class="text" x="72" y="252">若政策弱于预期，反弹逻辑会转为短线资金博弈。</text>
+    <circle cx="48" cy="292" r="9" fill="#2563eb"/>
+    <text class="h3" x="72" y="298">海外利率预期变化</text>
+    <text class="tiny" x="72" y="326">Expected · 成长估值链条</text>
+
+    <rect class="panel" x="580" y="0" width="548" height="356" rx="10"/>
+    <text class="h2" x="604" y="38">预测矩阵</text>
+    <text class="tiny" x="706" y="38">方向、条件和失效点分开表达</text>
+    <g transform="translate(604,70)">
+      <rect class="soft" x="0" y="0" width="500" height="76" rx="8"/>
+      <text class="h3" x="18" y="30">短期 5-20 日</text>
+      <text class="amber" x="180" y="30" font-size="18" font-weight="900">震荡偏强 56%</text>
+      <text class="tiny" x="18" y="58">验证：不破观察区，MACD 不转弱，新闻热度不衰减。</text>
+      <rect class="soft" x="0" y="96" width="500" height="76" rx="8"/>
+      <text class="h3" x="18" y="126">中期 20-60 日</text>
+      <text class="green" x="180" y="126" font-size="18" font-weight="900">事件兑现后上修</text>
+      <text class="tiny" x="18" y="154">验证：订单、价格、资金持续性同时改善。</text>
+      <rect class="soft" x="0" y="192" width="500" height="76" rx="8"/>
+      <text class="h3" x="18" y="222">长周期 60-120 日</text>
+      <text class="blue" x="180" y="222" font-size="18" font-weight="900">产业趋势观察</text>
+      <text class="tiny" x="18" y="250">验证：业绩确认，供给出清，估值分位仍可接受。</text>
+    </g>
+  </g>
+
+  <!-- Evidence layer -->
+  <g transform="translate(280,1360)">
+    <rect class="panel" x="0" y="0" width="1128" height="370" rx="10"/>
+    <text class="h2" x="24" y="38">证据层</text>
+    <text class="tiny" x="104" y="38">默认摘要展示，点击后展开完整明细；信息不删除，但不抢首屏重点</text>
+
+    <g transform="translate(24,72)">
+      <rect class="soft" x="0" y="0" width="528" height="60" rx="8"/>
+      <text class="h3" x="18" y="36">新闻证据</text>
+      <text class="tiny" x="126" y="36">38 条 · 3 条核心新闻已用于事件分析 · 查看全部</text>
+      <rect class="soft" x="576" y="0" width="504" height="60" rx="8"/>
+      <text class="h3" x="594" y="36">资金流</text>
+      <text class="tiny" x="682" y="36">近 5 日净流入放缓 · 主力分歧扩大 · 展开曲线</text>
+
+      <rect class="soft" x="0" y="82" width="528" height="60" rx="8"/>
+      <text class="h3" x="18" y="118">相关板块</text>
+      <text class="tiny" x="126" y="118">电力设备、储能、硅料、逆变器 · 查看联动</text>
+      <rect class="soft" x="576" y="82" width="504" height="60" rx="8"/>
+      <text class="h3" x="594" y="118">技术指标</text>
+      <text class="tiny" x="704" y="118">MACD、RSI、KDJ、BOLL、均线 · 展开表格</text>
+
+      <rect class="soft" x="0" y="164" width="528" height="60" rx="8"/>
+      <text class="h3" x="18" y="200">策略回测</text>
+      <text class="tiny" x="126" y="200">趋势跟踪胜率 62% · 最大回撤 8.4% · 查看</text>
+      <rect class="soft" x="576" y="164" width="504" height="60" rx="8"/>
+      <text class="h3" x="594" y="200">数据质量</text>
+      <text class="tiny" x="704" y="200">行情完整 · 新闻源 12 路 · 一致性 96 · 查看审计</text>
+
+      <rect x="0" y="252" width="1080" height="70" rx="8" fill="#eff6ff" stroke="#bfdbfe"/>
+      <text class="blue" x="18" y="286" font-size="16" font-weight="900">完整明细仍保留</text>
+      <text class="text" x="156" y="286">新闻原文、资金曲线、技术表格、阶段收益、相关板块、数据质量全部放在证据层内展开。</text>
+    </g>
+  </g>
+</svg>
