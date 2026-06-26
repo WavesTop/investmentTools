@@ -43,6 +43,14 @@ SectorSnapshot makeSector(const QString &name, AdviceAction action, double score
     snap.fundFlowFactor = 0.18;
     snap.aiInsight.valid = true;
     snap.aiInsight.primaryReason = QString::fromUtf8("资金和技术指标同步改善");
+    snap.priceLevelPlan.valid = true;
+    snap.priceLevelPlan.actionLabel = action == AdviceAction::Increase
+        ? QString::fromUtf8("回调分批") : QString::fromUtf8("观察");
+    snap.priceLevelPlan.entryZoneLow = 101.2;
+    snap.priceLevelPlan.entryZoneHigh = 104.6;
+    snap.priceLevelPlan.riskRewardRatio = 2.2;
+    snap.priceLevelPlan.holdingHorizonLabel = QString::fromUtf8("中期跟踪");
+    snap.priceLevelPlan.summary = QString::fromUtf8("接近观察区，等待确认");
     snap.peRatio = 18.0;
     snap.pePercentile = 42.0;
     snap.crowdingIndex = 58.0;
@@ -80,6 +88,9 @@ int runSectorTableRendererSmoke()
     expect(html.contains(QString::fromUtf8("KDJ")), "sector table html contains KDJ column");
     expect(html.contains(QString::fromUtf8("量能")), "sector table html contains volume column");
     expect(html.contains(QString::fromUtf8("资金")), "sector table html contains fund flow column");
+    expect(html.contains(QString::fromUtf8("点位计划")), "sector table html contains price level plan column");
+    expect(html.contains(QString::fromUtf8("观察区")), "sector table html renders entry observation zone");
+    expect(html.contains(QString::fromUtf8("风险收益比")), "sector table html renders risk reward ratio");
     expect(!html.contains(QString::fromUtf8("风险提示")), "sector table html removes risk hint column");
     expect(html.contains(QString::fromUtf8("资金和技术指标同步改善")), "sector table html renders key point");
     expect(html.contains("jump-1"), "sector table html keeps sector jump links");

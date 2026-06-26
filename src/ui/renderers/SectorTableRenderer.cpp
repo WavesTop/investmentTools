@@ -30,6 +30,7 @@ struct MixedRow {
     QString maState;
     QString volumeState;
     QString fundFlowState;
+    QString priceLevelSummary;
     QString keyPoint;
 };
 
@@ -107,6 +108,23 @@ QString kdjState(const TechSignals &tech)
     if (tech.kdjOverbought) return QString::fromUtf8("高位 ") + num(tech.kdjJ, 0);
     if (tech.kdjOversold) return QString::fromUtf8("低位 ") + num(tech.kdjJ, 0);
     return num(tech.kdjJ, 0);
+}
+
+QString priceLevelSummary(const SectorSnapshot &sector)
+{
+    const PriceLevelPlan &plan = sector.priceLevelPlan;
+    if (!plan.valid) return QString::fromUtf8("点位待确认");
+    QStringList parts;
+    parts << plan.actionLabel;
+    if (plan.entryZoneLow > 0.0 && plan.entryZoneHigh > 0.0) {
+        parts << QString::fromUtf8("观察区 %1-%2")
+            .arg(num(plan.entryZoneLow, 2), num(plan.entryZoneHigh, 2));
+    }
+    if (plan.riskRewardRatio > 0.0) {
+        parts << QString::fromUtf8("风险收益比 %1").arg(num(plan.riskRewardRatio, 2));
+    }
+    if (!plan.holdingHorizonLabel.isEmpty()) parts << plan.holdingHorizonLabel;
+    return parts.join(QString::fromUtf8(" · "));
 }
 
 QString maState(const TechSignals &tech)
@@ -193,6 +211,7 @@ QList<MixedRow> buildRows(const AnalysisResult &analysis,
         row.volumeState = sector.tech.volExpansion ? QString::fromUtf8("放量")
             : (sector.tech.volShrink ? QString::fromUtf8("缩量") : num(sector.tech.volRatio, 2));
         row.fundFlowState = num(sector.fundFlowFactor, 3);
+        row.priceLevelSummary = priceLevelSummary(sector);
         row.keyPoint = firstNonEmpty({sector.aiInsight.primaryReason,
                                       sector.trendSummary,
                                       sector.personalAdvice},
@@ -351,7 +370,7 @@ QString renderRows(const QList<MixedRow> &rows,
              "<th style='text-align:right;'>5日</th><th style='text-align:center;'>评分</th>"
              "<th style='text-align:center;'>事件</th><th>MACD</th><th>RSI</th><th>KDJ</th>"
              "<th>均线</th><th>量能</th><th>资金</th><th style='text-align:center;'>数据</th>"
-             "<th>建议</th><th>主要看点</th></tr>";
+             "<th>建议</th><th>点位计划</th><th>主要看点</th></tr>";
     }
 
     int displayIndex = 0;
@@ -384,6 +403,8 @@ QString renderRows(const QList<MixedRow> &rows,
         h += "<td style='text-align:center;'><span class='tag " + tagClass(row.action) + "'>"
             + actionText(row.action) + "</span></td>";
         if (!options.simpleMode) {
+            h += "<td style='font-size:11px;color:" + theme.bodyColor + ";line-height:1.55;'>"
+                + escaped(row.priceLevelSummary) + "</td>";
             h += "<td style='font-size:11px;color:" + theme.mutedColor + ";'>"
                 + escaped(row.keyPoint) + "</td>";
         } else {
@@ -392,7 +413,7 @@ QString renderRows(const QList<MixedRow> &rows,
         h += "</tr>";
     }
     if (rows.isEmpty()) {
-        h += "<tr><td colspan='15' style='text-align:center;color:" + theme.mutedColor
+        h += "<tr><td colspan='16' style='text-align:center;color:" + theme.mutedColor
             + ";padding:18px;'>暂无符合筛选条件的板块或指数</td></tr>";
     }
     h += "</table>";

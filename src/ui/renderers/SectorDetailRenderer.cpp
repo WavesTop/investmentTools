@@ -176,6 +176,39 @@ QString renderAiReadableInsight(const SectorSnapshot &sector, const ThemeColors 
     return h;
 }
 
+QString renderPriceLevelPlan(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    const PriceLevelPlan &plan = sector.priceLevelPlan;
+    if (!plan.valid) return {};
+
+    QString h = "<div class='section-title'>技术点位计划</div>";
+    h += "<div class='callout'>";
+    h += "<div style='display:flex;align-items:center;gap:10px;margin-bottom:10px;'>"
+        "<span class='tag tag-hold'>" + escaped(plan.actionLabel) + "</span>"
+        "<span style='font-size:12px;color:" + theme.bodyColor + ";font-weight:700;'>"
+        + escaped(plan.trendStateLabel) + QString::fromUtf8(" · ") + escaped(plan.holdingHorizonLabel)
+        + "</span></div>";
+    if (!plan.summary.isEmpty()) {
+        h += "<div style='font-size:12px;line-height:1.7;color:" + theme.bodyColor + ";margin-bottom:10px;'>"
+            + escaped(plan.summary) + "</div>";
+    }
+    h += "<div class='metric-grid'>";
+    h += coreScoreCard(QString::fromUtf8("观察买入区"),
+                       num(plan.entryZoneLow) + "-" + num(plan.entryZoneHigh),
+                       plan.entryReason, "#2563EB");
+    h += coreScoreCard(QString::fromUtf8("止损失效位"),
+                       num(plan.stopLossLevel),
+                       plan.invalidationReason, "#DC2626");
+    h += coreScoreCard(QString::fromUtf8("止盈减仓区"),
+                       num(plan.takeProfitLow) + "-" + num(plan.takeProfitHigh),
+                       plan.exitReason, "#059669");
+    h += coreScoreCard(QString::fromUtf8("风险收益比"),
+                       num(plan.riskRewardRatio, 2),
+                       QString::fromUtf8("低于 1.5 时不应积极增配"), colorFor(plan.riskRewardRatio - 1.5, theme));
+    h += "</div></div>";
+    return h;
+}
+
 QString renderSignalExplanation(const SectorSnapshot &sector, const ThemeColors &theme)
 {
     QString h = "<div class='section-title'>信号解释</div>";
@@ -480,6 +513,7 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         + num(sector.sectorStockCount > 0 ? sector.sectorStockCount : sector.stockCount, 0)
         + QString::fromUtf8(" 只 · 数据日期 ") + escaped(sector.lastDataDate) + "</div>";
     h += renderConclusion(sector, theme);
+    h += renderPriceLevelPlan(sector, theme);
     h += renderCoreScores(sector, theme);
     h += renderAiReadableInsight(sector, theme);
     h += renderSignalExplanation(sector, theme);
