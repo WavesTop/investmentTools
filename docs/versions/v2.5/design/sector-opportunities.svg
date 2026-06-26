@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1366" height="860" viewBox="0 0 1366 860">
+  <defs><style>
+    .bg{fill:#F5F7FA}.side{fill:#0E1626}.surface{fill:#fff;stroke:#DDE3EC}.soft{fill:#F8FAFD;stroke:#DDE3EC}.active{fill:#E8EEF9}
+    .title{font:700 24px "Microsoft YaHei",Arial;fill:#111827}.h2{font:700 17px "Microsoft YaHei",Arial;fill:#111827}.h3{font:700 14px "Microsoft YaHei",Arial;fill:#111827}
+    .body{font:400 12px "Microsoft YaHei",Arial;fill:#475569}.meta{font:400 11px "Microsoft YaHei",Arial;fill:#8A99AE}.red{fill:#E5484D}.blue{fill:#2563EB}.orange{fill:#C2410C}.green{fill:#16A34A}.line{stroke:#DDE3EC}
+  </style></defs>
+  <rect class="bg" width="1366" height="860"/><rect class="side" width="236" height="860"/>
+  <text x="24" y="54" font-family="Georgia" font-size="27" font-weight="700" fill="#fff">InvestInsight</text><text x="24" y="80" class="meta">新闻驱动的板块洞察</text>
+  <text x="46" y="152" class="h3" fill="#CBD5E1">总览</text><text x="46" y="204" class="h3" fill="#CBD5E1">事件雷达</text><rect x="18" y="228" width="200" height="44" rx="8" class="active"/><text x="46" y="256" class="h3" fill="#183B72">板块机会</text>
+  <text x="46" y="308" class="h3" fill="#CBD5E1">策略跟踪</text><text x="46" y="360" class="h3" fill="#CBD5E1">AI 助手</text><text x="46" y="412" class="h3" fill="#CBD5E1">配置</text>
+  <rect x="236" y="0" width="1130" height="64" fill="#fff" stroke="#DDE3EC"/><text x="268" y="40" class="title">板块机会</text><text x="378" y="40" class="body">板块评分、事件催化、趋势状态和风险排序</text><text x="940" y="40" class="h3">421 板块 · 专业模式 · 按推荐质量排序</text>
+  <rect x="260" y="88" width="1082" height="54" rx="8" class="surface"/>
+  <rect x="284" y="102" width="120" height="28" rx="6" class="soft"/><text x="304" y="121" class="body">专业模式</text>
+  <rect x="416" y="102" width="180" height="28" rx="6" class="soft"/><text x="436" y="121" class="meta">搜索板块、指数或机会</text>
+  <rect x="608" y="102" width="120" height="28" rx="6" class="soft"/><text x="628" y="121" class="body">趋势：全部</text>
+  <rect x="740" y="102" width="120" height="28" rx="6" class="soft"/><text x="760" y="121" class="body">建议：全部</text>
+  <rect x="872" y="102" width="140" height="28" rx="6" class="soft"/><text x="892" y="121" class="body">排序：质量优先</text>
+  <rect x="1208" y="102" width="92" height="28" rx="6" fill="#4258FF"/><text x="1230" y="121" font-family="Microsoft YaHei" font-size="12" font-weight="700" fill="#fff">导出视图</text>
+
+  <rect x="260" y="166" width="1082" height="666" rx="8" class="surface"/>
+  <text x="286" y="198" class="h2">机会表格</text><text x="286" y="222" class="body">长理由进入详情页，表格只保留扫读字段。</text>
+  <g transform="translate(286,250)">
+    <rect width="1028" height="34" fill="#F8FAFD" stroke="#DDE3EC"/>
+    <text x="12" y="22" class="meta">#</text><text x="42" y="22" class="meta">板块</text><text x="162" y="22" class="meta">今日</text><text x="230" y="22" class="meta">5日</text><text x="298" y="22" class="meta">20日</text><text x="370" y="22" class="meta">事件</text><text x="438" y="22" class="meta">技术</text><text x="510" y="22" class="meta">资金</text><text x="578" y="22" class="meta">点位</text><text x="690" y="22" class="meta">建议</text><text x="800" y="22" class="meta">下一观察</text><text x="962" y="22" class="meta">质量</text>
+    <g class="body">
+      <text x="12" y="64">1</text><text x="42" y="64" class="h3">玻璃玻纤</text><text x="162" y="64" class="red">+2.14%</text><text x="230" y="64" class="red">+6.10%</text><text x="298" y="64">0.00</text><text x="370" y="64" class="orange">0.49</text><text x="438" y="64">偏强</text><text x="510" y="64">流入</text><text x="578" y="64">观察区 5.62-5.90</text><text x="690" y="64">回调观察</text><text x="800" y="64">资金回流确认</text><text x="962" y="64">80</text>
+      <line x1="0" y1="80" x2="1028" y2="80" class="line"/>
+      <text x="12" y="106">2</text><text x="42" y="106" class="h3">半导体设备</text><text x="162" y="106" class="blue">-0.88%</text><text x="230" y="106" class="red">+10.10%</text><text x="298" y="106">0.08</text><text x="370" y="106" class="orange">0.48</text><text x="438" y="106">过热</text><text x="510" y="106">中性</text><text x="578" y="106">等回调</text><text x="690" y="106">过热不追</text><text x="800" y="106">订单/政策验证</text><text x="962" y="106">80</text>
+      <line x1="0" y1="122" x2="1028" y2="122" class="line"/>
+      <text x="12" y="148">3</text><text x="42" y="148" class="h3">存储芯片</text><text x="162" y="148" class="blue">-1.80%</text><text x="230" y="148">0.00</text><text x="298" y="148">0.37</text><text x="370" y="148">0.37</text><text x="438" y="148">中性</text><text x="510" y="148">流出</text><text x="578" y="148">支撑观察</text><text x="690" y="148">谨慎</text><text x="800" y="148">价格周期</text><text x="962" y="148">78</text>
+      <line x1="0" y1="164" x2="1028" y2="164" class="line"/>
+      <text x="12" y="190">4</text><text x="42" y="190" class="h3">数字经济</text><text x="162" y="190" class="blue">-2.09%</text><text x="230" y="190">0.00</text><text x="298" y="190">0.31</text><text x="370" y="190">0.31</text><text x="438" y="190">偏弱</text><text x="510" y="190">流入</text><text x="578" y="190">等放量</text><text x="690" y="190">观察</text><text x="800" y="190">情绪修复</text><text x="962" y="190">67</text>
+    </g>
+  </g>
+  <rect x="286" y="694" width="1028" height="100" rx="7" fill="#F8FAFD" stroke="#DDE3EC"/>
+  <text x="306" y="724" class="h3">选中行预览（未来增强）</text><text x="306" y="750" class="body">展示当前行的首要理由、首要风险、事件路径和点位计划，减少跳转次数。</text>
+</svg>

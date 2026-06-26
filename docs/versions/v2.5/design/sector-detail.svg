@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1366" height="860" viewBox="0 0 1366 860">
+  <defs><style>
+    .bg{fill:#F5F7FA}.side{fill:#0E1626}.surface{fill:#fff;stroke:#DDE3EC}.soft{fill:#F8FAFD;stroke:#DDE3EC}.active{fill:#E8EEF9}
+    .title{font:700 24px "Microsoft YaHei",Arial;fill:#111827}.h2{font:700 17px "Microsoft YaHei",Arial;fill:#111827}.h3{font:700 14px "Microsoft YaHei",Arial;fill:#111827}
+    .body{font:400 12px "Microsoft YaHei",Arial;fill:#475569}.meta{font:400 11px "Microsoft YaHei",Arial;fill:#8A99AE}.num{font:700 22px "Microsoft YaHei",Arial;fill:#111827}
+    .red{fill:#E5484D}.blue{fill:#2563EB}.orange{fill:#C2410C}.green{fill:#16A34A}.purple{fill:#6D5DF6}.line{stroke:#DDE3EC}
+  </style></defs>
+  <rect class="bg" width="1366" height="860"/><rect class="side" width="236" height="860"/>
+  <text x="24" y="54" font-family="Georgia" font-size="27" font-weight="700" fill="#fff">InvestInsight</text><text x="24" y="80" class="meta">新闻驱动的板块洞察</text>
+  <text x="46" y="152" class="h3" fill="#CBD5E1">总览</text><text x="46" y="204" class="h3" fill="#CBD5E1">事件雷达</text><rect x="18" y="228" width="200" height="44" rx="8" class="active"/><text x="46" y="256" class="h3" fill="#183B72">板块机会</text>
+  <text x="46" y="308" class="h3" fill="#CBD5E1">策略跟踪</text><text x="46" y="360" class="h3" fill="#CBD5E1">AI 助手</text><text x="46" y="412" class="h3" fill="#CBD5E1">配置</text>
+  <rect x="236" y="0" width="1130" height="64" fill="#fff" stroke="#DDE3EC"/>
+  <text x="268" y="40" class="title">光伏详情</text><text x="392" y="40" class="body">行情 · 事件 · 路径 · 技术面和证据新闻</text><text x="944" y="40" class="h3">20:25 · 推荐中 · 数据质量 80</text>
+
+  <rect x="260" y="88" width="1082" height="92" rx="8" class="surface"/>
+  <text x="286" y="120" class="h2">决策摘要</text>
+  <rect x="286" y="136" width="110" height="30" rx="5" fill="#DCFCE7" stroke="#86EFAC"/><text x="310" y="156" class="h3 green">持有偏空</text>
+  <text x="426" y="156" class="h3">下跌趋势，先处理风险，不因短线反弹提前推荐。</text>
+  <text x="792" y="156" class="body">今日 <tspan class="red">+2.21%</tspan> · 综合评分 0.12 · 置信度 78% · 风险收益比 0.80</text>
+
+  <rect x="260" y="204" width="676" height="380" rx="8" class="surface"/>
+  <text x="286" y="236" class="h2">趋势图与点位</text>
+  <rect x="286" y="256" width="610" height="282" rx="6" fill="#FBFCFE" stroke="#DDE3EC"/>
+  <polyline points="320,320 370,292 420,330 470,310 520,350 570,342 620,384 670,370 720,410 770,388 820,436 870,420" fill="none" stroke="#E5484D" stroke-width="3"/>
+  <g stroke="#2563EB" stroke-width="2"><line x1="330" y1="460" x2="330" y2="430"/><line x1="350" y1="460" x2="350" y2="438"/><line x1="370" y1="460" x2="370" y2="420"/><line x1="390" y1="460" x2="390" y2="446"/><line x1="410" y1="460" x2="410" y2="432"/><line x1="430" y1="460" x2="430" y2="414"/></g>
+  <text x="286" y="562" class="meta">趋势图保留 K 线、成交量、MACD、资金流和周/月参考，首屏只展示关键图层。</text>
+
+  <rect x="960" y="204" width="382" height="380" rx="8" class="surface"/>
+  <text x="986" y="236" class="h2">购买建议 · 技术点位计划</text>
+  <text x="986" y="272" class="h3">风险预警 · 下跌趋势 · 短期风险观察</text>
+  <g class="body">
+    <text x="986" y="318">观察买入区</text><text x="1120" y="318" class="blue">5626.37 - 5902.48</text>
+    <text x="986" y="360">止损失效位</text><text x="1120" y="360" class="red">5396.28</text>
+    <text x="986" y="402">止盈减仓区</text><text x="1120" y="402" class="green">6139.99 - 6370.08</text>
+    <text x="986" y="444">风险收益比</text><text x="1120" y="444" class="orange">0.80</text>
+  </g>
+  <rect x="986" y="484" width="306" height="58" rx="6" fill="#FFF7ED" stroke="#FED7AA"/>
+  <text x="1004" y="512" class="body">低于 1.5 时不应积极增配；等待放量企稳和重新站回 MA20。</text>
+
+  <rect x="260" y="608" width="526" height="224" rx="8" class="surface"/>
+  <text x="286" y="640" class="h2">相关事件分析</text>
+  <text x="286" y="674" class="body">事件驱动分：0.00</text>
+  <rect x="286" y="696" width="456" height="54" rx="6" class="soft"/>
+  <text x="304" y="728" class="body">暂无结构化事件路径，先以新闻证据和技术形态为主。</text>
+
+  <rect x="810" y="608" width="532" height="224" rx="8" class="surface"/>
+  <text x="836" y="640" class="h2">预测矩阵</text>
+  <text x="836" y="680" class="body">短期：MACD柱线为负，空方占优；成交量萎缩，观望情绪浓厚。</text>
+  <text x="836" y="716" class="body">中期：均线空头排列，周级别动量偏弱，等待重新放量。</text>
+  <text x="836" y="752" class="body">长期：月级别动量回落，产业趋势与估值分位需要再验证。</text>
+  <text x="836" y="792" class="h3 orange">证据层在下方：核心评分、AI、技术指标、资金流、新闻证据。</text>
+</svg>

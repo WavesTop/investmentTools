@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1366" height="860" viewBox="0 0 1366 860">
+  <defs>
+    <style>
+      .bg{fill:#F5F7FA}.side{fill:#0E1626}.surface{fill:#fff;stroke:#DDE3EC}.soft{fill:#F8FAFD;stroke:#DDE3EC}.active{fill:#E8EEF9}
+      .title{font:700 24px "Microsoft YaHei",Arial;fill:#111827}.h2{font:700 17px "Microsoft YaHei",Arial;fill:#111827}.h3{font:700 14px "Microsoft YaHei",Arial;fill:#111827}
+      .body{font:400 12px "Microsoft YaHei",Arial;fill:#475569}.meta{font:400 11px "Microsoft YaHei",Arial;fill:#8A99AE}.num{font:700 24px "Microsoft YaHei",Arial;fill:#111827}
+      .red{fill:#E5484D}.blue{fill:#2563EB}.green{fill:#16A34A}.orange{fill:#C2410C}.purple{fill:#6D5DF6}.line{stroke:#DDE3EC}
+    </style>
+  </defs>
+  <rect class="bg" width="1366" height="860"/><rect class="side" width="236" height="860"/>
+  <text x="24" y="54" font-family="Georgia" font-size="27" font-weight="700" fill="#fff">InvestInsight</text><text x="24" y="80" class="meta">新闻驱动的板块洞察</text>
+  <text x="46" y="152" class="h3" fill="#CBD5E1">总览</text><rect x="18" y="176" width="200" height="44" rx="8" class="active"/><text x="46" y="204" class="h3" fill="#183B72">事件雷达</text>
+  <text x="46" y="256" class="h3" fill="#CBD5E1">板块机会</text><text x="46" y="308" class="h3" fill="#CBD5E1">策略跟踪</text><text x="46" y="360" class="h3" fill="#CBD5E1">AI 助手</text><text x="46" y="412" class="h3" fill="#CBD5E1">配置</text>
+  <rect x="236" y="0" width="1130" height="64" fill="#fff" stroke="#DDE3EC"/><text x="268" y="40" class="title">事件雷达</text><text x="378" y="40" class="body">事件状态、时间节点、传导路径和影响板块</text><text x="922" y="40" class="h3">20:25 · 50 结构事件 · 716 新闻样本</text>
+
+  <rect x="260" y="88" width="1082" height="94" rx="8" class="surface"/>
+  <text x="286" y="120" class="h2">事件状态总览</text>
+  <g transform="translate(286,136)">
+    <rect width="132" height="34" rx="6" class="soft"/><text x="14" y="22" class="body">预期事件</text><text x="96" y="23" class="h3 orange">18</text>
+    <rect x="146" width="132" height="34" rx="6" class="soft"/><text x="160" y="22" class="body">已发生</text><text x="242" y="23" class="h3 green">12</text>
+    <rect x="292" width="132" height="34" rx="6" class="soft"/><text x="306" y="22" class="body">待验证</text><text x="388" y="23" class="h3 blue">16</text>
+    <rect x="438" width="132" height="34" rx="6" class="soft"/><text x="452" y="22" class="body">失效</text><text x="534" y="23" class="h3">4</text>
+  </g>
+
+  <rect x="260" y="206" width="650" height="626" rx="8" class="surface"/>
+  <text x="286" y="238" class="h2">结构化事件时间线</text><text x="286" y="262" class="body">按状态和观察点组织，而不是按新闻时间堆叠。</text>
+  <line x1="310" y1="300" x2="310" y2="786" stroke="#DDE3EC" stroke-width="2"/>
+  <g>
+    <circle cx="310" cy="324" r="7" fill="#C2410C"/><rect x="336" y="294" width="536" height="86" rx="7" class="soft"/>
+    <text x="354" y="322" class="h3">企业盈利依然强劲，花旗称现在判断 AI 交易终结还为时尚早</text>
+    <text x="354" y="346" class="meta">Expected · EastmoneyFocus · 可信度 0.82 · FOMC/CPI/PCE/非农</text>
+    <text x="354" y="366" class="body">盈利韧性 -> 成长估值修复 -> 半导体、AI 链观察</text>
+    <circle cx="310" cy="430" r="7" fill="#2563EB"/><rect x="336" y="400" width="536" height="86" rx="7" class="soft"/>
+    <text x="354" y="428" class="h3">国补延续，第三批 625 亿元资金已下达</text>
+    <text x="354" y="452" class="meta">Expected · FiscalPolicy · China · 可信度 0.78</text>
+    <text x="354" y="472" class="body">财政落地 -> 消费链/家电/汽车 -> 订单与终端需求验证</text>
+    <circle cx="310" cy="536" r="7" fill="#6D5DF6"/><rect x="336" y="506" width="536" height="86" rx="7" class="soft"/>
+    <text x="354" y="534" class="h3">商品价格与库存扰动，玻璃基板逆势走强</text>
+    <text x="354" y="558" class="meta">Expected · CommoditySupplyDemand · 可信度 0.74</text>
+    <text x="354" y="578" class="body">库存/价格 -> 玻璃玻纤/建材 -> 资金承接确认</text>
+  </g>
+
+  <rect x="934" y="206" width="408" height="302" rx="8" class="surface"/>
+  <text x="960" y="238" class="h2">关键事件队列</text>
+  <text x="960" y="266" class="meta">事件 · 状态 · 观察点 · 影响说明</text>
+  <text x="960" y="306" class="h3">AI 交易是否结束？</text><text x="960" y="330" class="body">状态：预期 · 观察：财报/订单/美债收益率</text>
+  <text x="960" y="370" class="h3">财政资金下达</text><text x="960" y="394" class="body">状态：已发生 · 观察：终端需求和资金扩散</text>
+  <text x="960" y="434" class="h3">商品价格扰动</text><text x="960" y="458" class="body">状态：待验证 · 观察：库存和供给数据</text>
+
+  <rect x="934" y="532" width="408" height="300" rx="8" class="surface"/>
+  <text x="960" y="564" class="h2">事件传导路径</text>
+  <rect x="960" y="590" width="342" height="52" rx="6" fill="#F8FAFD" stroke="#DDE3EC"/><text x="978" y="622" class="body">财政资金 -> 消费需求 -> 家电/汽车 -> 订单验证</text>
+  <rect x="960" y="656" width="342" height="52" rx="6" fill="#F8FAFD" stroke="#DDE3EC"/><text x="978" y="688" class="body">利率预期 -> 成长估值 -> 半导体 -> 财报验证</text>
+  <rect x="960" y="722" width="342" height="52" rx="6" fill="#FFF7ED" stroke="#FED7AA"/><text x="978" y="754" class="body">失效条件：未传导到资金、订单或价格数据</text>
+</svg>
