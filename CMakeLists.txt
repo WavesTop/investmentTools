@@ -231,3 +231,19 @@ if(MSVC)
 endif()
 
 target_link_libraries(InvestInsightRecommendationSmoke PRIVATE ${QT_LIBS})
+
+add_executable(InvestInsightPriceLevelSmoke
+    tests/core/PriceLevelAnalyzerSmoke.cpp
+    src/core/PriceLevelAnalyzer.cpp
+)
+
+target_include_directories(InvestInsightPriceLevelSmoke
+    PRIVATE
+        src
+)
+
+if(MSVC)
+    target_compile_options(InvestInsightPriceLevelSmoke PRIVATE /utf-8)
+endif()
+
+target_link_libraries(InvestInsightPriceLevelSmoke PRIVATE ${QT_LIBS})

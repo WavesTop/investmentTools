@@ -125,6 +125,27 @@ struct TradingStrategy
     QString operationAdvice;
 };
 
+struct PriceLevelPlan
+{
+    bool valid = false;
+    QString trendStateLabel;
+    QString actionLabel;
+    QString holdingHorizonLabel;
+
+    double currentPrice = 0.0;
+    double entryZoneLow = 0.0;
+    double entryZoneHigh = 0.0;
+    double stopLossLevel = 0.0;
+    double takeProfitLow = 0.0;
+    double takeProfitHigh = 0.0;
+    double riskRewardRatio = 0.0;
+
+    QString summary;
+    QString entryReason;
+    QString exitReason;
+    QString invalidationReason;
+};
+
 struct FormulaBreakdown
 {
     double momentumFactor = 0.0;
@@ -164,6 +185,7 @@ struct SectorSnapshot
     FormulaBreakdown formula;
     TechSignals tech;
     TradingStrategy strategy;
+    PriceLevelPlan priceLevelPlan;
 
     QString trendSummary;
     QString personalAdvice;
