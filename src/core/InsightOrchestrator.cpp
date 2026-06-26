@@ -26,6 +26,7 @@
 #include "core/MarketRegimeDetector.h"
 #include "core/ExplainabilityEngine.h"
 #include "core/RecommendationTracker.h"
+#include "core/PriceLevelAnalyzer.h"
 #include "core/EventExtractionEngine.h"
 #include "core/EventRepository.h"
 #include "core/ImpactGraphEngine.h"
@@ -1198,6 +1199,20 @@ AnalysisResult InsightOrchestrator::runAnalysis(ProgressCallback progress) const
         snap.trendSummary = toTrendSummary(forecastFinal, todayPct, mom5d);
 
         snap.strategy = StrategyEngine::generate(snap);
+        snap.priceLevelPlan = PriceLevelAnalyzer::analyze(snap);
+        if (snap.priceLevelPlan.valid) {
+            const QString pointHint = QString::fromUtf8("技术点位：%1，%2，风险收益比 %3")
+                .arg(snap.priceLevelPlan.actionLabel,
+                     snap.priceLevelPlan.summary,
+                     QString::number(snap.priceLevelPlan.riskRewardRatio, 'f', 2));
+            if (snap.priceLevelPlan.actionLabel.contains(QString::fromUtf8("风险"))
+                || snap.priceLevelPlan.actionLabel.contains(QString::fromUtf8("失效"))
+                || snap.priceLevelPlan.actionLabel.contains(QString::fromUtf8("过热不追"))) {
+                snap.negativeFactors.push_back(pointHint);
+            } else {
+                snap.positiveFactors.push_back(pointHint);
+            }
+        }
 
         snap.analysisNarrative = buildNarrative(si.name, todayPct, mom5d, mom20d,
             newsSentiment, na.count, na.positiveCount, na.negativeCount,

@@ -102,6 +102,38 @@ void verifyPullbackWatch()
            "pullback watch keeps an observation reason");
 }
 
+void verifyPriceLevelPlanCompressesWeakEntry()
+{
+    SectorSnapshot sector = makeSector(QString::fromUtf8("消费电子"),
+                                       AdviceAction::Increase, 0.36, 0.3, 1.2);
+    sector.priceLevelPlan.valid = true;
+    sector.priceLevelPlan.actionLabel = QString::fromUtf8("观察");
+    sector.priceLevelPlan.riskRewardRatio = 1.1;
+    sector.priceLevelPlan.summary = QString::fromUtf8("趋势存在但风险收益比不足");
+
+    const double directionScore = RecommendationTracker::computeDirectionScore(sector);
+    const double timingScore = RecommendationTracker::computeEntryTimingScore(sector, directionScore);
+
+    expect(timingScore < 0.08,
+           "poor price level risk-reward compresses entry timing score");
+}
+
+void verifyPriceLevelPlanBoostsPullbackEntry()
+{
+    SectorSnapshot sector = makeSector(QString::fromUtf8("半导体设备"),
+                                       AdviceAction::Increase, 0.34, -0.4, 1.8);
+    sector.priceLevelPlan.valid = true;
+    sector.priceLevelPlan.actionLabel = QString::fromUtf8("回调分批");
+    sector.priceLevelPlan.riskRewardRatio = 2.4;
+    sector.priceLevelPlan.summary = QString::fromUtf8("接近观察区且风险收益比合格");
+
+    const double directionScore = RecommendationTracker::computeDirectionScore(sector);
+    const double timingScore = RecommendationTracker::computeEntryTimingScore(sector, directionScore);
+
+    expect(timingScore > 0.18,
+           "qualified pullback price plan preserves positive entry timing score");
+}
+
 void verifyInvalidated()
 {
     RecommendationRecord previous = previousActive(QString::fromUtf8("锂电池"));
@@ -150,6 +182,8 @@ int main(int argc, char *argv[])
     verifyOverheatedNoChase();
     verifyRiskWarningKeepsPreviousRecommendation();
     verifyPullbackWatch();
+    verifyPriceLevelPlanCompressesWeakEntry();
+    verifyPriceLevelPlanBoostsPullbackEntry();
     verifyInvalidated();
     verifyUpdateAndSerialization();
 

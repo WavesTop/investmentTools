@@ -155,6 +155,23 @@ double RecommendationTracker::computeEntryTimingScore(const SectorSnapshot &sect
     if (sector.crowdingIndex >= 75.0) score -= 0.16;
     if (sector.dataQualityScore > 0.0 && sector.dataQualityScore < 55.0) score -= 0.12;
 
+    if (sector.priceLevelPlan.valid) {
+        const QString action = sector.priceLevelPlan.actionLabel;
+        if (action.contains(QString::fromUtf8("过热不追"))
+            || action.contains(QString::fromUtf8("风险"))
+            || action.contains(QString::fromUtf8("失效"))) {
+            score -= 0.22;
+        } else if (sector.priceLevelPlan.riskRewardRatio > 0.0
+                   && sector.priceLevelPlan.riskRewardRatio < 1.5) {
+            score -= 0.18;
+        } else if (action.contains(QString::fromUtf8("回调分批"))
+                   && sector.priceLevelPlan.riskRewardRatio >= 1.8) {
+            score += 0.06;
+        } else if (action.contains(QString::fromUtf8("观察"))) {
+            score -= 0.04;
+        }
+    }
+
     return qBound(-1.0, score, 1.0);
 }
 
