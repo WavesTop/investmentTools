@@ -105,6 +105,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `docs/versions/v2.0/plans/event-impact-engine-phase1-5-plan.md` | 2.0 事件传导引擎 Phase 1-5 执行计划，记录事件抽取、路径规则、评分接入、UI 展示、事件追踪和诊断命令的分段提交门禁。 |
 | `docs/versions/v2.1/plans/event-impact-engine-completion-plan.md` | 2.1 事件传导引擎补完计划，记录事件模型、状态时间、路径规则、评分、追踪和 UI 的剩余实现切片。 |
 | `docs/versions/v2.2/plans/ui-content-readability-optimization-plan.md` | 2.2 UI 内容可读性优化计划，记录 AI 协同分析、事件证据链、理由去重、板块机会表格、板块详情趋势图和截图验证要求。 |
+| `docs/versions/v2.5/DESIGN.md` | 2.5 DESIGN.md 新界面设计系统，记录 Insight Workbench 风格、颜色/组件 token、页面结构和 Qt 落地约束。 |
 
 ## 当前主流程
 
