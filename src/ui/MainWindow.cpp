@@ -77,6 +77,7 @@ void TypeComboDelegate::updateEditorGeometry(QWidget *editor,
 #include <QTabBar>
 #include <QTableWidget>
 #include <QTabWidget>
+#include <QTextCursor>
 #include <QTimer>
 #include <QToolButton>
 #include <QRegularExpression>
@@ -103,7 +104,13 @@ namespace UiTheme = InvestInsight::Ui;
 
 // --------------- ClickableBrowser ---------------
 
-ClickableBrowser::ClickableBrowser(QWidget *parent) : QTextBrowser(parent) {}
+ClickableBrowser::ClickableBrowser(QWidget *parent) : QTextBrowser(parent)
+{
+    setOpenExternalLinks(false);
+    setFocusPolicy(Qt::WheelFocus);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+}
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 void ClickableBrowser::doSetSource(const QUrl &url, QTextDocument::ResourceType /*type*/)
@@ -127,6 +134,12 @@ void ClickableBrowser::setSource(const QUrl &url)
         QDesktopServices::openUrl(url);
         return;
     }
+}
+
+void ClickableBrowser::wheelEvent(QWheelEvent *event)
+{
+    setFocus(Qt::MouseFocusReason);
+    QTextBrowser::wheelEvent(event);
 }
 
 static ThemeColors s_themeStorage;
@@ -364,6 +377,18 @@ void MainWindow::captureUiScreenshots(const QString &dirPath)
     if (!m_lastResult.sectors.isEmpty()) {
         openSectorTab(m_lastResult.sectors.first().industry);
         saveWindow("05-sector-detail.png");
+        if (auto *browser = qobject_cast<QTextBrowser *>(m_tabWidget->currentWidget())) {
+            if (auto *bar = browser->verticalScrollBar()) {
+                browser->moveCursor(QTextCursor::Start);
+                if (browser->find(QString::fromUtf8("证据层"))) {
+                    bar->setValue(qMin(bar->maximum(), bar->value() + browser->viewport()->height() / 2));
+                } else {
+                    bar->setValue(bar->maximum() / 2);
+                }
+                saveWindow("06-sector-detail-evidence.png");
+                bar->setValue(0);
+            }
+        }
     }
 }
 
@@ -378,8 +403,8 @@ void MainWindow::openSectorTab(const QString &sectorName)
 
     for (const SectorSnapshot &s : m_lastResult.sectors) {
         if (s.industry == sectorName) {
-            auto *browser = new QTextBrowser();
-            browser->setOpenExternalLinks(true);
+            auto *browser = new ClickableBrowser();
+            browser->onIndexJump = [this](const QString &key) { openIndexTab(key); };
             const bool isSimple = m_viewMode && m_viewMode->currentIndex() == 0;
             browser->setHtml(buildSectorHtml(s, m_lastResult.aiAvailable, isSimple));
             auto *stw = static_cast<ScrollableTabWidget *>(m_tabWidget);
@@ -418,8 +443,7 @@ void MainWindow::openIndexTab(const QString &indexKey)
     const IndexSnapshot *idx = pick(indexKey);
     if (!idx || idx->name.isEmpty()) return;
 
-    auto *browser = new QTextBrowser();
-    browser->setOpenExternalLinks(true);
+    auto *browser = new ClickableBrowser();
     const bool isSimple = m_viewMode && m_viewMode->currentIndex() == 0;
     browser->setHtml(buildIndexHtml(*idx, m_lastResult.aiAvailable, isSimple));
     auto *stw = static_cast<ScrollableTabWidget *>(m_tabWidget);

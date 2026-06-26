@@ -134,8 +134,13 @@ int runSectorDetailRendererSmoke()
     const QString html = InvestInsight::Ui::SectorDetailRenderer::render(makeSector(), theme, options);
 
     expect(html.contains("<html>"), "sector detail html contains document root");
-    expect(html.contains(QString::fromUtf8("投资结论")), "sector detail contains investment conclusion");
-    expect(html.contains("metric-grid"), "sector detail uses first-screen metric grid");
+    expect(html.contains("sector-detail-focused"), "sector detail uses focused layout marker");
+    expect(html.contains(QString::fromUtf8("决策摘要")), "sector detail contains decision summary");
+    expect(html.contains(QString::fromUtf8("购买建议")), "sector detail contains purchase advice");
+    expect(html.contains(QString::fromUtf8("趋势图与点位")), "sector detail contains trend chart and levels");
+    expect(html.contains(QString::fromUtf8("相关事件分析")), "sector detail contains related event analysis");
+    expect(html.contains(QString::fromUtf8("预测矩阵")), "sector detail contains prediction matrix");
+    expect(html.contains(QString::fromUtf8("证据层")), "sector detail contains evidence layer");
     expect(html.contains(QString::fromUtf8("核心评分")), "sector detail contains core score block");
     expect(html.contains(QString::fromUtf8("AI 协同解读")), "sector detail contains AI readable insight block");
     expect(html.contains(QString::fromUtf8("订单改善 -&gt; 设备稼动率")), "sector detail renders AI impact path");
@@ -150,6 +155,8 @@ int runSectorDetailRendererSmoke()
     expect(html.contains(QString::fromUtf8("风险收益比")), "sector detail renders risk reward ratio");
     expect(html.contains(QString::fromUtf8("资金流与相关板块")), "sector detail contains fund flow relation block");
     expect(html.contains("data:image/png;base64"), "sector detail embeds chart image");
+    expect(html.contains(QString::fromUtf8("新闻证据")), "sector detail evidence layer contains news");
+    expect(html.contains(QString::fromUtf8("相关板块线索")), "sector detail evidence layer contains related sectors");
     expect(html.contains(QString::fromUtf8("技术指标")), "sector detail contains technical indicators");
     expect(html.contains(QString::fromUtf8("资金流")), "sector detail contains fund flow");
     expect(html.contains(QString::fromUtf8("事件驱动")), "sector detail contains event impact section");
@@ -158,7 +165,6 @@ int runSectorDetailRendererSmoke()
     expect(html.contains(QStringLiteral("0.91")), "sector detail renders source reliability");
     expect(html.contains(QString::fromUtf8("若 FOMC 转鹰则路径失效")), "sector detail renders invalidation condition");
     expect(html.contains(QString::fromUtf8("策略回测")), "sector detail contains backtest");
-    expect(html.contains(QString::fromUtf8("新闻证据")), "sector detail contains news evidence");
     expect(html.contains(QString::fromUtf8("数据质量")), "sector detail contains data quality");
     expect(html.contains(theme.bodyBg), "sector detail applies theme css");
 

@@ -138,6 +138,7 @@ protected:
 #else
     void setSource(const QUrl &url) override;
 #endif
+    void wheelEvent(QWheelEvent *event) override;
 };
 
 class MainWindow : public QMainWindow

@@ -42,7 +42,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 `InvestInsightPriceLevelSmoke` 用于技术点位计划 smoke 验证，覆盖上升趋势回调观察、过热不追、下跌风险预警和 K 线不足兜底。
 `--debug-event-impact` 用于单条文本的事件影响诊断，会输出 `type/state/region/checkpoint`、时间字段、证据可信度、影响周期和评分因子。
 `--dump-event-rules` 用于列出事件抽取规则清单，便于核对规则 key、类型、地区、置信度和关键词。
-`--auto-analyze-no-ai` 用于 UI 自动分析验证：启动后自动分析但关闭 AI 深度调用，避免截图流程等待外部模型。`--capture-ui-screenshots` 用于 UI 截图验证：自动分析完成后依次切换总览、事件雷达、板块机会、策略跟踪和板块详情，并保存 PNG 截图。
+`--auto-analyze-no-ai` 用于 UI 自动分析验证：启动后自动分析但关闭 AI 深度调用，避免截图流程等待外部模型。`--capture-ui-screenshots` 用于 UI 截图验证：自动分析完成后依次切换总览、事件雷达、板块机会、策略跟踪和板块详情，并保存 PNG 截图；板块详情会额外保存滚动到“证据层”后的截图，用于确认长页滚动和下半部分内容可达。
 
 提交约定：后续本地 commit 尽量控制在 200 到 300 行，原则上不超过 500 行；每次提交前必须完成匹配的构建或功能验证；Codex 不直接 push 远端。
 
@@ -58,7 +58,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `src/ui/renderers/DashboardRenderer.cpp` | 总览工作台 HTML 渲染器，覆盖市场仪表盘、关键事件雷达、板块机会与风险、下一观察点和 AI 摘要。 |
 | `src/ui/renderers/SectorTableRenderer.cpp` | 板块机会 HTML 渲染器，覆盖板块/指数混合列表、筛选、排序、事件催化、MACD/RSI/KDJ、均线、量能、资金和数据审计摘要。 |
 | `src/ui/renderers/StrategyRenderer.cpp` | 策略跟踪 HTML 渲染器，覆盖跟踪状态卡片、推荐跟踪/信号复盘、市场操作建议、Top 板块、持仓诊断和策略验证日历。 |
-| `src/ui/renderers/SectorDetailRenderer.cpp` | 板块详情 HTML 渲染器，覆盖投资结论、核心评分、AI 协同解读、信号解释、事件驱动、影响路径、图表、阶段收益、资金流、回测、新闻证据和数据质量。 |
+| `src/ui/renderers/SectorDetailRenderer.cpp` | 板块详情 HTML 渲染器，按“决策摘要、趋势图与点位、购买建议、相关事件分析、预测矩阵、证据层”组织信息，并保留核心评分、AI 协同解读、信号解释、事件驱动、影响路径、阶段收益、资金流、回测、新闻证据和数据质量。 |
 | `src/ui/renderers/IndexDetailRenderer.cpp` | 指数详情 HTML 渲染器，覆盖指数方向、趋势图表、技术指标、市场风控和数据质量。 |
 | `src/ui/renderers/EventRadarRenderer.cpp` | 事件雷达 HTML 渲染器，覆盖结构化事件、事件催化分、传导路径、市场风险和失效条件。 |
 | `src/ui/MainWindow.cpp` | Qt 主界面；配置页、主页面、刷新进度、AI 助手、结果渲染、板块详情、持仓相关 UI。 |
@@ -90,7 +90,7 @@ chmod +x ./package_macos.sh && ./package_macos.sh
 | `tests/ui/DashboardRendererSmoke.cpp` | 总览页 HTML smoke 测试，校验工作台 CSS、关键事件雷达、板块机会与风险和下一观察点。 |
 | `tests/ui/SectorTableRendererSmoke.cpp` | 板块机会 HTML smoke 测试，校验事件催化、风险提示、筛选、排序、板块跳转和指数跳转。 |
 | `tests/ui/StrategyRendererSmoke.cpp` | 策略跟踪 HTML smoke 测试，校验跟踪状态、市场建议、Top 板块、指数参考、持仓诊断和未来事件。 |
-| `tests/ui/SectorDetailRendererSmoke.cpp` | 板块详情 HTML smoke 测试，校验首屏核心评分、信号解释、影响路径、阶段收益、资金流关系、图表嵌入和决策页关键量化信息。 |
+| `tests/ui/SectorDetailRendererSmoke.cpp` | 板块详情 HTML smoke 测试，校验聚焦布局标识、决策摘要、购买建议、趋势图与点位、相关事件分析、预测矩阵、证据层、图表嵌入和关键量化信息。 |
 | `tests/ui/IndexDetailRendererSmoke.cpp` | 指数详情 HTML smoke 测试，校验图表嵌入、技术指标、市场风控和数据质量。 |
 | `tests/ui/EventRadarRendererSmoke.cpp` | 事件雷达 HTML smoke 测试，校验事件队列、传导路径、风险区块和未来催化展示。 |
 | `tests/core/EventImpactSmoke.cpp` | 事件传导引擎 smoke 测试，校验事件模型字段、事件抽取、状态识别、证据保留、路径映射和仓库追踪。 |
@@ -192,7 +192,7 @@ v2.2 已开始把 AI 从“补充理由”扩展为协同分析层：`AIReadable
 
 当前 UI 代码仍主要集中在 `src/ui/MainWindow.cpp`，但主界面已经按 `docs/versions/v2.0/design/ui-workbench-redesign.md` 落地为左侧导航 + 顶部状态条 + 内容工作区：左侧入口包含“总览、事件雷达、板块机会、策略跟踪、AI 助手、配置”，顶部只显示当前页面标题、说明和运行状态，不再放置 AI 助手/配置快捷按钮或外层页签。“开始分析”和 AI 开关已经移动到总览页的分析控制卡片中，配置页作为左侧“配置”导航对应的右侧完整页面嵌入工作台。主题颜色、Widget 样式、HTML 基础 CSS 和暗色模式检测已拆到 `src/ui/AppTheme.cpp`，并新增 `sideNav`、`topStatusBar`、`workspace-shell`、`metric-grid`、`configCard`、`chatContextPanel` 等工作台样式。板块详情图表渲染已拆到 `src/ui/renderers/ChartRenderer.cpp`，`MainWindow::buildDataDashboardHtml` 已委托 `src/ui/renderers/DashboardRenderer.cpp`，`MainWindow::buildEventRadarHtml` 已委托 `src/ui/renderers/EventRadarRenderer.cpp`，`MainWindow::buildSectorTableHtml` 已委托 `src/ui/renderers/SectorTableRenderer.cpp`，`MainWindow::buildStrategyHtml` 已委托 `src/ui/renderers/StrategyRenderer.cpp`，`MainWindow::buildSectorHtml` 已委托 `src/ui/renderers/SectorDetailRenderer.cpp`，`MainWindow::buildIndexHtml` 已委托 `src/ui/renderers/IndexDetailRenderer.cpp`。
 
-总览页已改为工作台式信息结构，包含分析控制、可读关键事件雷达、板块机会与风险和下一观察点；板块机会页默认进入专业模式，完整表格删除“风险提示”列，改为展示事件、MACD、RSI、KDJ、均线、量能、资金、数据质量、建议、点位计划和主要看点；策略跟踪页新增“跟踪状态”指标卡片，并把完整事件列表收束为“策略验证日历”；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；事件雷达已新增结构化事件时间线，板块详情页在投资结论之后新增“技术点位计划”“核心评分”“AI 协同解读”“信号解释”“影响路径”“阶段收益与回测”“资金流与相关板块”等分区，并继续保留事件驱动、趋势图表、技术指标、资金流、回测、新闻证据和数据质量。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
+总览页已改为工作台式信息结构，包含分析控制、可读关键事件雷达、板块机会与风险和下一观察点；板块机会页默认进入专业模式，完整表格删除“风险提示”列，改为展示事件、MACD、RSI、KDJ、均线、量能、资金、数据质量、建议、点位计划和主要看点；策略跟踪页新增“跟踪状态”指标卡片，并把完整事件列表收束为“策略验证日历”；AI 助手已改为左侧当前上下文 + 快捷问题、右侧对话的布局；配置页取消独立欢迎页和内部主配置 Tab，改为 AI 接入、我的持仓、后台刷新与提醒、数据源健康同屏展示；事件雷达已新增结构化事件时间线。板块详情页已重排为“决策摘要 -> 趋势图与点位/购买建议 -> 相关事件分析/预测矩阵 -> 证据层”，首屏优先展示行动判断、买入观察区、止损失效位、止盈减仓区和风险收益比，下半部分证据层继续保留核心评分、AI 协同解读、信号解释、影响路径、阶段收益与回测、资金流与相关板块、技术指标、新闻证据和数据质量。动态详情页和指数详情页统一使用 `ClickableBrowser`，并设置滚动焦点策略，避免详情长页滚轮失效。后续 UI 优化优先继续收敛 renderer/panel 文件，避免把大段 HTML 塞回主窗口。
 
 板块详情页重构时不要删减当前已有量化信息。新的详情长图要求保留投资信号、短中长期收益、核心评分、技术指标、阶段收益/回测、资金流、相关板块、新闻证据和数据质量。
 

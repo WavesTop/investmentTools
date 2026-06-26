@@ -12,7 +12,7 @@ struct SectorDetailRenderOptions {
     bool aiAvailable = false;
     bool simpleMode = false;
     int chartWidth = 800;
-    int chartHeight = 850;
+    int chartHeight = 640;
 };
 
 class SectorDetailRenderer {

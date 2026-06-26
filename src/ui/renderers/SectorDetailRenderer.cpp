@@ -495,6 +495,221 @@ QString renderNews(const SectorSnapshot &sector, const ThemeColors &theme)
     return h;
 }
 
+QString cardDiv(const ThemeColors &theme,
+                const QString &content,
+                const QString &background = {},
+                const QString &borderColor = {})
+{
+    const QString bg = background.isEmpty() ? theme.paneBg : background;
+    const QString border = borderColor.isEmpty() ? theme.cardBorder : borderColor;
+    return "<div style='padding:14px 16px;border:1px solid " + border
+        + ";border-radius:10px;background:" + bg + ";'>" + content + "</div>";
+}
+
+QString renderSmallMetric(const QString &label, const QString &value, const QString &color, const ThemeColors &theme)
+{
+    return "<td valign='top' style='padding:6px;'>"
+        "<div style='padding:10px;border:1px solid " + theme.cardBorder
+        + ";background:" + theme.narrativeBg + ";border-radius:8px;'>"
+        "<div style='font-size:11px;color:" + theme.subtleColor + ";'>" + escaped(label) + "</div>"
+        "<div style='font-size:19px;font-weight:800;color:" + color + ";margin-top:4px;'>"
+        + escaped(value) + "</div></div></td>";
+}
+
+QString renderDecisionSummary(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    const QString actionLabel = sector.strategy.actionLabel.isEmpty()
+        ? actionText(sector.action)
+        : sector.strategy.actionLabel;
+    const QString actionColor = sector.action == AdviceAction::Increase ? "#EF4444"
+        : (sector.action == AdviceAction::Decrease ? "#3B82F6" : "#059669");
+    const double confidencePct = sector.confidence <= 1.0 ? sector.confidence * 100.0 : sector.confidence;
+
+    QString body;
+    body += "<table width='100%' cellspacing='0' cellpadding='0'><tr>";
+    body += "<td valign='top' width='26%'>"
+        "<div style='font-size:11px;color:" + theme.subtleColor + ";font-weight:700;'>当前动作</div>"
+        "<table cellspacing='0' cellpadding='0' style='margin-top:8px;'><tr><td width='118' align='center' "
+        "style='padding:8px 12px;background:" + actionColor
+        + ";color:#fff;font-size:18px;font-weight:800;'>" + escaped(actionLabel)
+        + "</td></tr></table></td>";
+    body += "<td valign='top' width='74%'>"
+        "<div style='font-size:14px;font-weight:800;color:" + theme.headingColor + ";margin-bottom:6px;'>"
+        + (sector.priceLevelPlan.valid && !sector.priceLevelPlan.summary.isEmpty()
+            ? escaped(sector.priceLevelPlan.summary)
+            : escaped(sector.trendSummary.isEmpty() ? QString::fromUtf8("等待趋势、事件和资金进一步共振。") : sector.trendSummary))
+        + "</div>"
+        "<div style='font-size:12px;line-height:1.7;color:" + theme.bodyColor + ";'>"
+        + escaped(sector.strategy.operationAdvice.isEmpty()
+            ? QString::fromUtf8("先用点位和事件确认入场条件，不把单日涨幅直接当作买入理由。")
+            : sector.strategy.operationAdvice)
+        + "</div></td>";
+    body += "</tr></table>";
+    body += "<table width='100%' cellspacing='0' cellpadding='0' style='margin-top:10px;'><tr>";
+    body += renderSmallMetric(QString::fromUtf8("今日涨幅"),
+                              sector.todayChangePctValid ? pct(sector.todayChangePct) : QString::fromUtf8("缺失"),
+                              colorFor(sector.todayChangePct, theme), theme);
+    body += renderSmallMetric(QString::fromUtf8("综合评分"), num(sector.forecastScore),
+                              colorFor(sector.forecastScore, theme), theme);
+    body += renderSmallMetric(QString::fromUtf8("置信度"), num(confidencePct, 0) + "%",
+                              colorFor(confidencePct - 60.0, theme), theme);
+    body += renderSmallMetric(QString::fromUtf8("数据质量"), num(sector.dataQualityScore, 0),
+                              colorFor(sector.dataQualityScore - 70.0, theme), theme);
+    body += "</tr></table>";
+
+    return "<div class='section-title'>决策摘要</div>" + cardDiv(theme, body, theme.bodyBg, actionColor);
+}
+
+QString renderPurchaseAdvice(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    const PriceLevelPlan &plan = sector.priceLevelPlan;
+    QString body;
+    if (plan.valid) {
+        body += "<div style='font-size:13px;font-weight:800;color:" + theme.headingColor + ";margin-bottom:8px;'>"
+            + escaped(plan.actionLabel) + QString::fromUtf8(" · ") + escaped(plan.trendStateLabel)
+            + QString::fromUtf8(" · ") + escaped(plan.holdingHorizonLabel) + "</div>";
+        body += "<table class='overview'><tr><th>项目</th><th>点位/判断</th></tr>";
+        body += "<tr><td>观察买入区</td><td><b style='color:#2563EB;'>"
+            + num(plan.entryZoneLow) + "-" + num(plan.entryZoneHigh) + "</b><br/><span class='meta'>"
+            + escaped(plan.entryReason) + "</span></td></tr>";
+        body += "<tr><td>止损失效位</td><td><b style='color:#DC2626;'>"
+            + num(plan.stopLossLevel) + "</b><br/><span class='meta'>"
+            + escaped(plan.invalidationReason) + "</span></td></tr>";
+        body += "<tr><td>止盈减仓区</td><td><b style='color:#059669;'>"
+            + num(plan.takeProfitLow) + "-" + num(plan.takeProfitHigh) + "</b><br/><span class='meta'>"
+            + escaped(plan.exitReason) + "</span></td></tr>";
+        body += "<tr><td>风险收益比</td><td><b style='color:" + colorFor(plan.riskRewardRatio - 1.5, theme)
+            + ";'>" + num(plan.riskRewardRatio, 2)
+            + "</b><br/><span class='meta'>低于 1.5 时不应积极增配</span></td></tr>";
+        body += "</table>";
+    } else {
+        body += "<div style='font-size:12px;line-height:1.7;color:" + theme.bodyColor + ";'>"
+            + QString::fromUtf8("K 线或技术指标不足，暂未生成明确买入区。先观察趋势、成交量和事件是否继续验证。")
+            + "</div>";
+    }
+    if (!sector.recommendationWarning.isEmpty()) {
+        body += "<div style='margin-top:8px;color:" + theme.warningColor + ";font-size:12px;font-weight:700;'>"
+            + escaped(sector.recommendationWarning) + "</div>";
+    }
+    return "<div class='section-title'>购买建议 · 技术点位计划</div>" + cardDiv(theme, body);
+}
+
+QString renderTrendAndLevels(const SectorSnapshot &sector,
+                             const QPixmap &chart,
+                             const ThemeColors &theme)
+{
+    QString body;
+    body += "<img style='max-width:100%;border:1px solid " + theme.cardBorder
+        + ";border-radius:8px;' src='data:image/png;base64," + pixmapToBase64(chart) + "'/>";
+    QString note = sector.priceLevelPlan.valid
+        ? QString::fromUtf8("当前价 ") + num(sector.priceLevelPlan.currentPrice)
+            + QString::fromUtf8(" · 观察区 ") + num(sector.priceLevelPlan.entryZoneLow)
+            + "-" + num(sector.priceLevelPlan.entryZoneHigh)
+            + QString::fromUtf8(" · 止盈区 ") + num(sector.priceLevelPlan.takeProfitLow)
+            + "-" + num(sector.priceLevelPlan.takeProfitHigh)
+        : QString::fromUtf8("趋势图保留 K 线、成交量、MACD、资金流和周/月参考，用于核对上方判断。");
+    body += "<div style='margin-top:8px;font-size:12px;line-height:1.7;color:" + theme.bodyColor
+        + ";'>" + escaped(note) + "</div>";
+    return "<div class='section-title'>趋势图与点位</div>" + cardDiv(theme, body);
+}
+
+QString renderRelatedEventAnalysis(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    QString body;
+    body += "<div style='font-size:12px;color:" + theme.bodyColor + ";margin-bottom:8px;'>"
+        + QString::fromUtf8("事件驱动分：<b style='color:") + colorFor(sector.eventCatalystScore, theme)
+        + ";'>" + num(sector.eventCatalystScore) + "</b>";
+    if (!sector.eventSummary.isEmpty()) body += QString::fromUtf8(" · ") + escaped(sector.eventSummary);
+    body += "</div>";
+    if (sector.eventImpacts.isEmpty()) {
+        body += "<div class='narrative'>暂无结构化事件路径，先以新闻证据和技术形态为主。</div>";
+    } else {
+        for (const SectorEventImpact &impact : sector.eventImpacts) {
+            body += "<div style='padding:10px 0;border-top:1px solid " + theme.cardBorder + ";'>";
+            body += "<div style='font-size:13px;font-weight:800;color:" + theme.headingColor + ";'>"
+                + escaped(impact.eventTitle) + "</div>";
+            body += "<div style='margin-top:5px;font-size:12px;line-height:1.7;color:" + theme.bodyColor + ";'>"
+                + escaped(impact.path) + "</div>";
+            body += "<div class='meta' style='margin-top:4px;'>"
+                + escaped(impactRelationText(impact.relation)) + QString::fromUtf8(" · ")
+                + escaped(impactDirectionText(impact.direction)) + QString::fromUtf8(" · 周期 ")
+                + escaped(toString(impact.horizon)) + QString::fromUtf8(" · 置信度 ")
+                + num(impact.confidence * 100.0, 0) + "% · "
+                + QString::fromUtf8("来源可信度 ") + num(impact.sourceReliability, 2)
+                + "</div>";
+            if (!impact.condition.isEmpty()) {
+                body += "<div style='margin-top:4px;font-size:11px;color:" + theme.warningColor
+                    + ";font-weight:700;'>" + QString::fromUtf8("失效条件：")
+                    + escaped(impact.condition) + "</div>";
+            }
+            body += "</div>";
+        }
+    }
+    return "<div class='section-title'>相关事件分析</div>" + cardDiv(theme, body);
+}
+
+QString renderPredictionMatrix(const SectorSnapshot &sector, const ThemeColors &theme)
+{
+    const TradingStrategy &strategy = sector.strategy;
+    QString body;
+    body += "<table class='overview'><tr><th>周期</th><th>判断</th><th>需要验证</th></tr>";
+    body += "<tr><td>短期</td><td>" + escaped(strategy.shortTermView) + "</td><td>"
+        + escaped(sector.todayChangePctValid && sector.todayChangePct > 3.0
+            ? QString::fromUtf8("回调后量能是否承接")
+            : QString::fromUtf8("是否出现新闻和资金共振")) + "</td></tr>";
+    body += "<tr><td>中期</td><td>" + escaped(strategy.mediumTermView) + "</td><td>"
+        + escaped(sector.aiInsight.valid && !sector.aiInsight.nextCheckpoint.isEmpty()
+            ? sector.aiInsight.nextCheckpoint
+            : QString::fromUtf8("业绩、订单或政策落地是否兑现")) + "</td></tr>";
+    body += "<tr><td>长期</td><td>" + escaped(strategy.longTermView) + "</td><td>"
+        + escaped(QString::fromUtf8("产业趋势和估值分位是否匹配")) + "</td></tr>";
+    body += "</table>";
+    if (sector.aiInsight.valid && !sector.aiInsight.disagreementNotes.isEmpty()) {
+        body += "<div style='margin-top:8px;color:" + theme.warningColor + ";font-size:12px;font-weight:700;'>"
+            + QString::fromUtf8("AI/规则分歧：") + escaped(sector.aiInsight.disagreementNotes) + "</div>";
+    }
+    return "<div class='section-title'>预测矩阵</div>" + cardDiv(theme, body);
+}
+
+QString renderEvidenceLayer(const SectorSnapshot &sector, const ThemeColors &theme, bool simpleMode)
+{
+    QString h = "<div class='section-title'>证据层</div>";
+    h += "<div class='meta' style='margin-bottom:8px;'>"
+        + QString::fromUtf8("下方保留原始证据和量化指标，用于核对首屏结论，不作为新的推荐入口。")
+        + "</div>";
+    h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>";
+    h += "<td width='50%' valign='top' style='padding-right:8px;'>";
+    h += renderCoreScores(sector, theme);
+    h += renderAiReadableInsight(sector, theme);
+    h += renderSignalExplanation(sector, theme);
+    h += renderImpactPath(sector, theme);
+    h += "</td><td width='50%' valign='top' style='padding-left:8px;'>";
+    h += renderViews(sector, theme);
+    h += renderTechnical(sector, theme);
+    h += renderStageReturnsAndBacktests(sector, theme);
+    h += renderFundFlowRelations(sector, theme);
+    h += "<div class='section-title'>相关板块线索</div>";
+    h += "<div class='callout'><ul class='factor-list'>";
+    QStringList clues;
+    for (const SectorEventImpact &impact : sector.eventImpacts) {
+        if (!impact.path.isEmpty()) clues << impact.path;
+    }
+    if (clues.isEmpty()) clues = sector.positiveFactors + sector.negativeFactors;
+    if (clues.isEmpty()) clues << QString::fromUtf8("暂无明确上下游或风格联动线索。");
+    const int clueCount = qMin(5, clues.size());
+    for (int i = 0; i < clueCount; ++i) h += "<li>" + escaped(clues[i]) + "</li>";
+    h += "</ul></div>";
+    if (!simpleMode) {
+        h += renderFundFlow(sector);
+        h += renderBacktests(sector);
+        h += renderDataQuality(sector, theme);
+    }
+    h += "</td></tr></table>";
+    h += renderEventImpacts(sector, theme);
+    h += renderNews(sector, theme);
+    return h;
+}
+
 } // namespace
 
 QString SectorDetailRenderer::render(const SectorSnapshot &sector,
@@ -505,32 +720,37 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         sector, theme, options.chartWidth, options.chartHeight);
 
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
-    h += "<h2>" + escaped(sector.industry) + " <span style='color:"
-        + colorFor(sector.todayChangePct, theme) + ";font-size:16px;'>"
-        + (sector.todayChangePctValid ? pct(sector.todayChangePct) : QString::fromUtf8("涨跌缺失"))
-        + "</span></h2>";
-    h += "<div class='meta'>" + QString::fromUtf8("成分股 ")
+    h += "<div class='sector-detail-focused'>";
+    h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>"
+        "<td valign='bottom'><h2 style='margin-bottom:4px;'>" + escaped(sector.industry)
+        + " <span style='color:" + colorFor(sector.todayChangePct, theme)
+        + ";font-size:16px;'>" + (sector.todayChangePctValid ? pct(sector.todayChangePct) : QString::fromUtf8("涨跌缺失"))
+        + "</span></h2><div class='meta'>" + QString::fromUtf8("成分股 ")
         + num(sector.sectorStockCount > 0 ? sector.sectorStockCount : sector.stockCount, 0)
-        + QString::fromUtf8(" 只 · 数据日期 ") + escaped(sector.lastDataDate) + "</div>";
-    h += renderConclusion(sector, theme);
-    h += renderPriceLevelPlan(sector, theme);
-    h += renderCoreScores(sector, theme);
-    h += renderAiReadableInsight(sector, theme);
-    h += renderSignalExplanation(sector, theme);
-    h += renderViews(sector, theme);
-    h += renderEventImpacts(sector, theme);
-    h += renderImpactPath(sector, theme);
-    if (!options.simpleMode) {
-        h += "<div class='section-title'>趋势图表</div>";
-        h += "<img style='max-width:100%;border:1px solid " + theme.cardBorder
-            + ";border-radius:8px;' src='data:image/png;base64," + pixmapToBase64(chart) + "'/>";
-        h += renderTechnical(sector, theme);
-        h += renderStageReturnsAndBacktests(sector, theme);
-        h += renderFundFlowRelations(sector, theme);
-        h += renderFundFlow(sector);
-        h += renderBacktests(sector);
-        h += renderDataQuality(sector, theme);
-    }
+        + QString::fromUtf8(" 只 · 数据日期 ") + escaped(sector.lastDataDate)
+        + QString::fromUtf8(" · 数据质量 ") + num(sector.dataQualityScore, 0)
+        + "</div></td>"
+        "<td align='right' valign='bottom'><span class='tag tag-hold'>"
+        + escaped(sector.recommendationStateLabel.isEmpty()
+            ? QString::fromUtf8("点位优先")
+            : sector.recommendationStateLabel)
+        + "</span></td></tr></table>";
+
+    h += renderDecisionSummary(sector, theme);
+    h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>";
+    h += "<td width='58%' valign='top' style='padding-right:8px;'>"
+        + renderTrendAndLevels(sector, chart, theme) + "</td>";
+    h += "<td width='42%' valign='top' style='padding-left:8px;'>"
+        + renderPurchaseAdvice(sector, theme) + "</td>";
+    h += "</tr></table>";
+    h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>";
+    h += "<td width='55%' valign='top' style='padding-right:8px;'>"
+        + renderRelatedEventAnalysis(sector, theme) + "</td>";
+    h += "<td width='45%' valign='top' style='padding-left:8px;'>"
+        + renderPredictionMatrix(sector, theme) + "</td>";
+    h += "</tr></table>";
+    h += renderEvidenceLayer(sector, theme, options.simpleMode);
+
     if (options.aiAvailable && !sector.aiAnalysis.isEmpty()) {
         h += "<div class='section-title'>深度行业分析 <span class='ai-badge'>AI</span></div>"
             "<div class='narrative'>" + escaped(sector.aiAnalysis).replace("\n", "<br/>") + "</div>";
@@ -538,8 +758,7 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         h += "<div class='section-title'>综合分析</div><div class='narrative'>"
             + escaped(sector.analysisNarrative).replace("\n", "<br/>") + "</div>";
     }
-    h += renderNews(sector, theme);
-    h += "</body></html>";
+    h += "</div></body></html>";
     return h;
 }
 
