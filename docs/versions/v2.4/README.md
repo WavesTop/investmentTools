@@ -16,6 +16,7 @@ v2.4 聚焦多周期技术点位与推荐质量：把“今日涨幅好所以推
 
 - `plans/technical-entry-exit-and-multi-horizon-recommendation-plan.md`：K 线点位与多周期推荐模型开发方案，包含资料来源记录、分析框架、实施阶段和验证口径。
 - `plans/technical-entry-exit-implementation-plan.md`：第一轮技术点位最小闭环实施方案，包含文件边界、TDD 任务和验证命令。
+- `plans/sector-detail-focused-layout-implementation-plan.md`：板块详情聚焦布局实施方案，包含页面替换、滚动修复、截图验收和 Qt 替代路线。
 - `design/sector-detail-focused-layout.md`：板块详情信息聚焦设计说明。
 - `design/sector-detail-focused-layout.svg`：新版板块详情布局矢量图片稿。
 - `design/sector-detail-focused-layout.png`：新版板块详情布局预览图。
