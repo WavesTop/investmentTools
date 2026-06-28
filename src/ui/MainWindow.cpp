@@ -390,6 +390,19 @@ void MainWindow::captureUiScreenshots(const QString &dirPath)
             }
         }
     }
+
+    openChatTab();
+    setHeader(QString::fromUtf8("AI 助手"),
+              QString::fromUtf8("基于当前分析结果的问答和复盘"));
+    saveWindow("07-ai-assistant.png");
+
+    loadSavedAIConfigToForm();
+    if (m_configTabIndex >= 0) {
+        m_tabWidget->setCurrentIndex(m_configTabIndex);
+    }
+    setHeader(QString::fromUtf8("配置"),
+              QString::fromUtf8("AI 接入、持仓、数据刷新和提醒设置"));
+    saveWindow("08-config.png");
 }
 
 void MainWindow::openSectorTab(const QString &sectorName)
@@ -702,6 +715,10 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
         QString::fromUtf8("投入金额（元）"),
         QString::fromUtf8("已卖出")});
     auto *ph = m_portfolioTable->horizontalHeader();
+    m_portfolioTable->setHorizontalHeaderLabels({
+        "", QString::fromUtf8("板块名称"), QString::fromUtf8("类型"),
+        QString::fromUtf8("买入日"), QString::fromUtf8("收益日"),
+        QString::fromUtf8("金额"), QString::fromUtf8("卖出")});
     ph->setSectionResizeMode(0, QHeaderView::Fixed);
     ph->setSectionResizeMode(1, QHeaderView::Stretch);
     ph->setSectionResizeMode(2, QHeaderView::Fixed);
@@ -709,12 +726,12 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
     ph->setSectionResizeMode(4, QHeaderView::Fixed);
     ph->setSectionResizeMode(5, QHeaderView::Fixed);
     ph->setSectionResizeMode(6, QHeaderView::Fixed);
-    m_portfolioTable->setColumnWidth(0, 44);
-    m_portfolioTable->setColumnWidth(2, 130);
-    m_portfolioTable->setColumnWidth(3, 148);
-    m_portfolioTable->setColumnWidth(4, 148);
-    m_portfolioTable->setColumnWidth(5, 130);
-    m_portfolioTable->setColumnWidth(6, 60);
+    m_portfolioTable->setColumnWidth(0, 30);
+    m_portfolioTable->setColumnWidth(2, 70);
+    m_portfolioTable->setColumnWidth(3, 92);
+    m_portfolioTable->setColumnWidth(4, 92);
+    m_portfolioTable->setColumnWidth(5, 78);
+    m_portfolioTable->setColumnWidth(6, 40);
     m_portfolioTable->verticalHeader()->setVisible(false);
     m_portfolioTable->verticalHeader()->setDefaultSectionSize(36);
     m_portfolioTable->setSelectionMode(QAbstractItemView::NoSelection);
@@ -811,7 +828,7 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
         buyDateEdit->setDisplayFormat("yyyy-MM-dd");
         buyDateEdit->setCalendarPopup(true);
         buyDateEdit->setDate(buyDate);
-        buyDateEdit->setMinimumWidth(136);
+        buyDateEdit->setMinimumWidth(92);
         m_portfolioTable->setCellWidget(r, 3, buyDateEdit);
         if (auto *le = buyDateEdit->findChild<QLineEdit *>()) {
             le->setTextMargins(0, 0, 0, 0);
@@ -842,7 +859,7 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
         earnDateEdit->setDisplayFormat("yyyy-MM-dd");
         earnDateEdit->setCalendarPopup(true);
         earnDateEdit->setDate(autoEarnDate.isValid() ? autoEarnDate : buyDate);
-        earnDateEdit->setMinimumWidth(136);
+        earnDateEdit->setMinimumWidth(92);
         earnDateEdit->setProperty("manualOverride", false);
         m_portfolioTable->setCellWidget(r, 4, earnDateEdit);
         if (auto *le = earnDateEdit->findChild<QLineEdit *>()) {
@@ -994,6 +1011,7 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
     pfTabLayout->addWidget(pfCard, 1);
 
     m_enterButton = new QPushButton(QString::fromUtf8("保存配置"), content);
+    m_enterButton->setObjectName("refreshBtn");
     m_enterButton->setFixedHeight(48);
     m_enterButton->setStyleSheet(
         "QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,"
@@ -1002,6 +1020,7 @@ void MainWindow::buildSetupPage(QVBoxLayout *root)
         "QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,"
         "stop:0 #4F46E5,stop:1 #818CF8);}"
         "QPushButton:pressed{background:#3730A3;}");
+    m_enterButton->setStyleSheet(QString());
     connect(m_enterButton, &QPushButton::clicked, this, &MainWindow::saveAndEnterMainPage);
 
     auto *opsGrid = new QWidget(content);
@@ -1541,7 +1560,7 @@ void MainWindow::loadPortfolioToTable()
         buyDateEdit2->setDisplayFormat("yyyy-MM-dd");
         buyDateEdit2->setCalendarPopup(true);
         buyDateEdit2->setDate(buyDate2);
-        buyDateEdit2->setMinimumWidth(136);
+        buyDateEdit2->setMinimumWidth(92);
         m_portfolioTable->setCellWidget(r, 3, buyDateEdit2);
         if (auto *le = buyDateEdit2->findChild<QLineEdit *>()) {
             le->setTextMargins(0, 0, 0, 0);
@@ -1584,7 +1603,7 @@ void MainWindow::loadPortfolioToTable()
         earnDateEdit2->setDisplayFormat("yyyy-MM-dd");
         earnDateEdit2->setCalendarPopup(true);
         earnDateEdit2->setDate(earnD2.isValid() ? earnD2 : buyDate2);
-        earnDateEdit2->setMinimumWidth(136);
+        earnDateEdit2->setMinimumWidth(92);
         bool savedManual = lr.firstEarnDateManual;
         if (!savedEarnDate2.isEmpty() && autoEarnD2.isValid() && earnD2 != autoEarnD2) savedManual = true;
         earnDateEdit2->setProperty("manualOverride", savedManual);
@@ -1878,17 +1897,40 @@ void MainWindow::openChatTab()
         QString("QTextBrowser{background:%1;border:none;padding:12px;font-size:13px;color:%2;}")
         .arg(t.paneBg, t.bodyColor));
 
-    QString welcome = "<div style='text-align:center;padding:40px 20px;'>"
-        "<div style='font-size:28px;margin-bottom:12px;'>&#128172;</div>"
-        "<div style='font-size:16px;font-weight:700;color:" + t.bodyColor
-        + ";margin-bottom:8px;'>InvestInsight AI &#21161;&#25163;</div>"
-        "<div style='font-size:12px;color:" + t.mutedColor
-        + ";line-height:1.8;max-width:400px;margin:0 auto;'>"
-        "&#22522;&#20110;&#23454;&#26102;&#37319;&#38598;&#30340;&#34892;&#24773;&#25968;&#25454;&#12289;"
-        "&#26032;&#38395;&#12289;&#25216;&#26415;&#25351;&#26631;&#21644;&#31574;&#30053;&#20998;&#26512;"
-        "&#32467;&#26524;&#65292;<br/>&#20026;&#24744;&#25552;&#20379;&#19987;&#19994;&#30340;&#25237;"
-        "&#36164;&#38382;&#31572;&#26381;&#21153;&#12290;"
-        "</div></div>";
+    QString welcome = QString::fromUtf8(R"HTML(
+        <div style='padding:18px 10px;'>
+          <div style='font-size:17px;font-weight:800;color:@body@;margin-bottom:6px;'>当前可以问什么</div>
+          <div style='font-size:12px;color:@muted@;line-height:1.8;margin-bottom:14px;'>
+            AI 会结合当前行情、新闻事件、技术指标、策略跟踪和持仓上下文回答；结论仍以规则评分与证据层为准。
+          </div>
+          <table width='100%' cellspacing='8' cellpadding='0'>
+            <tr>
+              <td width='50%' valign='top' style='padding:12px;border:1px solid @border@;border-radius:8px;background:@soft@;'>
+                <b>解释推荐理由</b><br/><span style='font-size:11px;color:@muted@;'>为什么这个板块进入机会列表？事件和资金分别贡献了什么？</span>
+              </td>
+              <td width='50%' valign='top' style='padding:12px;border:1px solid @border@;border-radius:8px;background:@soft@;'>
+                <b>核对风险条件</b><br/><span style='font-size:11px;color:@muted@;'>哪些信号会让当前判断失效？下跌时是否需要继续预警？</span>
+              </td>
+            </tr>
+            <tr>
+              <td width='50%' valign='top' style='padding:12px;border:1px solid @border@;border-radius:8px;background:@soft@;'>
+                <b>拆解事件路径</b><br/><span style='font-size:11px;color:@muted@;'>某条新闻如何传导到板块、价格、订单或资金面？</span>
+              </td>
+              <td width='50%' valign='top' style='padding:12px;border:1px solid @border@;border-radius:8px;background:@soft@;'>
+                <b>复盘持仓动作</b><br/><span style='font-size:11px;color:@muted@;'>结合我的买入日期和金额，下一步该观察还是减仓？</span>
+              </td>
+            </tr>
+          </table>
+          <div style='margin-top:12px;padding:10px 12px;border-left:3px solid @accent@;background:@soft@;font-size:12px;color:@body@;'>
+            建议直接提出具体板块或事件，例如：半导体今天还能追吗？有色金属下跌后预警是否失效？
+          </div>
+        </div>
+    )HTML");
+    welcome.replace("@body@", t.bodyColor);
+    welcome.replace("@muted@", t.mutedColor);
+    welcome.replace("@border@", t.cardBorder);
+    welcome.replace("@soft@", t.narrativeBg);
+    welcome.replace("@accent@", t.btnBg);
     m_chatDisplay->setHtml(welcome);
 
     auto *inputBar = new QWidget(conversationPanel);

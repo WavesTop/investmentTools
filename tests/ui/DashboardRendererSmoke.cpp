@@ -81,6 +81,9 @@ int runDashboardRendererSmoke()
     expect(html.contains("<html>"), "dashboard html contains document root");
     expect(html.contains("table.overview"), "dashboard html keeps shared overview table class");
     expect(html.contains("workspace-shell"), "dashboard html uses workspace shell");
+    expect(html.contains("overview-dashboard"), "dashboard html uses v2.5 dashboard marker");
+    expect(html.contains("workspace-status-band"), "dashboard html renders v2.5 status band");
+    expect(html.contains("insight-card"), "dashboard html renders v2.5 insight cards");
     expect(html.contains(QString::fromUtf8("市场仪表盘")), "dashboard html contains market dashboard");
     expect(html.contains(QString::fromUtf8("关键事件雷达")), "dashboard html contains event radar section");
     expect(html.contains(QString::fromUtf8("板块机会与风险")), "dashboard html contains opportunity and risk section");

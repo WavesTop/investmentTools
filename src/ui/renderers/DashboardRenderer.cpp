@@ -195,6 +195,38 @@ QList<const SectorSnapshot *> topSectors(const AnalysisResult &analysis, int lim
     return sectors;
 }
 
+QString renderDashboardStatusBand(const AnalysisResult &analysis, const ThemeColors &theme)
+{
+    const QString riskLevel = analysis.marketCtx.riskLevel.isEmpty()
+        ? QString::fromUtf8("等待市场风险评级")
+        : analysis.marketCtx.riskLevel;
+    QString topEvent = QString::fromUtf8("等待新闻与事件雷达刷新");
+    if (!analysis.macroEvents.isEmpty()) {
+        topEvent = eventReadableTitle(analysis.macroEvents.first());
+    } else {
+        const QList<const SectorSnapshot *> sectors = topSectors(analysis, 1);
+        if (!sectors.isEmpty()) topEvent = sectorNextCheckpoint(*sectors.first());
+    }
+
+    QString h = "<div class='workspace-status-band insight-card' data-design='overview-status-band'>";
+    h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>";
+    h += "<td width='34%' valign='top'><div class='status-title'>今日工作台</div>"
+        "<div class='status-meta'>市场风险 "
+        + escaped(num(analysis.marketCtx.marketRiskScore, 0))
+        + " / " + escaped(riskLevel)
+        + "</div></td>";
+    h += "<td width='42%' valign='top'><div class='status-title'>下一观察点</div>"
+        "<div class='status-meta'>" + escaped(shortText(topEvent, 86)) + "</div></td>";
+    h += "<td width='24%' valign='top' align='right'><span class='state-chip'>"
+        + (analysis.aiAvailable ? QStringLiteral("AI + Rules") : QStringLiteral("Rules"))
+        + "</span><div class='status-meta' style='margin-top:6px;'>"
+        + escaped(num(analysis.sectors.size(), 0)) + QString::fromUtf8(" 个板块 / ")
+        + escaped(num(indexCount(analysis), 0)) + QString::fromUtf8(" 个指数</div></td>");
+    h += "</tr></table></div>";
+    Q_UNUSED(theme);
+    return h;
+}
+
 QString renderMarketDashboard(const AnalysisResult &analysis, const ThemeColors &theme)
 {
     QString h;
@@ -391,7 +423,7 @@ QString DashboardRenderer::render(const AnalysisResult &analysis,
                                   const DashboardRenderOptions &options)
 {
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
-    h += "<div class='workspace-shell'>";
+    h += "<div class='workspace-shell overview-dashboard' data-design='overview-dashboard'>";
     h += "<h1 style='font-size:18px;'>综合总览</h1>";
     h += "<div class='meta'>" + num(analysis.sectors.size(), 0)
         + QString::fromUtf8(" 个板块 · ") + num(indexCount(analysis), 0)
@@ -399,6 +431,7 @@ QString DashboardRenderer::render(const AnalysisResult &analysis,
     if (analysis.aiAvailable) h += " · <span class='ai-badge'>AI</span>";
     h += "</div>";
 
+    h += renderDashboardStatusBand(analysis, theme);
     h += renderMarketDashboard(analysis, theme);
     h += renderPortfolio(analysis, options, theme);
     h += renderKeyEventRadar(analysis, theme);

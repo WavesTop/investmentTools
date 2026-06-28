@@ -37,3 +37,8 @@
 - 文件名使用稳定主题名，例如 `ui-workbench-redesign.md`、`event-impact-engine-design.md`。
 - 日期写在正文的“最后更新”中，不作为文件名主键。
 - 打包脚本、启动脚本、CMake 部署参数或图标资源变更时，同步更新对应版本的 `release/PACKAGING.md`。
+
+## v2.5 UI 落地入口
+
+- `docs/versions/v2.5/plans/ui-workbench-implementation-plan.md`：v2.5 工作台界面实施计划。
+- `docs/versions/v2.5/screenshots/ui-implementation/`：当前代码生成的页面截图，用于和 v2.5 设计稿逐页核对。

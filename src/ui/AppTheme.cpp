@@ -8,25 +8,25 @@ namespace InvestInsight::Ui {
 ThemeColors lightTheme()
 {
     ThemeColors t;
-    t.winBg = "#F5F6FA"; t.paneBg = "#FFFFFF"; t.paneBorder = "#E2E8F0";
-    t.tabBg = "#EDF0F7"; t.tabSelectedBg = "#FFFFFF"; t.tabSelectedColor = "#4F46E5";
-    t.btnBg = "#4F46E5"; t.btnHover = "#4338CA"; t.btnDisabled = "#CBD5E1";
-    t.barBg = "#E2E8F0"; t.barChunk1 = "#4F46E5"; t.barChunk2 = "#818CF8"; t.barText = "#334155";
+    t.winBg = "#F5F7FA"; t.paneBg = "#FFFFFF"; t.paneBorder = "#DDE3EC";
+    t.tabBg = "#EEF2F7"; t.tabSelectedBg = "#FFFFFF"; t.tabSelectedColor = "#4258FF";
+    t.btnBg = "#4258FF"; t.btnHover = "#3347E6"; t.btnDisabled = "#CBD5E1";
+    t.barBg = "#E5EAF2"; t.barChunk1 = "#4258FF"; t.barChunk2 = "#6D5DF6"; t.barText = "#475569";
     t.statusColor = "#475569";
 
-    t.bodyBg = "#FFFFFF"; t.bodyColor = "#1E293B"; t.headingColor = "#1E293B";
-    t.metaColor = "#94A3B8"; t.dividerColor = "#F1F5F9";
-    t.sectionTitleColor = "#1E293B"; t.sectionBorderColor = "#4F46E5";
-    t.narrativeBg = "#F8FAFC"; t.narrativeColor = "#334155";
-    t.tableHeaderBg = "#F8FAFC"; t.tableBorder = "#E2E8F0"; t.tableHoverBg = "#F1F5F9"; t.tableAltRowBg = "#FAFBFE";
-    t.linkColor = "#4F46E5"; t.linkHoverColor = "#4338CA";
-    t.formulaHeaderBg = "#F5F3FF"; t.formulaHighlightBg = "#F5F3FF";
-    t.neutralColor = "#475569"; t.mutedColor = "#64748B"; t.subtleColor = "#94A3B8";
-    t.cardBorder = "#E2E8F0";
-    t.warningBg = "#FFFBEB"; t.warningBorder = "#F59E0B"; t.warningColor = "#B45309";
-    t.disclaimerColor = "#CBD5E1"; t.newsItemBorder = "#F1F5F9";
+    t.bodyBg = "#FFFFFF"; t.bodyColor = "#111827"; t.headingColor = "#111827";
+    t.metaColor = "#8A99AE"; t.dividerColor = "#EEF2F7";
+    t.sectionTitleColor = "#111827"; t.sectionBorderColor = "#4258FF";
+    t.narrativeBg = "#F7F9FC"; t.narrativeColor = "#475569";
+    t.tableHeaderBg = "#F7F9FC"; t.tableBorder = "#DDE3EC"; t.tableHoverBg = "#F1F5FB"; t.tableAltRowBg = "#FAFBFD";
+    t.linkColor = "#2563EB"; t.linkHoverColor = "#4258FF";
+    t.formulaHeaderBg = "#EEF2FF"; t.formulaHighlightBg = "#EEF2FF";
+    t.neutralColor = "#475569"; t.mutedColor = "#475569"; t.subtleColor = "#8A99AE";
+    t.cardBorder = "#DDE3EC";
+    t.warningBg = "#FFF7ED"; t.warningBorder = "#FDBA74"; t.warningColor = "#C2410C";
+    t.disclaimerColor = "#8A99AE"; t.newsItemBorder = "#EEF2F7";
 
-    t.chartBg = "#FAFBFE"; t.chartGrid = "#F1F5F9"; t.chartAxisText = "#94A3B8"; t.chartTitleText = "#334155";
+    t.chartBg = "#FFFFFF"; t.chartGrid = "#EEF2F7"; t.chartAxisText = "#8A99AE"; t.chartTitleText = "#111827";
     return t;
 }
 
@@ -98,10 +98,10 @@ QString buildWidgetStyleSheet(const ThemeColors &t)
     QPushButton#refreshBtn {
         padding: 8px 28px; font-size: 13px; font-weight: 700;
         border-radius: 8px;
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @btn@,stop:1 @chunk1@);
+        background: @btn@;
     }
     QPushButton#refreshBtn:hover {
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @btnH@,stop:1 @btn@);
+        background: @btnH@;
     }
 
     QLineEdit {
@@ -328,7 +328,7 @@ QString buildWidgetStyleSheet(const ThemeColors &t)
         font-weight: 700;
     }
     QPushButton#quickQuestionButton:hover {
-        background: rgba(79,70,229,0.14);
+        background: rgba(66,88,255,0.12);
         color: @btn@;
     }
     QScrollArea {
@@ -349,7 +349,7 @@ QString buildWidgetStyleSheet(const ThemeColors &t)
     s.replace(QLatin1String("@chunk1@"), t.barChunk1);
     s.replace(QLatin1String("@chunk2@"), t.barChunk2);
     s.replace(QLatin1String("@status@"), t.statusColor);
-    s.replace(QLatin1String("@sideBg@"), QStringLiteral("#111827"));
+    s.replace(QLatin1String("@sideBg@"), QStringLiteral("#0E1626"));
     return s;
 }
 
@@ -488,6 +488,85 @@ table.formula tr:last-child td { border-bottom: none; }
 .workspace-shell {
     max-width: 1680px;
     margin: 0 auto;
+}
+.workspace-status-band {
+    border: 1px solid %13;
+    border-radius: 8px;
+    background: %10;
+    padding: 14px 16px;
+    margin: 0 0 16px 0;
+}
+.workspace-status-band .status-title {
+    color: %3;
+    font-size: 16px;
+    font-weight: 800;
+}
+.workspace-status-band .status-meta {
+    color: %8;
+    font-size: 11px;
+    line-height: 1.65;
+}
+.insight-card {
+    border: 1px solid %13;
+    border-radius: 8px;
+    background: %1;
+    padding: 12px 14px;
+    margin: 8px 0;
+}
+.event-card {
+    border: 1px solid %13;
+    border-radius: 8px;
+    background: %1;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.event-card .event-title {
+    color: %3;
+    font-size: 13px;
+    font-weight: 800;
+}
+.state-chip,
+.risk-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+}
+.state-chip { background: #EEF2FF; color: #4258FF; }
+.risk-chip { background: #FFF7ED; color: #C2410C; }
+table.scan-table {
+    border-collapse: separate; border-spacing: 0;
+    width: 100%%; font-size: 11px; margin-top: 6px;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid %13;
+}
+table.scan-table th {
+    background: %12; padding: 7px 9px; text-align: left;
+    font-weight: 700; font-size: 10px;
+    border-bottom: 1px solid %13; white-space: nowrap;
+    color: %8;
+}
+table.scan-table td {
+    padding: 7px 9px; border-bottom: 1px solid %9;
+    vertical-align: top; line-height: 1.55;
+}
+table.scan-table tr:last-child td { border-bottom: none; }
+table.scan-table tr:hover td { background: %14; }
+.sector-detail-long {
+    max-width: 1680px;
+    margin: 0 auto;
+}
+table.detail-hero-table {
+    width: 100%%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 8px;
+}
+.evidence-layer {
+    border-top: 1px solid %13;
+    margin-top: 14px;
+    padding-top: 8px;
 }
 .metric-grid {
     display: grid;

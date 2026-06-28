@@ -674,6 +674,7 @@ QString renderPredictionMatrix(const SectorSnapshot &sector, const ThemeColors &
 QString renderEvidenceLayer(const SectorSnapshot &sector, const ThemeColors &theme, bool simpleMode)
 {
     QString h = "<div class='section-title'>证据层</div>";
+    h = "<div class='evidence-layer' data-design='sector-evidence-layer'>" + h;
     h += "<div class='meta' style='margin-bottom:8px;'>"
         + QString::fromUtf8("下方保留原始证据和量化指标，用于核对首屏结论，不作为新的推荐入口。")
         + "</div>";
@@ -707,6 +708,7 @@ QString renderEvidenceLayer(const SectorSnapshot &sector, const ThemeColors &the
     h += "</td></tr></table>";
     h += renderEventImpacts(sector, theme);
     h += renderNews(sector, theme);
+    h += "</div>";
     return h;
 }
 
@@ -720,7 +722,7 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         sector, theme, options.chartWidth, options.chartHeight);
 
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
-    h += "<div class='sector-detail-focused'>";
+    h += "<div class='sector-detail-focused sector-detail-long' data-design='sector-detail-long'>";
     h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>"
         "<td valign='bottom'><h2 style='margin-bottom:4px;'>" + escaped(sector.industry)
         + " <span style='color:" + colorFor(sector.todayChangePct, theme)
@@ -737,7 +739,7 @@ QString SectorDetailRenderer::render(const SectorSnapshot &sector,
         + "</span></td></tr></table>";
 
     h += renderDecisionSummary(sector, theme);
-    h += "<table width='100%' cellspacing='0' cellpadding='0'><tr>";
+    h += "<table class='detail-hero-table' width='100%' cellspacing='0' cellpadding='0'><tr>";
     h += "<td width='58%' valign='top' style='padding-right:8px;'>"
         + renderTrendAndLevels(sector, chart, theme) + "</td>";
     h += "<td width='42%' valign='top' style='padding-left:8px;'>"

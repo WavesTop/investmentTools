@@ -385,16 +385,19 @@ QString EventRadarRenderer::render(const AnalysisResult &analysis,
     h += "<html><head><meta charset='utf-8'><style>";
     h += buildHtmlCss(theme);
     h += "</style></head><body>";
+    h += "<div class='workspace-shell event-radar-workbench' data-design='event-radar'>";
     h += "<h1>事件雷达</h1>";
     h += "<p class='meta'>将新闻、未来催化、行情确认和风险条件组织为一个可扫描的事件工作台。</p>";
+    h += "<div class='workspace-status-band event-card' data-design='event-status-band'>";
     h += renderSummary(analysis, items, theme);
+    h += "</div>";
     h += renderEventTimeline(analysis, theme);
     h += renderQueue(items, theme);
     if (!options.simpleMode) {
         h += renderPath(items);
         h += renderRisk(analysis, items, theme);
     }
-    h += "</body></html>";
+    h += "</div></body></html>";
     return h;
 }
 

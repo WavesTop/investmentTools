@@ -36,6 +36,10 @@ void verifyTheme(const InvestInsight::Ui::ThemeColors &theme, const QString &nam
     expect(htmlCss.contains("table.fund"), name + " HTML stylesheet contains fund table rules");
     expect(htmlCss.contains("workspace-shell"), name + " HTML stylesheet contains workspace shell rules");
     expect(htmlCss.contains("metric-grid"), name + " HTML stylesheet contains metric grid rules");
+    expect(htmlCss.contains("workspace-status-band"), name + " HTML stylesheet contains v2.5 status band rules");
+    expect(htmlCss.contains("insight-card"), name + " HTML stylesheet contains v2.5 insight card rules");
+    expect(htmlCss.contains("scan-table"), name + " HTML stylesheet contains v2.5 scan table rules");
+    expect(htmlCss.contains("sector-detail-long"), name + " HTML stylesheet contains v2.5 long detail rules");
     expect(htmlCss.contains(theme.bodyBg), name + " HTML stylesheet contains body background");
     expect(htmlCss.contains(theme.linkColor), name + " HTML stylesheet contains link color");
 }
@@ -62,6 +66,9 @@ int main(int argc, char *argv[])
 
     expect(light.bodyBg != dark.bodyBg, "light and dark themes use different body backgrounds");
     expect(light.btnBg != dark.btnBg, "light and dark themes use different button backgrounds");
+    expect(light.winBg == QStringLiteral("#F5F7FA"), "light theme uses v2.5 app background");
+    expect(light.btnBg == QStringLiteral("#4258FF"), "light theme uses v2.5 primary accent");
+    expect(light.paneBorder == QStringLiteral("#DDE3EC"), "light theme uses v2.5 default border");
 
     const int chartResult = runChartRendererSmoke();
     if (chartResult != 0) {

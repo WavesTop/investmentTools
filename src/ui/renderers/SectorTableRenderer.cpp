@@ -361,7 +361,7 @@ QString renderRows(const QList<MixedRow> &rows,
                    const SectorTableRenderOptions &options,
                    const ThemeColors &theme)
 {
-    QString h = "<table class='overview'>";
+    QString h = "<table class='overview scan-table sector-opportunity-table'>";
     if (options.simpleMode) {
         h += "<tr><th>#</th><th>板块&指数</th><th style='text-align:right;'>今日</th>"
              "<th style='text-align:center;'>评分</th><th style='text-align:center;'>建议</th><th>一句话看点</th></tr>";
@@ -449,6 +449,7 @@ QString SectorTableRenderer::render(const AnalysisResult &analysis,
     const int universe = analysis.sectors.size() + marketIndexCount(analysis);
 
     QString h = "<html><head><style>" + buildHtmlCss(theme) + "</style></head><body>";
+    h += "<div class='workspace-shell sector-opportunities-workbench' data-design='sector-opportunities'>";
     h += "<h1 style='font-size:18px;'>板块机会</h1>";
     h += "<div class='meta'>" + num(analysis.sectors.size(), 0)
         + QString::fromUtf8(" 个板块 · ") + num(marketIndexCount(analysis), 0)
@@ -456,10 +457,15 @@ QString SectorTableRenderer::render(const AnalysisResult &analysis,
     if (filtered) h += QString::fromUtf8(" · 当前展示 ") + num(rows.size(), 0) + "/" + num(universe, 0);
     h += "</div>";
 
+    h += "<div class='workspace-status-band insight-card' data-design='sector-scan-summary'>"
+        + QString::fromUtf8("本轮扫描 ")
+        + num(universe, 0)
+        + QString::fromUtf8(" 个板块与指数，优先展示技术、资金、点位和下一观察；长解释进入详情页。")
+        + "</div>";
     if (!options.simpleMode) h += renderAudit(analysis, theme);
     h += "<div class='section-title'>板块&指数总览</div>";
     h += renderRows(rows, options, theme);
-    h += "</body></html>";
+    h += "</div></body></html>";
     return h;
 }
 

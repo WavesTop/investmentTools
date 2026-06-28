@@ -135,6 +135,9 @@ int runSectorDetailRendererSmoke()
 
     expect(html.contains("<html>"), "sector detail html contains document root");
     expect(html.contains("sector-detail-focused"), "sector detail uses focused layout marker");
+    expect(html.contains("sector-detail-long"), "sector detail uses v2.5 long page marker");
+    expect(html.contains("detail-hero-table"), "sector detail renders v2.5 hero chart/advice table");
+    expect(html.contains("evidence-layer"), "sector detail renders v2.5 evidence layer marker");
     expect(html.contains(QString::fromUtf8("决策摘要")), "sector detail contains decision summary");
     expect(html.contains(QString::fromUtf8("购买建议")), "sector detail contains purchase advice");
     expect(html.contains(QString::fromUtf8("趋势图与点位")), "sector detail contains trend chart and levels");

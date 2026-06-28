@@ -104,6 +104,9 @@ int runEventRadarRendererSmoke()
 
     expect(html.contains("<html>"), "event radar html contains document root");
     expect(html.contains("workspace-shell"), "event radar html uses workspace shell");
+    expect(html.contains("event-radar-workbench"), "event radar html uses v2.5 page marker");
+    expect(html.contains("workspace-status-band"), "event radar html renders v2.5 status band");
+    expect(html.contains("event-card"), "event radar html renders v2.5 event cards");
     expect(html.contains(QString::fromUtf8("事件雷达")), "event radar html contains title");
     expect(html.contains(QString::fromUtf8("关键事件队列")), "event radar html contains event queue");
     expect(html.contains(QString::fromUtf8("可读事件")), "event radar html contains readable event column");

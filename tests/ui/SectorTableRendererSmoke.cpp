@@ -82,6 +82,9 @@ int runSectorTableRendererSmoke()
     const QString html = InvestInsight::Ui::SectorTableRenderer::render(makeAnalysis(), theme, options);
     expect(html.contains("<html>"), "sector table html contains document root");
     expect(html.contains("table.overview"), "sector table html keeps shared overview table class");
+    expect(html.contains("sector-opportunities-workbench"), "sector table html uses v2.5 page marker");
+    expect(html.contains("sector-opportunity-table"), "sector table html uses v2.5 opportunity table marker");
+    expect(html.contains("scan-table"), "sector table html applies v2.5 scan table style");
     expect(html.contains(QString::fromUtf8("板块机会")), "sector table html contains page title");
     expect(html.contains(QString::fromUtf8("MACD")), "sector table html contains MACD column");
     expect(html.contains(QString::fromUtf8("RSI")), "sector table html contains RSI column");
